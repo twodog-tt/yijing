@@ -4,6 +4,7 @@
 # 密码从 .env 读取，不写死在脚本中
 
 set -euo pipefail
+umask 077
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${ROOT_DIR}"
@@ -33,6 +34,7 @@ if [ -z "${ROOT_PASS}" ]; then
 fi
 
 mkdir -p "${BACKUP_DIR}"
+chmod 700 "${BACKUP_DIR}"
 OUT_FILE="${BACKUP_DIR}/yijing_${DB_NAME}_${TIMESTAMP}.sql.gz"
 
 echo "==> 备份 ${DB_NAME} -> ${OUT_FILE}"
