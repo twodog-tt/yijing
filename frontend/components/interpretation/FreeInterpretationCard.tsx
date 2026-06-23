@@ -9,7 +9,7 @@ export default function FreeInterpretationCard({
   content,
 }: FreeInterpretationCardProps) {
   return (
-    <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm sm:p-7">
+    <section className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm sm:p-7">
       <h2 className="text-lg font-bold text-stone-900">免费解读</h2>
       <div className="mt-5 text-sm leading-7 text-stone-700 sm:leading-8">
         <p className="whitespace-pre-wrap">{content || "暂无免费解读"}</p>

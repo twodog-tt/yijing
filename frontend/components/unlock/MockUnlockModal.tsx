@@ -43,17 +43,17 @@ export default function MockUnlockModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:items-center sm:p-4"
       role="dialog"
       aria-modal
       aria-labelledby="unlock-title"
     >
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+      <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl sm:p-6">
         <h2 id="unlock-title" className="text-lg font-bold text-stone-900">
           模拟观看激励广告
         </h2>
         <p className="mt-3 text-sm leading-relaxed text-stone-600">
-          本地 MVP 阶段不会播放真实广告，点击确认后视为解锁成功。
+          当前内测阶段不会播放真实广告，点击确认后视为解锁成功。
         </p>
 
         {error && (
@@ -67,7 +67,7 @@ export default function MockUnlockModal({
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="flex-1 rounded-xl border border-stone-300 py-3 text-sm font-medium text-stone-700"
+            className="min-h-12 flex-1 rounded-xl border border-stone-300 py-3 text-sm font-medium text-stone-700"
           >
             取消
           </button>
@@ -75,7 +75,7 @@ export default function MockUnlockModal({
             type="button"
             onClick={handleConfirm}
             disabled={loading}
-            className="flex-1 rounded-xl bg-stone-900 py-3 text-sm font-semibold text-white disabled:opacity-60"
+            className="min-h-12 flex-1 rounded-xl bg-stone-900 py-3 text-sm font-semibold text-white disabled:opacity-60"
           >
             {loading ? "解锁中…" : "确认解锁"}
           </button>

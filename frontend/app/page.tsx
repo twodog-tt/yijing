@@ -2,8 +2,8 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-10 sm:py-16">
-      <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm sm:p-10">
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-8 sm:py-16">
+      <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm sm:p-10">
         <p className="text-sm tracking-[0.2em] text-amber-800">易经问事</p>
         <h1 className="mt-4 text-3xl font-bold leading-tight text-stone-900 sm:text-4xl">
           心中有事，起一卦。
@@ -28,13 +28,13 @@ export default function Home() {
           <div className="flex gap-3">
             <Link
               href="/history"
-              className="inline-flex flex-1 items-center justify-center rounded-xl border border-stone-300 bg-white px-6 py-3.5 text-sm font-semibold text-stone-800 transition hover:bg-stone-50"
+              className="inline-flex flex-1 items-center justify-center rounded-xl border border-stone-300 bg-white px-3 py-3.5 text-sm font-semibold text-stone-800 transition hover:bg-stone-50 sm:px-6"
             >
               历史记录
             </Link>
             <Link
               href="/about"
-              className="inline-flex flex-1 items-center justify-center rounded-xl border border-stone-300 bg-white px-6 py-3.5 text-sm font-semibold text-stone-800 transition hover:bg-stone-50"
+              className="inline-flex flex-1 items-center justify-center rounded-xl border border-stone-300 bg-white px-3 py-3.5 text-sm font-semibold text-stone-800 transition hover:bg-stone-50 sm:px-6"
             >
               关于说明
             </Link>
@@ -49,7 +49,7 @@ export default function Home() {
         </p>
         <Link
           href="/today"
-          className="mt-3 inline-flex text-sm font-semibold text-amber-800 hover:underline"
+          className="mt-1 inline-flex min-h-11 items-center text-sm font-semibold text-amber-800 hover:underline"
         >
           查看今日一卦 →
         </Link>

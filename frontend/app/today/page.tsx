@@ -96,7 +96,7 @@ export default function TodayPage() {
 
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-8 sm:py-10">
         <div className="mb-6">
-          <Link href="/" className="text-sm text-amber-800 hover:underline">
+          <Link href="/" className="-ml-3 inline-flex min-h-11 items-center rounded-lg px-3 text-sm text-amber-800 hover:underline">
             ← 返回首页
           </Link>
           <h1 className="mt-4 text-2xl font-bold text-stone-900">今日一卦</h1>
@@ -120,7 +120,7 @@ export default function TodayPage() {
           </p>
         )}
 
-        <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+        <section className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm sm:p-6">
           <p className="text-sm leading-relaxed text-stone-700">
             今日一卦通过三枚硬币法起卦，帮你整理：
           </p>
@@ -136,7 +136,7 @@ export default function TodayPage() {
             type="button"
             onClick={handleStart}
             disabled={busy || !ready}
-            className="mt-6 w-full rounded-xl bg-stone-900 py-3.5 text-sm font-semibold text-white transition hover:bg-stone-800 disabled:opacity-60"
+            className="mt-6 min-h-12 w-full rounded-xl bg-stone-900 py-3.5 text-sm font-semibold text-white transition hover:bg-stone-800 disabled:opacity-60"
           >
             {busy ? "起卦中…" : "查看今日一卦"}
           </button>

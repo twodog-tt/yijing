@@ -56,7 +56,7 @@ const SharePoster = forwardRef<HTMLDivElement, SharePosterProps>(
     return (
       <div
         ref={ref}
-        className="w-[320px] overflow-hidden rounded-2xl border border-stone-200 bg-[#faf8f5] shadow-xl"
+        className="w-full max-w-[320px] overflow-hidden rounded-2xl border border-stone-200 bg-[#faf8f5] shadow-xl"
         style={{ fontFamily: "serif" }}
       >
         <div className="border-b border-amber-200/60 bg-gradient-to-r from-amber-100 to-stone-100 px-6 py-5">

@@ -71,7 +71,7 @@ export default function Select({
         aria-expanded={open}
         aria-controls={listboxId}
         onClick={() => !disabled && setOpen((prev) => !prev)}
-        className="flex w-full items-center justify-between rounded-xl border border-stone-300 bg-white px-4 py-3 text-left text-sm text-stone-900 outline-none transition hover:border-stone-400 focus:border-amber-600 disabled:cursor-not-allowed disabled:opacity-60"
+        className="flex min-h-12 w-full items-center justify-between rounded-xl border border-stone-300 bg-white px-4 py-3 text-left text-base text-stone-900 outline-none transition hover:border-stone-400 focus:border-amber-600 disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
       >
         <span className={selected ? "text-stone-900" : "text-stone-400"}>
           {selected?.label ?? placeholder}
@@ -104,7 +104,7 @@ export default function Select({
                 <button
                   type="button"
                   onClick={() => choose(opt.value)}
-                  className={`flex w-full px-4 py-2.5 text-left text-sm transition ${
+                  className={`flex min-h-11 w-full items-center px-4 py-2.5 text-left text-base transition sm:text-sm ${
                     isSelected
                       ? "bg-amber-50 font-medium text-amber-900"
                       : "text-stone-800 hover:bg-stone-50"

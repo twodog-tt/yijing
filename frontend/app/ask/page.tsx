@@ -121,7 +121,7 @@ export default function AskPage() {
 
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-8 sm:py-10">
         <div className="mb-6">
-          <Link href="/" className="text-sm text-amber-800 hover:underline">
+          <Link href="/" className="-ml-3 inline-flex min-h-11 items-center rounded-lg px-3 text-sm text-amber-800 hover:underline">
             ← 返回首页
           </Link>
           <h1 className="mt-4 text-2xl font-bold text-stone-900">问事起卦</h1>
@@ -138,7 +138,7 @@ export default function AskPage() {
 
         <form
           onSubmit={handleSubmit}
-          className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm"
+          className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm sm:p-6"
         >
           <label className="block">
             <span className="text-sm font-medium text-stone-800">事项类型</span>
@@ -164,7 +164,7 @@ export default function AskPage() {
               disabled={casting}
               rows={5}
               placeholder="例如：我现在适不适合继续推进这个 AI 易经小程序？"
-              className="mt-2 w-full resize-none rounded-xl border border-stone-300 px-4 py-3 text-sm leading-relaxed text-stone-900 outline-none focus:border-amber-600 disabled:opacity-60"
+              className="mt-2 w-full resize-none rounded-xl border border-stone-300 px-4 py-3 text-base leading-relaxed text-stone-900 outline-none focus:border-amber-600 disabled:opacity-60 sm:text-sm"
             />
             <p className="mt-1 text-right text-xs text-stone-400">
               {[...question.trim()].length} / 200 字
@@ -177,7 +177,7 @@ export default function AskPage() {
               checked={confirmed}
               onChange={(e) => setConfirmed(e.target.checked)}
               disabled={casting}
-              className="mt-1 h-4 w-4 rounded border-stone-300"
+              className="mt-0.5 h-5 w-5 shrink-0 rounded border-stone-300"
             />
             <span className="text-sm leading-relaxed text-stone-600">
               我已阅读并理解：本工具仅供娱乐和传统文化参考，不构成医疗、法律、投资或重大决策建议。
@@ -193,7 +193,7 @@ export default function AskPage() {
           <button
             type="submit"
             disabled={casting}
-            className="mt-6 w-full rounded-xl bg-stone-900 py-3.5 text-sm font-semibold text-white transition hover:bg-stone-800 disabled:opacity-60"
+            className="mt-6 min-h-12 w-full rounded-xl bg-stone-900 py-3.5 text-sm font-semibold text-white transition hover:bg-stone-800 disabled:opacity-60"
           >
             {casting ? "起卦中…" : "开始起卦"}
           </button>

@@ -151,14 +151,14 @@ export default function DivinationResultPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8 sm:py-10">
-      <div className="flex items-center justify-between">
-        <Link href="/history" className="text-sm text-amber-800 hover:underline">
+      <div className="flex items-center justify-between gap-2">
+        <Link href="/history" className="-ml-3 inline-flex min-h-11 items-center rounded-lg px-3 text-sm text-amber-800 hover:underline">
           ← 历史记录
         </Link>
         <button
           type="button"
           onClick={() => setPosterModalOpen(true)}
-          className="text-sm font-medium text-stone-600 underline-offset-2 hover:text-amber-800 hover:underline"
+          className="inline-flex min-h-11 items-center rounded-lg px-2 text-sm font-medium text-stone-600 underline-offset-2 hover:text-amber-800 hover:underline"
         >
           生成分享海报
         </button>

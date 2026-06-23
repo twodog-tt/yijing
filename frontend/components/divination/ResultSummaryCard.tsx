@@ -16,7 +16,7 @@ export default function ResultSummaryCard({
       : "本次无动爻，可重点理解本卦整体含义。";
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-50 via-white to-stone-50 p-6 shadow-sm">
+    <section className="overflow-hidden rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-50 via-white to-stone-50 p-5 shadow-sm sm:p-6">
       <div className="flex items-center justify-between gap-2">
         <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-900">
           {divination.category?.name}

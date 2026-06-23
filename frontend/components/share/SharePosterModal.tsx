@@ -37,18 +37,18 @@ export default function SharePosterModal({
     } finally {
       setDownloading(false);
     }
-  }, [data?.divination.id]);
+  }, [data]);
 
   if (!open || !data) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:items-center sm:p-4"
       role="dialog"
       aria-modal
       aria-labelledby="poster-title"
     >
-      <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+      <div className="max-h-[calc(100dvh-1.5rem)] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-4 shadow-xl sm:max-h-[90vh] sm:p-6">
         <h2 id="poster-title" className="text-lg font-bold text-stone-900">
           分享海报预览
         </h2>
@@ -56,7 +56,7 @@ export default function SharePosterModal({
           可保存图片分享至朋友圈、小红书或微信群。
         </p>
 
-        <div className="mt-5 flex justify-center overflow-x-auto py-2">
+        <div className="mt-5 flex min-w-0 justify-center py-2">
           <SharePoster ref={posterRef} data={data} />
         </div>
 
@@ -70,7 +70,7 @@ export default function SharePosterModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 rounded-xl border border-stone-300 py-3 text-sm font-medium text-stone-700"
+            className="min-h-12 flex-1 rounded-xl border border-stone-300 py-3 text-sm font-medium text-stone-700"
           >
             关闭
           </button>
@@ -78,7 +78,7 @@ export default function SharePosterModal({
             type="button"
             onClick={handleDownload}
             disabled={downloading}
-            className="flex-1 rounded-xl bg-stone-900 py-3 text-sm font-semibold text-white disabled:opacity-60"
+            className="min-h-12 flex-1 rounded-xl bg-stone-900 py-3 text-sm font-semibold text-white disabled:opacity-60"
           >
             {downloading ? "生成中…" : "下载海报"}
           </button>

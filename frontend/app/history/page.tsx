@@ -73,7 +73,7 @@ export default function HistoryPage() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-8 sm:py-10">
       <div className="mb-6">
-        <Link href="/" className="text-sm text-amber-800 hover:underline">
+        <Link href="/" className="-ml-3 inline-flex min-h-11 items-center rounded-lg px-3 text-sm text-amber-800 hover:underline">
           ← 返回首页
         </Link>
         <h1 className="mt-4 text-2xl font-bold text-stone-900">历史记录</h1>
@@ -86,7 +86,7 @@ export default function HistoryPage() {
       )}
 
       {!loading && !error && items.length === 0 && (
-        <section className="rounded-2xl border border-dashed border-stone-300 bg-white p-10 text-center">
+        <section className="rounded-2xl border border-dashed border-stone-300 bg-white p-6 text-center sm:p-10">
           <p className="text-stone-600">你还没有起过卦，先去问一件事吧。</p>
           <Link
             href="/ask"
@@ -140,7 +140,7 @@ export default function HistoryPage() {
                 type="button"
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="rounded-xl border border-stone-300 bg-white px-8 py-3 text-sm font-medium text-stone-700 disabled:opacity-60"
+                className="min-h-11 rounded-xl border border-stone-300 bg-white px-8 py-3 text-sm font-medium text-stone-700 disabled:opacity-60"
               >
                 {loadingMore ? "加载中…" : "加载更多"}
               </button>

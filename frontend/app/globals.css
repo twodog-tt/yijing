@@ -5,6 +5,11 @@
   --foreground: #1c1917;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -15,4 +20,13 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-serif-sc), "Songti SC", "STSong", serif;
+  min-width: 320px;
+}
+
+a,
+button,
+input,
+textarea {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }

@@ -11,7 +11,7 @@ const notoSerif = Noto_Serif_SC({
 });
 
 export const metadata: Metadata = {
-  title: "易经问事 · 本地 MVP",
+  title: "易经问事 · AI 卦象解读",
   description:
     "AI 易经问事与卦象解读工具，仅供娱乐和传统文化参考，助力自我反思与行动建议。",
 };
@@ -23,7 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN" className={`${notoSerif.variable} h-full`}>
-      <body className="flex min-h-full flex-col bg-stone-100 font-serif text-stone-900 antialiased">
+      <body className="flex min-h-dvh flex-col bg-stone-100 font-serif text-stone-900 antialiased">
         <DisclaimerBanner />
         <div className="flex flex-1 flex-col">{children}</div>
         <Footer />

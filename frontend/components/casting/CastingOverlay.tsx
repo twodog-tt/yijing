@@ -195,7 +195,7 @@ export default function CastingOverlay({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col bg-stone-900/92 px-4 py-6 backdrop-blur-sm sm:px-6"
+      className="fixed inset-0 z-50 flex flex-col bg-stone-900/92 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))] backdrop-blur-sm sm:px-6"
       role="status"
       aria-live="polite"
       aria-label="起卦中"
