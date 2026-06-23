@@ -50,7 +50,15 @@ swapon --show
 
 echo "==> 安装 Docker（若未安装）..."
 if ! command -v docker &>/dev/null; then
-  curl -fsSL https://get.docker.com | sh
+  if ! curl -fsSL https://get.docker.com | sh; then
+    if command -v apt-get &>/dev/null; then
+      echo "Docker 官方安装地址不可用，改用 Ubuntu 软件源..."
+      apt-get install -y docker.io docker-compose-v2
+    else
+      echo "错误：Docker 安装失败，请检查网络"
+      exit 1
+    fi
+  fi
 else
   echo "Docker 已安装：$(docker --version)"
 fi
@@ -64,7 +72,7 @@ fi
 echo "==> 安装 Docker Compose 插件（若未安装）..."
 if ! docker compose version &>/dev/null; then
   if command -v apt-get &>/dev/null; then
-    apt-get install -y docker-compose-plugin || true
+    apt-get install -y docker-compose-v2 || apt-get install -y docker-compose-plugin
   elif command -v dnf &>/dev/null; then
     dnf install -y docker-compose-plugin || true
   fi
