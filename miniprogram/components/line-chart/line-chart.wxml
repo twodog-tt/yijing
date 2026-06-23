@@ -1,0 +1,18 @@
+<view class="chart">
+  <text class="title">六爻图（上 → 下展示）</text>
+  <view wx:if="{{!lines.length}}" class="empty">六爻数据暂不可用</view>
+  <view wx:else class="line-list">
+    <view wx:for="{{lines}}" wx:key="position" class="line-item {{item.is_moving ? 'line-item--moving' : ''}}">
+      <text class="position">{{item.position_label}}</text>
+      <view class="line-symbol">
+        <view wx:if="{{item.is_yang}}" class="yang-line {{item.is_moving ? 'bar--moving' : ''}}"></view>
+        <view wx:else class="yin-line">
+          <view class="yin-part {{item.is_moving ? 'bar--moving' : ''}}"></view>
+          <view class="yin-part {{item.is_moving ? 'bar--moving' : ''}}"></view>
+        </view>
+      </view>
+      <text class="meaning">{{item.meaning}}{{item.is_moving ? ' · 动' : ''}}</text>
+    </view>
+  </view>
+  <text class="direction">初爻在下，上爻在上</text>
+</view>

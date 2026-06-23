@@ -1,0 +1,31 @@
+.error {
+  padding: 28rpx;
+  border: 1rpx solid #fecaca;
+  border-radius: 20rpx;
+  background: #fef2f2;
+}
+
+.message {
+  display: block;
+  color: #991b1b;
+  font-size: 24rpx;
+  line-height: 1.6;
+  word-break: break-all;
+}
+
+.retry {
+  width: 180rpx;
+  min-height: 88rpx;
+  margin: 20rpx 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 14rpx;
+  background: #991b1b;
+  color: #ffffff;
+  font-size: 24rpx;
+  line-height: 88rpx;
+}
+
+.retry::after {
+  border: 0;
+}

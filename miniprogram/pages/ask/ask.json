@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "问事起卦",
+  "usingComponents": {
+    "casting-overlay": "/components/casting-overlay/casting-overlay",
+    "error-state": "/components/error-state/error-state",
+    "loading-state": "/components/loading-state/loading-state"
+  }
+}

@@ -1,0 +1,44 @@
+<casting-overlay visible="{{castingVisible}}" record="{{castingRecord}}" mode="ask" bindfinish="handleCastingFinish" bindcancel="handleCastingCancel"></casting-overlay>
+
+<view class="page">
+  <navigator class="back-link" open-type="navigateBack" delta="1">← 返回</navigator>
+
+  <view class="page-header">
+    <text class="eyebrow">问事起卦</text>
+    <text class="page-title">整理你正在思考的问题</text>
+    <text class="page-description">选择事项类型，写下一个具体问题，用卦象帮助梳理处境与行动方向。</text>
+  </view>
+
+  <loading-state wx:if="{{loading}}" text="正在加载事项类型…"></loading-state>
+  <error-state wx:if="{{loadError}}" visible="{{true}}" message="{{loadError}}" bindretry="loadCategories"></error-state>
+
+  <view wx:if="{{!loading && !loadError}}" class="card form-card">
+    <text class="field-label">事项类型</text>
+    <picker mode="selector" range="{{categories}}" range-key="name" value="{{categoryIndex}}" bindchange="onCategoryChange">
+      <view class="picker-field {{selectedCategoryName ? 'picker-field--selected' : ''}}">
+        <text>{{selectedCategoryName || '请选择事项类型'}}</text>
+        <text>⌄</text>
+      </view>
+    </picker>
+
+    <text class="field-label question-label">你的问题</text>
+    <textarea class="question-input" value="{{question}}" maxlength="200" placeholder="例如：我应该如何安排本周学习与休息的节奏？" bindinput="onQuestionInput"></textarea>
+    <text class="counter">{{questionLength}} / 200 字</text>
+
+    <view class="safety-hint">请勿输入医疗、法律、投资、赌博、伤害自己或他人等问题。本工具不会处理此类内容。</view>
+
+    <checkbox-group bindchange="onDisclaimerChange">
+      <label class="agreement">
+        <checkbox value="confirmed" checked="{{confirmed}}" color="#292524"></checkbox>
+        <text>我理解本内容仅用于传统文化学习和自我反思，不作为现实决策依据。</text>
+      </label>
+    </checkbox-group>
+
+    <text wx:if="{{fieldError}}" class="field-error">{{fieldError}}</text>
+    <error-state wx:if="{{submitError}}" visible="{{true}}" message="{{submitError}}" show-retry="{{submitCanRetry}}" bindretry="submitForm"></error-state>
+
+    <button class="primary-button submit-button" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submitForm">{{submitting ? '提交中…' : '开始起卦'}}</button>
+  </view>
+
+  <text class="disclaimer">内容仅用于趣味解读、自我反思和行动整理，不构成现实决策建议。</text>
+</view>

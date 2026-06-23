@@ -1,0 +1,26 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/today/today",
+    "pages/ask/ask",
+    "pages/result/result",
+    "pages/history/history",
+    "pages/about/about",
+    "pages/debug/debug"
+  ],
+  "window": {
+    "navigationBarTitleText": "易经问事",
+    "navigationBarBackgroundColor": "#faf8f3",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#faf8f3",
+    "backgroundTextStyle": "dark"
+  },
+  "networkTimeout": {
+    "request": 90000,
+    "connectSocket": 10000,
+    "uploadFile": 10000,
+    "downloadFile": 10000
+  },
+  "sitemapLocation": "sitemap.json",
+  "style": "v2"
+}

@@ -1,0 +1,46 @@
+.hero {
+  padding: 40rpx 0 24rpx;
+}
+
+.positioning-card {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 32rpx;
+  padding: 24rpx 20rpx 8rpx;
+  border: 1rpx solid #fde68a;
+  border-radius: 20rpx;
+  background: #fffbeb;
+}
+
+.positioning-item {
+  display: flex;
+  align-items: center;
+  width: 50%;
+  margin-bottom: 16rpx;
+  color: #57534e;
+  font-size: 23rpx;
+  box-sizing: border-box;
+}
+
+.positioning-dot {
+  width: 10rpx;
+  height: 10rpx;
+  margin-right: 12rpx;
+  border-radius: 50%;
+  background: #d97706;
+}
+
+.today-link {
+  border-color: #fcd34d;
+  background: #fffbeb;
+  color: #78350f;
+}
+
+.session-hint {
+  display: block;
+  margin-top: 24rpx;
+  color: #a16207;
+  font-size: 22rpx;
+  line-height: 1.6;
+  text-align: center;
+}

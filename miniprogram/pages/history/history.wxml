@@ -1,0 +1,34 @@
+<view class="page">
+  <navigator class="back-link" open-type="navigateBack" delta="1">← 返回</navigator>
+
+  <view class="page-header">
+    <text class="eyebrow">历史记录</text>
+    <text class="page-title">回看你的思考记录</text>
+    <text class="page-description">记录与当前设备保存的匿名 session_key 关联，下拉可刷新。</text>
+  </view>
+
+  <loading-state wx:if="{{loading}}" text="正在加载历史记录…"></loading-state>
+  <error-state wx:if="{{error}}" visible="{{true}}" message="{{error}}" bindretry="loadHistory"></error-state>
+
+  <view wx:if="{{!loading && !error && !items.length}}" class="empty-state">
+    <text class="empty-title">当前还没有起卦记录</text>
+    <text class="empty-description">完成一次问事或今日一卦后，记录会显示在这里。</text>
+    <navigator class="nav-link nav-link--primary empty-action" url="/pages/ask/ask">开始一次问事 →</navigator>
+  </view>
+
+  <view wx:if="{{items.length}}" class="history-list">
+    <navigator wx:for="{{items}}" wx:key="id" class="history-item" url="/pages/result/result?id={{item.id}}">
+      <view class="item-header">
+        <text class="category">{{item.category_name}}</text>
+        <text class="unlock-status">{{item.unlock_status === 1 ? '已解锁' : '未解锁'}}</text>
+      </view>
+      <text class="question">{{item.question_summary}}</text>
+      <text class="hexagrams">本卦 {{item.primary_name}}　→　变卦 {{item.changed_name}}</text>
+      <text class="created-at">{{item.created_at_display}}</text>
+    </navigator>
+  </view>
+
+  <loading-state wx:if="{{loadingMore}}" text="正在加载更多…"></loading-state>
+  <button wx:if="{{hasMore && !loadingMore}}" class="secondary-button load-more" bindtap="loadMore">加载更多</button>
+  <text wx:if="{{items.length && !hasMore && !loading}}" class="list-end">没有更多记录了</text>
+</view>

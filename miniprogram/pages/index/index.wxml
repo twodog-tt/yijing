@@ -1,0 +1,30 @@
+<view class="page">
+  <view class="page-header hero">
+    <text class="eyebrow">易经问事</text>
+    <text class="page-title">从卦象中整理当下思路</text>
+    <text class="page-description">以传统文化学习和趣味解读为基础，为自我反思、风险梳理与下一步行动提供参考。</text>
+  </view>
+
+  <view class="positioning-card">
+    <view class="positioning-item"><text class="positioning-dot"></text><text>传统文化学习</text></view>
+    <view class="positioning-item"><text class="positioning-dot"></text><text>趣味卦象解读</text></view>
+    <view class="positioning-item"><text class="positioning-dot"></text><text>自我反思整理</text></view>
+    <view class="positioning-item"><text class="positioning-dot"></text><text>克制的行动建议</text></view>
+  </view>
+
+  <navigator class="nav-link nav-link--primary" url="/pages/ask/ask">
+    <text>问事起卦</text><text>→</text>
+  </navigator>
+  <navigator class="nav-link today-link" url="/pages/today/today">
+    <text>今日一卦</text><text>→</text>
+  </navigator>
+  <navigator class="nav-link" url="/pages/history/history">
+    <text>历史记录</text><text>→</text>
+  </navigator>
+  <navigator class="nav-link" url="/pages/about/about">
+    <text>关于与免责声明</text><text>→</text>
+  </navigator>
+
+  <text wx:if="{{sessionStatus === 'retry_later'}}" class="session-hint">匿名会话暂未连接，进入功能页时将自动重试。</text>
+  <text class="disclaimer">仅供娱乐、传统文化学习和自我反思参考，不构成预测、医疗、法律、投资或重大决策建议。</text>
+</view>

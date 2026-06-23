@@ -1,0 +1,56 @@
+<view class="page">
+  <navigator class="back-link" open-type="navigateBack" delta="1">← 返回</navigator>
+
+  <loading-state wx:if="{{loading}}" text="正在加载卦象结果…"></loading-state>
+
+  <view wx:if="{{!loading && error}}" class="page-error">
+    <error-state visible="{{true}}" message="{{error}}" bindretry="loadResult"></error-state>
+    <navigator class="nav-link error-link" url="/pages/history/history">前往历史记录 →</navigator>
+  </view>
+
+  <block wx:if="{{!loading && divination}}">
+    <view class="page-header">
+      <text class="eyebrow">卦象结果</text>
+      <text class="page-title">{{divination.question}}</text>
+      <view class="result-meta">
+        <text>{{divination.category.name}}</text>
+        <text>{{createdAtDisplay}}</text>
+      </view>
+    </view>
+
+    <view class="card result-summary">
+      <view class="summary-row"><text class="summary-label">事项类型</text><text>{{divination.category.name}}</text></view>
+      <view class="summary-row"><text class="summary-label">动爻</text><text>{{movingLinesDisplay}}</text></view>
+      <view class="summary-row"><text class="summary-label">起卦时间</text><text>{{createdAtDisplay}}</text></view>
+    </view>
+
+    <view class="hexagram-list">
+      <hexagram-card title="本卦" hexagram="{{divination.primary_hexagram}}" accent="primary"></hexagram-card>
+      <hexagram-card title="变卦" hexagram="{{divination.changed_hexagram}}" accent="changed"></hexagram-card>
+    </view>
+
+    <line-chart lines="{{displayLines}}"></line-chart>
+
+    <view class="card free-card">
+      <text class="section-title">免费解读</text>
+      <text class="free-content">{{freeContent}}</text>
+    </view>
+
+    <view class="full-section">
+      <loading-state wx:if="{{unlocking}}" text="正在生成完整解读，可能需要几十秒…"></loading-state>
+      <loading-state wx:if="{{loadingFull}}" text="正在加载完整解读…"></loading-state>
+
+      <error-state wx:if="{{fullError}}" visible="{{true}}" message="{{fullError}}" show-retry="{{false}}"></error-state>
+
+      <button wx:if="{{fullStatus === 'locked' && !unlocking}}" class="unlock-button" bindtap="handleUnlock">模拟解锁完整解读</button>
+      <button wx:if="{{fullStatus === 'error' && !unlocking && !loadingFull}}" class="secondary-button retry-full" bindtap="loadFullOnly">重新加载完整解读</button>
+
+      <view wx:if="{{fullStatus === 'loaded'}}" id="full-report">
+        <text wx:if="{{aiProvider}}" class="provider-hint">解读来源：{{aiProvider}}</text>
+        <full-report report="{{fullReport}}" fallback-text="{{fullFallbackText}}"></full-report>
+      </view>
+    </view>
+
+    <text class="disclaimer">解读用于传统文化学习、自我反思和行动整理，不代表确定结果。</text>
+  </block>
+</view>

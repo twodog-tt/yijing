@@ -1,0 +1,10 @@
+{
+  "navigationBarTitleText": "历史记录",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark",
+  "onReachBottomDistance": 120,
+  "usingComponents": {
+    "error-state": "/components/error-state/error-state",
+    "loading-state": "/components/loading-state/loading-state"
+  }
+}

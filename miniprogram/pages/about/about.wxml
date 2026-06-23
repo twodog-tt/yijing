@@ -1,0 +1,35 @@
+<view class="page">
+  <navigator class="back-link" open-type="navigateBack" delta="1">← 返回</navigator>
+
+  <view class="page-header">
+    <text class="eyebrow">关于产品</text>
+    <text class="page-title">传统文化学习与趣味解读</text>
+    <text class="page-description">通过易经卦象帮助用户整理当前状态、风险、行动建议与自我反思问题。</text>
+  </view>
+
+  <view class="card">
+    <text class="card-title">起卦方式</text>
+    <text class="card-text">系统使用三枚硬币法生成六爻，由后端形成本卦、动爻和变卦。小程序只展示后端返回的真实结果，不会在前端重新随机。</text>
+    <text class="card-text">六爻由初爻到上爻组成，老阴与老阳为动爻，用于形成变卦。</text>
+  </view>
+
+  <view class="card">
+    <text class="card-title">内容边界</text>
+    <text class="boundary-item">· 不预测确定的未来结果</text>
+    <text class="boundary-item">· 不处理健康诊断、生死或伤害相关问题</text>
+    <text class="boundary-item">· 不处理赌博、彩票或金融涨跌问题</text>
+    <text class="boundary-item">· 不代替法律、医疗、心理或财务专业服务</text>
+    <text class="boundary-item">· 不提供结果保证或所谓改变运势的服务</text>
+  </view>
+
+  <view class="card privacy-card">
+    <text class="card-title">隐私说明</text>
+    <text class="card-text">当前使用随机生成的匿名 session_key 关联本地历史记录。小程序不接入微信登录，不采集手机号，也不请求手机号授权。</text>
+    <text class="card-text">session_key 保存在本机小程序 Storage 中；清除缓存后将形成新的匿名会话，原历史不会自动迁移。</text>
+  </view>
+
+  <view class="card disclaimer-card">
+    <text class="card-title">免责声明</text>
+    <text class="card-text">本产品内容仅供娱乐、传统文化学习和自我反思参考。请结合现实情况理性判断，重要事项请咨询相应专业人士。</text>
+  </view>
+</view>

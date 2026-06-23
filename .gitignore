@@ -26,6 +26,12 @@ id_ed25519
 .idea/
 .vscode/
 
+# WeChat Mini Program local project settings / generated dependencies
+miniprogram/project.config.json
+miniprogram/project.private.config.json
+miniprogram/miniprogram_npm/
+miniprogram/.idea/
+
 # Logs
 *.log
 backups/

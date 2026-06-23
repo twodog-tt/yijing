@@ -1,0 +1,17 @@
+.today-date {
+  display: block;
+  margin-top: 14rpx;
+  color: #92400e;
+  font-size: 25rpx;
+}
+
+.today-card {
+  margin-top: 24rpx;
+}
+
+.topic {
+  display: block;
+  margin-top: 16rpx;
+  color: #57534e;
+  font-size: 26rpx;
+}

@@ -1,0 +1,10 @@
+{
+  "navigationBarTitleText": "卦象结果",
+  "usingComponents": {
+    "error-state": "/components/error-state/error-state",
+    "full-report": "/components/full-report/full-report",
+    "hexagram-card": "/components/hexagram-card/hexagram-card",
+    "line-chart": "/components/line-chart/line-chart",
+    "loading-state": "/components/loading-state/loading-state"
+  }
+}

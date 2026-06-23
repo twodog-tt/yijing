@@ -1,0 +1,52 @@
+<view class="page">
+  <navigator class="back-link" open-type="navigateBack" delta="1">← 返回</navigator>
+
+  <view class="page-header">
+    <text class="eyebrow">仅限开发阶段</text>
+    <text class="page-title">开发接口检查</text>
+    <text class="page-description">用于验证 API、匿名会话和基础数据，不展示密钥或完整 AI 报告。</text>
+  </view>
+
+  <view wx:if="{{!isDev}}" class="blocked">
+    正式环境不开放此调试页面。
+  </view>
+
+  <block wx:else>
+    <view wx:if="{{error}}" class="error">{{error}}</view>
+
+    <view class="check-card">
+      <view class="check-content">
+        <text class="check-title">Health</text>
+        <text class="check-result">{{healthResult}}</text>
+      </view>
+      <button class="check-button" loading="{{running === 'health'}}" disabled="{{running}}" bindtap="testHealth">检查</button>
+    </view>
+
+    <view class="check-card">
+      <view class="check-content">
+        <text class="check-title">Session</text>
+        <text class="check-result">{{sessionResult}}</text>
+      </view>
+      <button class="check-button" loading="{{running === 'session'}}" disabled="{{running}}" bindtap="testSession">检查</button>
+    </view>
+
+    <view class="check-card">
+      <view class="check-content">
+        <text class="check-title">Categories</text>
+        <text class="check-result">{{categoriesResult}}</text>
+      </view>
+      <button class="check-button" loading="{{running === 'categories'}}" disabled="{{running}}" bindtap="testCategories">检查</button>
+    </view>
+
+    <view class="check-card">
+      <view class="check-content">
+        <text class="check-title">Today Fortune</text>
+        <text class="check-result">{{todayResult}}</text>
+        <text class="check-note">执行检查会创建或读取今天的真实匿名记录。</text>
+      </view>
+      <button class="check-button" loading="{{running === 'today'}}" disabled="{{running}}" bindtap="testTodayFortune">检查</button>
+    </view>
+
+    <button class="clear-button" disabled="{{running}}" bindtap="clearDebugSession">清除本地调试会话</button>
+  </block>
+</view>

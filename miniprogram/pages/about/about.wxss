@@ -1,0 +1,17 @@
+.boundary-item {
+  display: block;
+  margin-top: 16rpx;
+  color: #57534e;
+  font-size: 25rpx;
+  line-height: 1.65;
+}
+
+.privacy-card {
+  border-color: #d6d3d1;
+  background: #fafaf9;
+}
+
+.disclaimer-card {
+  border-color: #fcd34d;
+  background: #fffbeb;
+}

@@ -1,0 +1,61 @@
+<view wx:if="{{visible}}" class="overlay" role="status" aria-live="polite">
+  <view class="content">
+    <view class="header">
+      <text class="eyebrow">正在起卦</text>
+      <text class="title">{{phaseTitle}}</text>
+      <text class="subtitle">{{phaseSubtitle}}</text>
+      <text class="progress">{{progressText}}</text>
+    </view>
+
+    <view class="stage">
+      <view wx:if="{{phase === 'prepare'}}" class="preparing">
+        <view class="prepare-ring"></view>
+        <text>正在准备展示后端返回的六爻结果</text>
+      </view>
+
+      <view wx:if="{{phase === 'line' && activeLine}}" class="active-card">
+        <view class="coins" aria-hidden="true">
+          <view class="coin {{activeLine.active ? 'coin--active' : ''}}"></view>
+          <view class="coin {{activeLine.active ? 'coin--active coin--delay-one' : ''}}"></view>
+          <view class="coin {{activeLine.active ? 'coin--active coin--delay-two' : ''}}"></view>
+        </view>
+        <text class="line-value">{{activeLine.revealed ? '爻值 ' + activeLine.value : '正在落定'}}</text>
+        <text class="line-meta">{{activeLine.revealed ? activeLine.type_label + ' · ' + activeLine.nature_label + ' · ' + activeLine.moving_label : '正在展示后端返回的爻象'}}</text>
+      </view>
+
+      <view wx:if="{{phase !== 'prepare'}}" class="line-stack">
+        <view wx:for="{{lineSlots}}" wx:key="position" class="line-slot {{item.active ? 'line-slot--active' : ''}}">
+          <text class="position">{{item.position_label}}</text>
+          <view class="bar-wrap {{item.revealed ? '' : 'bar-wrap--pending'}}">
+            <view wx:if="{{!item.revealed}}" class="pending-bar"></view>
+            <block wx:else>
+              <view wx:if="{{item.is_yang}}" class="yang-bar {{item.is_moving ? 'bar--moving' : ''}}"></view>
+              <view wx:else class="yin-bar">
+                <view class="yin-part {{item.is_moving ? 'bar--moving' : ''}}"></view>
+                <view class="yin-part {{item.is_moving ? 'bar--moving' : ''}}"></view>
+              </view>
+            </block>
+          </view>
+          <text class="slot-meta">{{item.revealed ? item.type_label : '待生成'}}{{item.revealed && item.is_moving ? ' · 动' : ''}}</text>
+        </view>
+      </view>
+
+      <view wx:if="{{phase === 'primary' || phase === 'changed' || phase === 'interpret'}}" class="hexagram-summary">
+        <view class="summary-item">
+          <text class="summary-label">本卦</text>
+          <text class="summary-name">{{primaryName}}</text>
+        </view>
+        <view wx:if="{{phase === 'changed' || phase === 'interpret'}}" class="summary-item summary-item--changed">
+          <text class="summary-label">{{hasMovingLines ? '变卦' : '卦象状态'}}</text>
+          <text class="summary-name">{{hasMovingLines ? changedName : '无动爻'}}</text>
+          <text class="moving-text">{{movingLinesText}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="footer">
+      <text class="disclaimer">仅展示后端已经生成的真实卦象结果，不在前端重新随机。</text>
+      <button class="skip-button" bindtap="handleSkip">跳过动画</button>
+    </view>
+  </view>
+</view>

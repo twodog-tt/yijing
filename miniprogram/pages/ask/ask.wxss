@@ -1,0 +1,85 @@
+.field-label {
+  display: block;
+  margin-bottom: 14rpx;
+  color: #44403c;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.question-label {
+  margin-top: 32rpx;
+}
+
+.picker-field,
+.question-input {
+  width: 100%;
+  border: 1rpx solid #d6d3d1;
+  border-radius: 16rpx;
+  background: #ffffff;
+  color: #a8a29e;
+  font-size: 27rpx;
+  box-sizing: border-box;
+}
+
+.picker-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 88rpx;
+  padding: 0 24rpx;
+}
+
+.picker-field--selected {
+  color: #292524;
+}
+
+.question-input {
+  min-height: 240rpx;
+  padding: 24rpx;
+  color: #292524;
+  line-height: 1.65;
+}
+
+.counter {
+  display: block;
+  margin-top: 10rpx;
+  color: #a8a29e;
+  font-size: 22rpx;
+  text-align: right;
+}
+
+.safety-hint {
+  margin-top: 24rpx;
+  padding: 22rpx;
+  border-radius: 14rpx;
+  background: #f5f5f4;
+  color: #78716c;
+  font-size: 22rpx;
+  line-height: 1.65;
+}
+
+.agreement {
+  display: flex;
+  align-items: flex-start;
+  margin-top: 28rpx;
+  color: #57534e;
+  font-size: 24rpx;
+  line-height: 1.65;
+}
+
+.agreement checkbox {
+  margin-right: 16rpx;
+  transform: scale(0.86);
+  transform-origin: top left;
+}
+
+.field-error {
+  display: block;
+  margin-top: 20rpx;
+  color: #b91c1c;
+  font-size: 24rpx;
+}
+
+.submit-button {
+  margin-top: 32rpx;
+}

@@ -1,0 +1,10 @@
+<view class="card card--{{accent}}">
+  <text class="label">{{title}}</text>
+  <block wx:if="{{hexagram}}">
+    <text class="name">{{hexagram.name || '未命名卦象'}}</text>
+    <text wx:if="{{hexagram.full_name}}" class="full-name">{{hexagram.full_name}}</text>
+    <text wx:if="{{hexagram.number}}" class="number">第 {{hexagram.number}} 卦</text>
+    <text wx:if="{{hexagram.summary}}" class="summary">{{hexagram.summary}}</text>
+  </block>
+  <text wx:else class="empty">卦象数据暂不可用</text>
+</view>

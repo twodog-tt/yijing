@@ -1,0 +1,36 @@
+<view class="report">
+  <text class="section-title">完整解读</text>
+
+  <block wx:if="{{report}}">
+    <view class="summary-card">
+      <text class="label">一句话总结</text>
+      <text class="summary">{{report.summary}}</text>
+    </view>
+
+    <view class="content-card"><text class="title">总体判断</text><text class="content">{{report.overall}}</text></view>
+    <view class="content-card"><text class="title">当前处境</text><text class="content">{{report.current_state}}</text></view>
+    <view class="content-card"><text class="title">机会点</text><text class="content">{{report.opportunity}}</text></view>
+    <view class="content-card"><text class="title">风险点</text><text class="content">{{report.risk}}</text></view>
+
+    <view class="content-card">
+      <text class="title">行动建议</text>
+      <text wx:for="{{report.action_steps}}" wx:key="*this" class="list-item">{{index + 1}}. {{item}}</text>
+    </view>
+
+    <view class="content-card"><text class="title">情绪提醒</text><text class="content">{{report.emotion_reminder}}</text></view>
+
+    <view class="content-card">
+      <text class="title">自我反思问题</text>
+      <text wx:for="{{report.reflection_questions}}" wx:key="*this" class="list-item">· {{item}}</text>
+    </view>
+
+    <text class="report-disclaimer">{{report.disclaimer}}</text>
+  </block>
+
+  <view wx:elif="{{fallbackText}}" class="content-card">
+    <text class="title">解读摘要</text>
+    <text class="content">{{fallbackText}}</text>
+  </view>
+
+  <text wx:else class="empty">完整解读暂不可用。</text>
+</view>
