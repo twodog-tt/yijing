@@ -27,7 +27,7 @@
 
 | 项 | 建议 |
 |----|------|
-| 规格 | **2 vCPU / 4 GiB** 起 |
+| 规格 | **2 vCPU / 2 GiB**（配合 2 GiB swap，内测够用） |
 | 系统盘 | ESSD **40–60 GiB** |
 | 操作系统 | Alibaba Cloud Linux 3 或 Ubuntu 22.04 LTS |
 | 地域 | 大陆节点（后续备案）；仅技术验证可考虑香港（路线不同） |
@@ -63,6 +63,7 @@ sudo bash deploy/scripts/server-init.sh
 脚本将完成：
 
 - 系统更新
+- 创建 2 GiB swap（已存在时不会覆盖）
 - 安装 Docker、Docker Compose 插件
 - 安装并启用 Nginx
 - 创建 `/opt/yijing` 与 `backups` 目录
@@ -111,7 +112,10 @@ systemctl status nginx
 
 ```bash
 sudo cp deploy/nginx/yijing-ip.conf /etc/nginx/conf.d/yijing.conf
-# 如存在 default 冲突，可禁用：sudo rm /etc/nginx/sites-enabled/default  # Ubuntu
+# Ubuntu 默认站点会与 default_server 冲突；只移除软链接，保留原配置文件
+if [ -L /etc/nginx/sites-enabled/default ]; then
+  sudo unlink /etc/nginx/sites-enabled/default
+fi
 sudo nginx -t
 sudo systemctl reload nginx
 ```
@@ -151,9 +155,17 @@ scp yijing.tar.gz user@<ECS_IP>:/opt/yijing/
 
 ```bash
 cd /opt/yijing
-cp .env.internal-test.example .env
-chmod 600 .env
+if [ ! -e .env.internal-test ]; then
+  install -m 600 .env.internal-test.example .env.internal-test
+else
+  echo ".env.internal-test 已存在，未覆盖"
+fi
+if [ ! -e .env ]; then ln -s .env.internal-test .env; fi
+if [ ! -e .env.production ]; then ln -s .env.internal-test .env.production; fi
+nano .env.internal-test
 ```
+
+三个入口使用同一份配置，避免密码重复维护；上述命令不会覆盖已有环境文件。
 
 ### 6.1 必须修改的项
 
@@ -161,8 +173,7 @@ chmod 600 .env
 |------|------|
 | `SERVER_IP` | ECS 公网 IP（全文替换占位） |
 | `MYSQL_ROOT_PASSWORD` | MySQL root 强密码 |
-| `MYSQL_PASSWORD` / `DB_PASSWORD` | 应用库用户密码 |
-| `DATABASE_DSN` | 与上面密码一致，`tcp(mysql:3306)` 主机名不变 |
+| `MYSQL_PASSWORD` | 应用库用户密码；Compose 会注入 backend 的 `DB_PASSWORD` |
 | `CORS_ALLOWED_ORIGINS` | `http://<公网IP>` |
 | `NEXT_PUBLIC_API_BASE_URL` | `http://<公网IP>/api/v1` |
 | `NEXT_PUBLIC_SITE_URL` | `http://<公网IP>` |
@@ -170,7 +181,7 @@ chmod 600 .env
 一键替换示例（将 `123.45.67.89` 换成真实 IP）：
 
 ```bash
-sed -i 's/SERVER_IP/123.45.67.89/g' .env
+sed -i 's/SERVER_IP/123.45.67.89/g' .env.internal-test
 # 再手动改 CHANGE_ME 密码
 ```
 
@@ -185,7 +196,7 @@ sed -i 's/SERVER_IP/123.45.67.89/g' .env
 
 ### 6.3 DeepSeek Key
 
-仅在后端 `.env` 中设置，**不要**写入前端或 Git：
+仅在服务器 `.env.internal-test` 中设置，**不要**写入前端或 Git：
 
 ```env
 AI_PROVIDER=deepseek
@@ -304,7 +315,7 @@ docker compose -f docker-compose.prod.yml exec mysql \
 ## 11. DeepSeek Key 配置说明
 
 1. 在 [DeepSeek 开放平台](https://platform.deepseek.com) 创建 API Key  
-2. 写入服务器 `/opt/yijing/.env`（权限 `600`）  
+2. 写入服务器 `/opt/yijing/.env.internal-test`（权限 `600`）
 3. 设置 `AI_PROVIDER=deepseek`  
 4. 重启 backend 容器  
 5. **切勿** 提交到 Git、文档或前端环境变量  
@@ -355,6 +366,9 @@ crontab -e
 ### 13.3 恢复（谨慎，会覆盖数据）
 
 ```bash
+set -a
+source .env
+set +a
 gunzip -c backups/yijing_yijing_20260623_030000.sql.gz | \
   docker compose -f docker-compose.prod.yml exec -T mysql \
   mysql -u root -p"$MYSQL_ROOT_PASSWORD" yijing
@@ -370,7 +384,7 @@ gunzip -c backups/yijing_yijing_20260623_030000.sql.gz | \
 
 ```bash
 cd /opt/yijing
-git checkout <上一版本commit>   # 若用 Git
+git switch --detach <上一版本commit>
 docker compose -f docker-compose.prod.yml --env-file .env build
 docker compose -f docker-compose.prod.yml --env-file .env up -d
 ```
@@ -380,7 +394,9 @@ docker compose -f docker-compose.prod.yml --env-file .env up -d
 ### 14.2 配置回滚
 
 ```bash
-cp .env.bak .env
+# 先比较并人工确认，不直接覆盖当前配置
+diff -u .env.internal-test .env.internal-test.bak || true
+# 确认后再执行：cp .env.internal-test.bak .env.internal-test
 docker compose -f docker-compose.prod.yml up -d
 ```
 
@@ -420,11 +436,11 @@ docker compose -f docker-compose.prod.yml down
 ## 16. 完整内测部署流程（速查）
 
 ```text
-1. 购买 ECS（2C4G）+ 公网 IP + 安全组（22 限 IP，80 公网）
+1. 准备 ECS（2C2G + 2G swap）+ 公网 IP + 安全组（22 限 IP，80 公网）
 2. SSH 登录
 3. 上传代码到 /opt/yijing
 4. sudo bash deploy/scripts/server-init.sh
-5. cp .env.internal-test.example .env → 改 IP、密码、（可选）DeepSeek Key
+5. 创建 `.env.internal-test`，让 `.env` / `.env.production` 链接到它，再改 IP、密码
 6. sudo cp deploy/nginx/yijing-ip.conf /etc/nginx/conf.d/yijing.conf
 7. sudo nginx -t && sudo systemctl reload nginx
 8. bash deploy/scripts/deploy.sh

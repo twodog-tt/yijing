@@ -1,0 +1,9 @@
+.git
+.gitignore
+.env*
+backups/
+backend/bin/
+frontend/
+**/node_modules/
+**/.next/
+*.log

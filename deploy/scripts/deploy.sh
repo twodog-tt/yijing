@@ -10,8 +10,8 @@ cd "${ROOT_DIR}"
 
 COMPOSE_FILE="docker-compose.prod.yml"
 ENV_FILE="${ENV_FILE:-.env}"
-HEALTH_URL="${HEALTH_URL:-http://127.0.0.1/api/v1/health}"
 MAX_WAIT="${MAX_WAIT:-120}"
+export COMPOSE_PARALLEL_LIMIT="${COMPOSE_PARALLEL_LIMIT:-1}"
 
 echo "==> 项目目录：${ROOT_DIR}"
 
@@ -21,8 +21,8 @@ echo "==> 项目目录：${ROOT_DIR}"
 
 if [ ! -f "${ENV_FILE}" ]; then
   echo "错误：未找到 ${ENV_FILE}"
-  echo "请执行：cp .env.internal-test.example .env"
-  echo "并替换 SERVER_IP、数据库密码、（可选）DEEPSEEK_API_KEY"
+  echo "请先创建 .env.internal-test，并让 .env 链接到它"
+  echo "然后替换 SERVER_IP、数据库密码、（可选）DEEPSEEK_API_KEY"
   exit 1
 fi
 
@@ -31,22 +31,23 @@ set -a
 source "${ENV_FILE}"
 set +a
 
-if grep -q 'SERVER_IP' "${ENV_FILE}" 2>/dev/null; then
-  echo "警告：.env 中仍包含占位符 SERVER_IP，请替换为 ECS 公网 IP"
-fi
-
-if grep -q 'CHANGE_ME' "${ENV_FILE}" 2>/dev/null; then
-  echo "警告：.env 中仍包含 CHANGE_ME 占位密码，请修改后再部署"
+if grep -Eq '^[A-Z0-9_]+=.*CHANGE_ME' "${ENV_FILE}" 2>/dev/null; then
+  echo "错误：${ENV_FILE} 中仍包含 CHANGE_ME 占位密码，请修改后再部署"
+  exit 1
 fi
 
 PUBLIC_IP="${SERVER_IP:-}"
 if [ -z "${PUBLIC_IP}" ] || [ "${PUBLIC_IP}" = "SERVER_IP" ]; then
-  # 尝试从元数据或 curl 获取（阿里云 ECS 可选）
-  PUBLIC_IP="$(curl -sf --max-time 2 http://100.100.100.200/latest/meta-data/eipv4 2>/dev/null || true)"
+  echo "错误：请在 ${ENV_FILE} 中设置真实 SERVER_IP"
+  exit 1
 fi
 
-echo "==> 构建并启动容器..."
-docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" build
+HEALTH_URL="${HEALTH_URL:-http://127.0.0.1:${BACKEND_PORT:-8080}/api/v1/health}"
+
+echo "==> 串行构建容器（适配 2G 内存 ECS）..."
+docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" build backend
+docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" build frontend
+echo "==> 启动容器..."
 docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" up -d
 
 echo "==> 等待服务就绪（migrate 在 backend 启动时自动执行）..."
@@ -56,8 +57,8 @@ until curl -sf "${HEALTH_URL}" >/dev/null 2>&1; do
   elapsed=$((elapsed + 3))
   if [ "${elapsed}" -ge "${MAX_WAIT}" ]; then
     echo "错误：健康检查超时 ${HEALTH_URL}"
-    docker compose -f "${COMPOSE_FILE}" ps
-    docker compose -f "${COMPOSE_FILE}" logs --tail=50 backend
+    docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" ps
+    docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" logs --tail=50 backend
     exit 1
   fi
   echo "  等待中... (${elapsed}s)"
@@ -67,11 +68,9 @@ echo "==> 健康检查通过"
 curl -s "${HEALTH_URL}" | head -c 500
 echo ""
 
-# 可选：单独执行 migrate（backend entrypoint 已执行，此处作双保险）
-if docker compose -f "${COMPOSE_FILE}" ps --status running backend | grep -q backend; then
-  echo "==> 确认 migration 状态..."
-  docker compose -f "${COMPOSE_FILE}" exec -T backend ./migrate || true
-fi
+# backend entrypoint 已自动执行；再次运行用于明确确认所有版本均已记录。
+echo "==> 确认 migration 状态..."
+docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" exec -T backend ./migrate
 
 echo ""
 echo "=========================================="
@@ -84,5 +83,5 @@ else
 fi
 echo "=========================================="
 echo ""
-echo "日志：docker compose -f ${COMPOSE_FILE} logs -f --tail=100 backend"
+echo "日志：docker compose -f ${COMPOSE_FILE} --env-file ${ENV_FILE} logs -f --tail=100 backend"
 echo "备份：bash deploy/scripts/backup-mysql.sh"

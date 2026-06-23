@@ -38,8 +38,8 @@ OUT_FILE="${BACKUP_DIR}/yijing_${DB_NAME}_${TIMESTAMP}.sql.gz"
 echo "==> 备份 ${DB_NAME} -> ${OUT_FILE}"
 
 docker compose -f "${COMPOSE_FILE}" exec -T mysql \
-  mysqldump -u root -p"${ROOT_PASS}" \
-  --single-transaction --routines --triggers \
-  "${DB_NAME}" | gzip > "${OUT_FILE}"
+  sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" exec mysqldump -u root \
+    --single-transaction --routines --triggers "$MYSQL_DATABASE"' \
+  | gzip > "${OUT_FILE}"
 
 echo "==> 完成，大小：$(du -h "${OUT_FILE}" | cut -f1)"
