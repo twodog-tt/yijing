@@ -4,6 +4,8 @@ const {
   getFullInterpretation,
   unlockDivination,
 } = require("../../utils/api");
+const { getAdConfig, getCurrentEnvironment } = require("../../utils/config");
+const { createRewardedAdController } = require("../../utils/rewarded-ad");
 const { formatDateTime } = require("../../utils/date");
 
 const POSITION_LABELS = ["", "初爻", "二爻", "三爻", "四爻", "五爻", "上爻"];
@@ -88,6 +90,21 @@ function buildPosterData(divination, freeContent, movingLinesDisplay, displayLin
   };
 }
 
+const AD_RESULT_MESSAGES = Object.freeze({
+  cancelled: "完整观看后才能解锁",
+  disabled: "当前环境暂未开启视频解锁",
+  invalid_config: "视频解锁配置未完成",
+  load_failed: "视频加载失败，请稍后再试",
+  show_failed: "视频展示失败，请稍后再试",
+  unsupported: "当前微信版本暂不支持视频解锁",
+  busy: "正在处理中，请稍候",
+  page_unloaded: "",
+});
+
+function getAdResultMessage(reason) {
+  return AD_RESULT_MESSAGES[reason] || AD_RESULT_MESSAGES.cancelled;
+}
+
 Page({
   data: {
     id: 0,
@@ -104,7 +121,9 @@ Page({
     fullFallbackText: "",
     aiProvider: "",
     unlocking: false,
+    unlockFlowRunning: false,
     loadingFull: false,
+    isDevEnv: false,
     posterData: null,
     posterGenerating: false,
   },
@@ -118,8 +137,70 @@ Page({
       });
       return;
     }
-    this.setData({ id });
+    this.setData({ id, isDevEnv: getCurrentEnvironment() === "dev" });
+    this.pageUnloaded = false;
+    this.unlockFlowToken = 0;
+    this.scrollTimerId = null;
+    this.rewardedAdController = createRewardedAdController({
+      ...getAdConfig(),
+      env: getCurrentEnvironment(),
+    });
     this.loadResult();
+  },
+
+  onUnload() {
+    this.pageUnloaded = true;
+    this.unlockFlowToken += 1;
+    this.unlockFlowRunning = false;
+    this.clearScrollTimer();
+    if (this.rewardedAdController) {
+      this.rewardedAdController.dispose();
+      this.rewardedAdController = null;
+    }
+  },
+
+  safeSetData(data) {
+    if (this.pageUnloaded) return;
+    this.setData(data);
+  },
+
+  isFlowActive(flowToken) {
+    return !this.pageUnloaded && flowToken === this.unlockFlowToken;
+  },
+
+  clearScrollTimer() {
+    if (this.scrollTimerId != null) {
+      clearTimeout(this.scrollTimerId);
+      this.scrollTimerId = null;
+    }
+  },
+
+  showAdResultToast(reason) {
+    if (this.pageUnloaded || reason === "page_unloaded") return;
+    const message = getAdResultMessage(reason);
+    if (!message) return;
+    wx.showToast({ title: message, icon: "none" });
+  },
+
+  beginUnlockFlow() {
+    if (this.pageUnloaded) return null;
+    if (this.unlockFlowRunning) {
+      wx.showToast({ title: "正在处理中，请稍候", icon: "none" });
+      return null;
+    }
+
+    this.unlockFlowRunning = true;
+    this.unlockFlowToken += 1;
+    const flowToken = this.unlockFlowToken;
+    this.safeSetData({ unlockFlowRunning: true });
+    return flowToken;
+  },
+
+  endUnlockFlow(flowToken) {
+    if (flowToken != null && flowToken !== this.unlockFlowToken) return;
+    this.unlockFlowRunning = false;
+    if (this.pageUnloaded) return;
+    this.safeSetData({ unlockFlowRunning: false, unlocking: false });
   },
 
   async loadResult() {
@@ -203,8 +284,9 @@ Page({
   },
 
   applyFullContent(content, aiProvider = "") {
+    if (this.pageUnloaded) return;
     const parsed = parseFullContent(content);
-    this.setData({
+    this.safeSetData({
       fullStatus: "loaded",
       fullReport: parsed.report,
       fullFallbackText: parsed.fallbackText,
@@ -213,17 +295,26 @@ Page({
     });
   },
 
-  async handleUnlock() {
-    if (!this.data.id || this.data.unlocking) return;
-    this.setData({ unlocking: true, fullError: "" });
+  async performUnlock(flowToken) {
+    if (!this.data.id || !this.isFlowActive(flowToken)) {
+      this.endUnlockFlow(flowToken);
+      return;
+    }
+
+    this.safeSetData({ unlocking: true, fullError: "" });
 
     try {
-      const unlockResult = await unlockDivination(this.data.id);
+      const unlockResult = await unlockDivination(this.data.id, {
+        unlockType: "rewarded_video_mock",
+      });
+      if (!this.isFlowActive(flowToken)) return;
+
       let content = unlockResult?.full_interpretation;
       let aiProvider = "";
 
       try {
         const full = await getFullInterpretation(this.data.id);
+        if (!this.isFlowActive(flowToken)) return;
         if (full.unlocked) {
           content = full.full_content;
           aiProvider = full.ai_provider || "";
@@ -232,19 +323,111 @@ Page({
         // 解锁响应已经包含完整内容时，后续查询失败不阻塞展示。
       }
 
-      if (!content) throw new Error("完整解读暂未返回，请稍后重新加载。" );
+      if (!this.isFlowActive(flowToken)) return;
+      if (!content) throw new Error("完整解读暂未返回，请稍后重新加载。");
+
       this.applyFullContent(content, aiProvider);
       wx.showToast({ title: "完整解读已解锁", icon: "success" });
-      setTimeout(() => {
+
+      this.clearScrollTimer();
+      this.scrollTimerId = setTimeout(() => {
+        if (!this.isFlowActive(flowToken)) return;
         wx.pageScrollTo({ selector: "#full-report", duration: 300 });
       }, 100);
     } catch (error) {
-      this.setData({
+      if (!this.isFlowActive(flowToken)) return;
+      this.safeSetData({
         fullStatus: "error",
-        fullError: error?.message || "模拟解锁失败，请稍后重试。",
+        fullError: error?.message || "解锁失败，请稍后重试。",
       });
     } finally {
-      this.setData({ unlocking: false });
+      this.endUnlockFlow(flowToken);
+    }
+  },
+
+  handleUnlock() {
+    if (!this.data.id) return;
+    if (!this.rewardedAdController) {
+      wx.showToast({ title: "广告模块暂不可用", icon: "none" });
+      return;
+    }
+
+    const flowToken = this.beginUnlockFlow();
+    if (flowToken === null) return;
+
+    wx.showModal({
+      title: "解锁完整解读",
+      content:
+        "观看一段视频，解锁完整解读。完整观看后可以解锁；中途退出不会解锁。",
+      confirmText: "观看视频",
+      cancelText: "取消",
+      success: async (res) => {
+        if (!this.isFlowActive(flowToken)) {
+          this.endUnlockFlow(flowToken);
+          return;
+        }
+
+        if (!res.confirm) {
+          this.endUnlockFlow(flowToken);
+          return;
+        }
+
+        try {
+          const adResult = await this.rewardedAdController.show();
+          if (!this.isFlowActive(flowToken)) return;
+
+          if (adResult.completed !== true) {
+            this.showAdResultToast(adResult.reason);
+            this.endUnlockFlow(flowToken);
+            return;
+          }
+
+          await this.performUnlock(flowToken);
+        } catch (_error) {
+          if (this.isFlowActive(flowToken)) {
+            this.showAdResultToast("cancelled");
+            this.endUnlockFlow(flowToken);
+          }
+        }
+      },
+      fail: () => {
+        this.endUnlockFlow(flowToken);
+      },
+    });
+  },
+
+  async handleDevMockAdTest(event) {
+    if (!this.data.isDevEnv || !this.rewardedAdController) return;
+
+    const flowToken = this.beginUnlockFlow();
+    if (flowToken === null) return;
+
+    try {
+      const outcome = event?.currentTarget?.dataset?.outcome || "completed";
+      if (this.rewardedAdController.dispose) {
+        this.rewardedAdController.dispose();
+      }
+      this.rewardedAdController = createRewardedAdController({
+        ...getAdConfig(),
+        env: getCurrentEnvironment(),
+        mockOutcome: outcome,
+      });
+
+      const adResult = await this.rewardedAdController.show();
+      if (!this.isFlowActive(flowToken)) return;
+
+      if (adResult.completed !== true) {
+        this.showAdResultToast(adResult.reason);
+        this.endUnlockFlow(flowToken);
+        return;
+      }
+
+      await this.performUnlock(flowToken);
+    } catch (_error) {
+      if (this.isFlowActive(flowToken)) {
+        this.showAdResultToast("cancelled");
+        this.endUnlockFlow(flowToken);
+      }
     }
   },
 

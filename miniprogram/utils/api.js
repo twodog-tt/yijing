@@ -136,14 +136,23 @@ async function getFullInterpretation(id) {
   }
 }
 
-async function unlockDivination(id) {
+async function unlockDivination(id, options = {}) {
+  const unlockType =
+    options && options.unlockType ? String(options.unlockType).trim() : "";
+  if (!unlockType) {
+    throw new RequestError({
+      type: ERROR_TYPES.CONFIG,
+      message: "unlock_type 未配置，请显式传入 unlockType。",
+    });
+  }
+
   const session = await ensureSession();
   return request({
     path: unlockPath(id),
     method: "POST",
     data: {
       session_key: session.session_key,
-      unlock_type: "mock_button",
+      unlock_type: unlockType,
     },
     timeout: LONG_REQUEST_TIMEOUT,
   });

@@ -51,3 +51,27 @@ func TestUnlockStatusGate(t *testing.T) {
 		t.Fatalf("unlocked should pass, got %v", err)
 	}
 }
+
+func TestValidateUnlockType(t *testing.T) {
+	allowed := []string{
+		model.UnlockTypeMockAd,
+		model.UnlockTypeMockButton,
+		model.UnlockTypeRewardedVideoMock,
+	}
+	for _, unlockType := range allowed {
+		if err := validateUnlockType(unlockType); err != nil {
+			t.Fatalf("expected %q allowed, got %v", unlockType, err)
+		}
+	}
+
+	rejected := []string{
+		model.UnlockTypeRewardedVideo,
+		"unknown",
+		"",
+	}
+	for _, unlockType := range rejected {
+		if err := validateUnlockType(unlockType); err != ErrInvalidParams {
+			t.Fatalf("expected %q rejected, got %v", unlockType, err)
+		}
+	}
+}

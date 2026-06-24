@@ -19,8 +19,10 @@ const (
 	GenerationStatusFullDone    = 2
 	GenerationStatusFailed      = 3
 
-	UnlockTypeMockAd     = "mock_ad"
-	UnlockTypeMockButton = "mock_button"
+	UnlockTypeMockAd              = "mock_ad"
+	UnlockTypeMockButton          = "mock_button"
+	UnlockTypeRewardedVideoMock   = "rewarded_video_mock"
+	UnlockTypeRewardedVideo       = "rewarded_video"
 
 	AILogStatusSuccess         = 1
 	AILogStatusFailed          = 2

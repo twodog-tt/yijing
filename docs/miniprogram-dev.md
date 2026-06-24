@@ -462,13 +462,99 @@ POST /daily-fortune/today
 - 权限：使用 `scope.writePhotosAlbum`，拒绝后通过用户主动操作引导 `wx.openSetting`
 - 当前不使用外部图片 URL、第三方二维码服务或真实小程序码接口
 
-## 13. 当前明确不做
+## 13. Phase B 激励视频 mock 适配层
+
+本阶段只实现 **mock 激励视频适配层**，为后续微信流量主激励视频预留结构，不接真实广告。
+
+### 13.1 当前实现范围
+
+- 适配层：`miniprogram/utils/rewarded-ad.js`
+- 配置：`miniprogram/utils/config.js` 中 `ad` 字段
+- 结果页主流程：确认弹窗 → `controller.show()` → `completed === true` 才调用 unlock
+- 后端 unlock_type：`rewarded_video_mock`（Phase B 允许）
+
+### 13.2 环境默认
+
+| 环境 | 映射 | `ad.enabled` | `ad.mode` | 说明 |
+|------|------|--------------|-----------|------|
+| develop | dev | `true` | `mock` | 开发版 mock |
+| trial | dev | `true` | `mock` | 体验版仍为 mock（内测） |
+| release | prod | `false` | `disabled` | 正式版默认关闭 |
+| 未知 env + 开发者工具 | dev | `true` | `mock` | 仅工具内允许 mock |
+| 未知 env + 真机 | prod | `false` | `disabled` | fail closed |
+
+- 空 `envVersion` **不会** 自动当作 dev
+- `rewarded-ad` controller 缺少 `env` 时默认 `disabled`，不默认 dev
+- `rewardedVideoAdUnitId` 当前留空
+- **未接** 真实微信激励视频、流量主、真实 adUnitId
+- **没有** 服务端广告完成强验证
+- **没有** Phase B 数据库 migration
+- `wechat + 空 adUnitId` 返回 `invalid_config`，**不会** 自动回退 mock
+- release / prod **禁止** mock
+- 激励视频 mock **仅允许**在标准化后的 `dev` 环境运行（`enabled === true` 且 `mode === "mock"` 且 `env === "dev"`）
+- release / prod / 未知真机环境均默认 `disabled`；`rewarded-ad` 适配器自身也会 fail closed，不依赖页面调用方兜底
+- 传入 `env: "release"`、`env: "prod"`、空 env 或未知字符串时，即使 `mode: "mock"` 也返回 `disabled`，不会回退 mock
+
+### 13.3 unlock_type 规则（Phase B）
+
+**允许：**
+
+- `mock_button`
+- `mock_ad`
+- `rewarded_video_mock`
+
+**不允许：**
+
+- `rewarded_video`（真实广告阶段再启用）
+
+结果页主流程使用 `rewarded_video_mock`，不再默认 `mock_button`。
+
+`unlockDivination(id, options)` 必须显式传入 `unlockType`；缺少时 API 层直接抛出配置错误（fail closed）。
+
+### 13.4 流程锁与页面卸载防护
+
+- 结果页使用 `unlockFlowRunning` + `unlockFlowToken` 覆盖弹窗、广告、unlock 全链路
+- 主按钮与 dev 调试按钮共用同一把锁；进行中再次点击提示「正在处理中，请稍候」
+- `onUnload` 设置 `pageUnloaded`、dispose controller、清理 scroll timer
+- 异步返回后先校验页面未卸载且 flow token 仍有效，再 `setData` / toast / scroll
+
+### 13.5 开发调试
+
+dev 环境结果页提供：
+
+- 「模拟看完」→ mock `completed`
+- 「模拟退出」→ mock `cancelled`，不调用 unlock
+
+也可通过 `config.ad.mockOutcome = "completed" | "cancelled"` 切换。
+
+广告失败提示按 `reason` 区分（如 `disabled`、`invalid_config`、`load_failed` 等），不再一律显示「完整观看后才能解锁」。
+
+### 13.6 Phase B 验收
+
+- [ ] 快速双击 / 主按钮与 dev 按钮交替点击只产生一个流程
+- [ ] 取消弹窗后释放锁，可再次点击
+- [ ] mock 完整观看：`completed=true` 后调用一次 unlock
+- [ ] mock 中途退出：不调用 unlock
+- [ ] `disabled` / `invalid_config` / `load_failed`：不调用 unlock，提示对应文案
+- [ ] 页面 `onUnload` 后不再 setData / toast / scroll
+- [ ] 未知真机环境不会进入 mock
+- [ ] 缺少 `unlockType` 时 API 层 fail closed
+- [ ] 不打印完整报告、完整 session_key、广告原始错误对象
+
+### 13.7 真实商业化前必须完成
+
+- 关闭 `mock_button`、`mock_ad`、`rewarded_video_mock`
+- 配置真实公开 `adUnitId`（不含 AppSecret）
+- 启用 `rewarded_video` 与服务端校验策略
+- 开通流量主并通过微信审核
+
+## 14. 当前明确不做
 
 - 不提交微信审核或正式发布
 - 不配置正式 request 合法域名
 - 不接微信登录或手机号授权
 - 不接微信支付
-- 不接广告
+- 不接真实广告（Phase B 仅 mock 适配层，非真实流量主）
 - 不接订阅消息
 - 不接真实小程序码接口或伪造二维码
 - 不为分享海报请求外部图片或第三方制图服务

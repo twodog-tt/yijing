@@ -42,8 +42,16 @@
 
       <error-state wx:if="{{fullError}}" visible="{{true}}" message="{{fullError}}" show-retry="{{false}}"></error-state>
 
-      <button wx:if="{{fullStatus === 'locked' && !unlocking}}" class="unlock-button" bindtap="handleUnlock">模拟解锁完整解读</button>
-      <button wx:if="{{fullStatus === 'error' && !unlocking && !loadingFull}}" class="secondary-button retry-full" bindtap="loadFullOnly">重新加载完整解读</button>
+      <button wx:if="{{fullStatus === 'locked' && !unlockFlowRunning}}" class="unlock-button" bindtap="handleUnlock">解锁完整解读</button>
+      <text wx:if="{{fullStatus === 'locked' && !unlockFlowRunning}}" class="unlock-hint">观看一段视频，解锁完整解读。完整观看后可以解锁；中途退出不会解锁。</text>
+      <view wx:if="{{isDevEnv && fullStatus === 'locked' && !unlockFlowRunning}}" class="dev-ad-tools">
+        <text class="dev-ad-label">开发调试：mock 激励视频</text>
+        <view class="dev-ad-actions">
+          <button class="secondary-button dev-ad-button" size="mini" data-outcome="completed" bindtap="handleDevMockAdTest">模拟看完</button>
+          <button class="secondary-button dev-ad-button" size="mini" data-outcome="cancelled" bindtap="handleDevMockAdTest">模拟退出</button>
+        </view>
+      </view>
+      <button wx:if="{{fullStatus === 'error' && !unlockFlowRunning && !loadingFull}}" class="secondary-button retry-full" bindtap="loadFullOnly">重新加载完整解读</button>
 
       <view wx:if="{{fullStatus === 'loaded'}}" id="full-report">
         <text wx:if="{{aiProvider}}" class="provider-hint">解读来源：{{aiProvider}}</text>

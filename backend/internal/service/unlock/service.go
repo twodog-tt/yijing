@@ -53,8 +53,8 @@ func (s *Service) Unlock(ctx context.Context, divinationID int64, sessionKey, un
 	if sessionKey == "" || divinationID <= 0 {
 		return nil, ErrInvalidParams
 	}
-	if unlockType != model.UnlockTypeMockAd && unlockType != model.UnlockTypeMockButton {
-		return nil, ErrInvalidParams
+	if err := validateUnlockType(unlockType); err != nil {
+		return nil, err
 	}
 
 	divination, err := s.divinationRepo.FindByID(ctx, divinationID)
@@ -174,6 +174,17 @@ func validateSessionAccess(divinationSessionID int64, session *model.Session) er
 		return ErrForbidden
 	}
 	return nil
+}
+
+func validateUnlockType(unlockType string) error {
+	switch unlockType {
+	case model.UnlockTypeMockAd,
+		model.UnlockTypeMockButton,
+		model.UnlockTypeRewardedVideoMock:
+		return nil
+	default:
+		return ErrInvalidParams
+	}
 }
 
 func validateUnlocked(unlockStatus int) error {
