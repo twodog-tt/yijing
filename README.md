@@ -36,6 +36,7 @@ yijing/
 | 文档 | 说明 |
 |------|------|
 | [docs/ai-agent-workflow.md](docs/ai-agent-workflow.md) | **ChatGPT / Cursor / Codex 协作边界与 review 流程** |
+| [docs/main-program-module-roadmap.md](docs/main-program-module-roadmap.md) | 主程序模块路线图，说明今日一卦、六爻、八字、奇门、广告解锁、统一报告中心的阶段规划 |
 | [docs/local-acceptance-test.md](docs/local-acceptance-test.md) | 本地 MVP 验收手册 |
 | [docs/phase8-production-hardening.md](docs/phase8-production-hardening.md) | 生产安全收口 |
 | [docs/phase9-aliyun-deployment-plan.md](docs/phase9-aliyun-deployment-plan.md) | 阿里云部署前方案 |
