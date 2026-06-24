@@ -75,6 +75,19 @@ function parseFullContent(content) {
   return { report: null, fallbackText: "" };
 }
 
+function buildPosterData(divination, freeContent, movingLinesDisplay, displayLines) {
+  return {
+    id: Number(divination?.id) || 0,
+    categoryName: divination?.category?.name || "未分类",
+    question: summarizeText(divination?.question || "一次卦象记录", 72),
+    primaryHexagram: divination?.primary_hexagram || null,
+    changedHexagram: divination?.changed_hexagram || null,
+    movingLinesDisplay,
+    lines: displayLines,
+    freeSummary: summarizeText(freeContent, 150),
+  };
+}
+
 Page({
   data: {
     id: 0,
@@ -92,6 +105,8 @@ Page({
     aiProvider: "",
     unlocking: false,
     loadingFull: false,
+    posterData: null,
+    posterGenerating: false,
   },
 
   onLoad(options) {
@@ -124,14 +139,24 @@ Page({
       const movingLines = Array.isArray(divination.moving_lines)
         ? divination.moving_lines
         : [];
+      const movingLinesDisplay = movingLines.length
+        ? `第 ${movingLines.join("、")} 爻`
+        : "无动爻";
+      const displayLines = prepareLines(divination.lines);
+      const freeContent =
+        free?.free_content || divination.free_interpretation || "暂无免费解读。";
       const nextData = {
         divination,
         createdAtDisplay: formatDateTime(divination.created_at),
-        movingLinesDisplay: movingLines.length
-          ? `第 ${movingLines.join("、")} 爻`
-          : "无动爻",
-        displayLines: prepareLines(divination.lines),
-        freeContent: free?.free_content || divination.free_interpretation || "暂无免费解读。",
+        movingLinesDisplay,
+        displayLines,
+        freeContent,
+        posterData: buildPosterData(
+          divination,
+          freeContent,
+          movingLinesDisplay,
+          displayLines
+        ),
       };
 
       if (full?._loadError) {
@@ -221,5 +246,28 @@ Page({
     } finally {
       this.setData({ unlocking: false });
     }
+  },
+
+  async handleGeneratePoster() {
+    if (this.data.posterGenerating || !this.data.posterData) return;
+    const poster = this.selectComponent("#sharePoster");
+    if (!poster) {
+      wx.showToast({ title: "海报组件暂不可用", icon: "none" });
+      return;
+    }
+
+    this.setData({ posterGenerating: true });
+    try {
+      await poster.open();
+    } finally {
+      this.setData({ posterGenerating: false });
+    }
+  },
+
+  onShareAppMessage() {
+    return {
+      title: "一份基于传统文化的趣味解读",
+      path: `/pages/result/result?id=${this.data.id}`,
+    };
   },
 });

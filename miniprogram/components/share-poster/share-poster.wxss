@@ -1,0 +1,98 @@
+.poster-canvas {
+  position: fixed;
+  left: -10000rpx;
+  top: 0;
+  width: 600rpx;
+  height: 800rpx;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.poster-overlay {
+  position: fixed;
+  z-index: 1200;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32rpx;
+  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
+  background: rgba(28, 25, 23, 0.72);
+  box-sizing: border-box;
+}
+
+.poster-dialog {
+  width: 100%;
+  max-width: 680rpx;
+  max-height: 94vh;
+  padding: 28rpx;
+  border-radius: 28rpx;
+  background: #fffdf8;
+  box-sizing: border-box;
+}
+
+.poster-dialog__header {
+  margin-bottom: 20rpx;
+}
+
+.poster-dialog__title {
+  display: block;
+  color: #292524;
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.poster-dialog__hint {
+  display: block;
+  margin-top: 8rpx;
+  color: #78716c;
+  font-size: 22rpx;
+  line-height: 1.55;
+}
+
+.poster-preview {
+  width: 100%;
+  max-height: 66vh;
+  border-radius: 18rpx;
+  background: #f5f5f4;
+}
+
+.poster-image {
+  display: block;
+  width: 100%;
+  border-radius: 18rpx;
+}
+
+.poster-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 24rpx;
+}
+
+.poster-button {
+  flex: 1;
+  min-height: 88rpx;
+  margin: 0;
+  border-radius: 18rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+  line-height: 88rpx;
+}
+
+.poster-button::after {
+  border: 0;
+}
+
+.poster-button--secondary {
+  border: 1rpx solid #d6d3d1;
+  background: #ffffff;
+  color: #44403c;
+}
+
+.poster-button--primary {
+  background: #292524;
+  color: #ffffff;
+}

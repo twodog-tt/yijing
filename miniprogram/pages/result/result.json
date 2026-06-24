@@ -5,6 +5,7 @@
     "full-report": "/components/full-report/full-report",
     "hexagram-card": "/components/hexagram-card/hexagram-card",
     "line-chart": "/components/line-chart/line-chart",
-    "loading-state": "/components/loading-state/loading-state"
+    "loading-state": "/components/loading-state/loading-state",
+    "share-poster": "/components/share-poster/share-poster"
   }
 }

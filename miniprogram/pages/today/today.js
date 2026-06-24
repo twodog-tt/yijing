@@ -102,4 +102,11 @@ Page({
       },
     });
   },
+
+  onShareAppMessage() {
+    return {
+      title: "今日一卦：一份传统文化趣味解读",
+      path: "/pages/today/today",
+    };
+  },
 });

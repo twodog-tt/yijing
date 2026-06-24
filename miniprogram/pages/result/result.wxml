@@ -51,6 +51,17 @@
       </view>
     </view>
 
+    <view class="card share-section">
+      <text class="section-title">分享这份解读</text>
+      <text class="share-hint">可以发送克制的微信分享卡片，或生成一张不含完整报告的本地海报。</text>
+      <view class="share-actions">
+        <button class="secondary-button share-button" open-type="share">分享给朋友</button>
+        <button class="primary-button share-button" loading="{{posterGenerating}}" disabled="{{posterGenerating}}" bindtap="handleGeneratePoster">生成分享海报</button>
+      </view>
+    </view>
+
     <text class="disclaimer">解读用于传统文化学习、自我反思和行动整理，不代表确定结果。</text>
+
+    <share-poster id="sharePoster" poster-data="{{posterData}}"></share-poster>
   </block>
 </view>

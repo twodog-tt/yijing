@@ -1,0 +1,17 @@
+<canvas type="2d" id="sharePosterCanvas" class="poster-canvas"></canvas>
+
+<view wx:if="{{previewVisible}}" class="poster-overlay" catchtouchmove="preventTouchMove" bindtap="closePreview">
+  <view class="poster-dialog" catchtap="preventTouchMove">
+    <view class="poster-dialog__header">
+      <text class="poster-dialog__title">分享海报</text>
+      <text class="poster-dialog__hint">海报不包含完整报告，也不包含小程序码</text>
+    </view>
+    <scroll-view class="poster-preview" scroll-y="true">
+      <image class="poster-image" src="{{imagePath}}" mode="widthFix"></image>
+    </scroll-view>
+    <view class="poster-actions">
+      <button class="poster-button poster-button--secondary" bindtap="closePreview">关闭</button>
+      <button class="poster-button poster-button--primary" loading="{{saving}}" disabled="{{saving}}" bindtap="savePoster">保存到相册</button>
+    </view>
+  </view>
+</view>
