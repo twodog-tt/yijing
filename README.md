@@ -31,6 +31,17 @@ yijing/
 
 详细安全说明见 [docs/phase8-production-hardening.md](docs/phase8-production-hardening.md)。
 
+## 文档
+
+| 文档 | 说明 |
+|------|------|
+| [docs/ai-agent-workflow.md](docs/ai-agent-workflow.md) | **ChatGPT / Cursor / Codex 协作边界与 review 流程** |
+| [docs/local-acceptance-test.md](docs/local-acceptance-test.md) | 本地 MVP 验收手册 |
+| [docs/phase8-production-hardening.md](docs/phase8-production-hardening.md) | 生产安全收口 |
+| [docs/phase9-aliyun-deployment-plan.md](docs/phase9-aliyun-deployment-plan.md) | 阿里云部署前方案 |
+| [docs/phase10-aliyun-internal-test-deploy.md](docs/phase10-aliyun-internal-test-deploy.md) | ECS 内测部署指南 |
+| [docs/miniprogram-dev.md](docs/miniprogram-dev.md) | 微信小程序开发 |
+
 ---
 
 ## 方式 A：本地开发启动
