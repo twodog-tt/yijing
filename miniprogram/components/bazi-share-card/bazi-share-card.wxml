@@ -1,4 +1,4 @@
-<canvas type="2d" id="baziShareCardCanvas" class="card-canvas"></canvas>
+<canvas type="2d" id="baziShareCardCanvas" class="card-canvas" style="width: 600px; height: 960px;"></canvas>
 
 <view wx:if="{{previewVisible}}" class="card-overlay" catchtouchmove="preventTouchMove" bindtap="closePreview">
   <view class="card-dialog" catchtap="preventTouchMove">

@@ -1,11 +1,76 @@
-const {
-  drawRoundedRect,
-  drawWrappedText,
-  normalizeText,
-} = require("../../utils/poster-canvas");
-
 const CARD_WIDTH = 600;
 const CARD_HEIGHT = 960;
+
+function normalizeText(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function fitLine(ctx, text, maxWidth, suffix = "…") {
+  let output = normalizeText(text);
+  while (output && ctx.measureText(`${output}${suffix}`).width > maxWidth) {
+    output = output.slice(0, -1);
+  }
+  return `${output}${suffix}`;
+}
+
+function wrapLines(ctx, text, maxWidth, maxLines) {
+  const normalized = normalizeText(text);
+  if (!normalized) return [];
+
+  const lines = [];
+  let current = "";
+  for (const character of normalized) {
+    const candidate = `${current}${character}`;
+    if (current && ctx.measureText(candidate).width > maxWidth) {
+      lines.push(current);
+      current = character;
+    } else {
+      current = candidate;
+    }
+  }
+  if (current) lines.push(current);
+
+  if (lines.length <= maxLines) return lines;
+  const visible = lines.slice(0, maxLines);
+  visible[maxLines - 1] = fitLine(ctx, visible[maxLines - 1], maxWidth);
+  return visible;
+}
+
+function drawWrappedText(ctx, text, options) {
+  const {
+    x,
+    y,
+    maxWidth,
+    lineHeight,
+    maxLines,
+    color = "#44403c",
+    font = "16px sans-serif",
+  } = options;
+  ctx.fillStyle = color;
+  ctx.font = font;
+  const lines = wrapLines(ctx, text, maxWidth, maxLines);
+  lines.forEach((line, index) => {
+    ctx.fillText(line, x, y + index * lineHeight);
+  });
+  return y + lines.length * lineHeight;
+}
+
+function drawRoundedRect(ctx, x, y, width, height, radius, fillStyle) {
+  const safeRadius = Math.min(radius, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + safeRadius, y);
+  ctx.lineTo(x + width - safeRadius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + safeRadius);
+  ctx.lineTo(x + width, y + height - safeRadius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - safeRadius, y + height);
+  ctx.lineTo(x + safeRadius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - safeRadius);
+  ctx.lineTo(x, y + safeRadius);
+  ctx.quadraticCurveTo(x, y, x + safeRadius, y);
+  ctx.closePath();
+  ctx.fillStyle = fillStyle;
+  ctx.fill();
+}
 
 Component({
   properties: {
@@ -30,22 +95,28 @@ Component({
   },
 
   methods: {
-    async open() {
+    async open(cardDataOverride) {
       if (this.data.generating) return false;
-      if (!this.properties.cardData?.id) {
-        wx.showToast({ title: "结果尚未加载完成", icon: "none" });
+
+      const cardData = cardDataOverride || this.properties.cardData;
+      if (!cardData?.id) {
+        wx.showToast({ title: "卡片数据暂不可用，请刷新后重试", icon: "none" });
         return false;
       }
 
       this.setData({ generating: true });
       try {
-        const imagePath = await this.generateCard();
+        const imagePath = await this.generateCard(cardData);
         if (this.isDetached) return false;
         this.setData({ imagePath, previewVisible: true });
         return true;
-      } catch (_error) {
+      } catch (error) {
         if (!this.isDetached) {
-          wx.showToast({ title: "卡片生成失败，请稍后重试", icon: "none" });
+          const message =
+            error?.message === "Canvas 初始化失败"
+              ? "卡片画布初始化失败，请重新进入页面"
+              : "卡片生成失败，请稍后重试";
+          wx.showToast({ title: message, icon: "none" });
         }
         return false;
       } finally {
@@ -61,16 +132,20 @@ Component({
           .fields({ node: true, size: true })
           .exec((result) => {
             const canvasInfo = result?.[0];
-            if (!canvasInfo?.node || !canvasInfo.width || !canvasInfo.height) {
+            if (!canvasInfo?.node) {
               reject(new Error("Canvas 初始化失败"));
               return;
             }
-            resolve(canvasInfo);
+            resolve({
+              node: canvasInfo.node,
+              width: canvasInfo.width || CARD_WIDTH,
+              height: canvasInfo.height || CARD_HEIGHT,
+            });
           });
       });
     },
 
-    async generateCard() {
+    async generateCard(cardData) {
       const { node: canvas, width, height } = await this.getCanvasNode();
       const pixelRatio = Math.min(wx.getSystemInfoSync().pixelRatio || 2, 3);
       canvas.width = width * pixelRatio;
@@ -78,7 +153,7 @@ Component({
       const ctx = canvas.getContext("2d");
       ctx.scale(pixelRatio, pixelRatio);
       this.canvasNode = canvas;
-      this.drawCard(ctx, this.properties.cardData, width, height);
+      this.drawCard(ctx, cardData, width, height);
 
       await new Promise((resolve) => setTimeout(resolve, 60));
       return new Promise((resolve, reject) => {

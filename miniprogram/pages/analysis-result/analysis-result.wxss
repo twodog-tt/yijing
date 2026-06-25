@@ -108,29 +108,6 @@
   margin-top: 8rpx;
 }
 
-.unlock-button {
-  min-height: 96rpx;
-  border: 1rpx solid #fcd34d;
-  border-radius: 20rpx;
-  background: #fffbeb;
-  color: #78350f;
-  font-size: 28rpx;
-  font-weight: 600;
-  line-height: 96rpx;
-}
-
-.unlock-button::after {
-  border: 0;
-}
-
-.unlock-hint {
-  display: block;
-  margin-top: 16rpx;
-  color: #78716c;
-  font-size: 22rpx;
-  line-height: 1.7;
-}
-
 .full-card {
   margin-top: 24rpx;
 }
@@ -147,23 +124,92 @@
   white-space: pre-wrap;
 }
 
-.delete-button {
-  margin-top: 24rpx;
-  color: #b91c1c;
-}
-
-.card-section {
+.action-block {
   margin-top: 24rpx;
 }
 
-.card-button {
+.action-button {
   width: 100%;
+  height: 88rpx;
+  min-height: 88rpx;
+  padding: 0 20rpx;
+  margin: 0;
+  border-radius: 20rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
-.card-hint {
+.action-button::after {
+  border: 0;
+}
+
+.action-button--unlock {
+  border: 1rpx solid #fcd34d;
+  background: #fffbeb;
+  color: #78350f;
+}
+
+.action-button--card {
+  border: 1rpx solid #292524;
+  background: #292524;
+  color: #ffffff;
+}
+
+.action-hint {
   display: block;
   margin-top: 16rpx;
   color: #78716c;
   font-size: 22rpx;
   line-height: 1.7;
+}
+
+.danger-section {
+  margin-top: 48rpx;
+  padding-top: 32rpx;
+  border-top: 1rpx solid #e7e5e4;
+}
+
+.danger-label {
+  display: block;
+  margin-bottom: 16rpx;
+  color: #a8a29e;
+  font-size: 22rpx;
+}
+
+.danger-button {
+  width: 100%;
+  height: 76rpx;
+  min-height: 76rpx;
+  padding: 0 24rpx;
+  margin: 0;
+  border: 1rpx solid #fecaca;
+  border-radius: 16rpx;
+  background: #ffffff;
+  color: #b91c1c;
+  font-size: 24rpx;
+  font-weight: 500;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.danger-button::after {
+  border: 0;
+}
+
+@media (max-width: 340px) {
+  .action-button {
+    height: 84rpx;
+    min-height: 84rpx;
+    padding: 0 12rpx;
+    font-size: 24rpx;
+  }
 }

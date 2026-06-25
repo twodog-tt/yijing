@@ -858,11 +858,24 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 
 **已实现：**
 
-- [x] 八字结果页「生成结果卡片」按钮
+- [x] 解锁完整报告后显示「生成结果卡片」（`unlock_status === 1`）
+- [x] 未解锁不显示卡片入口，仅引导 mock 视频解锁
 - [x] 本地 canvas 竖版摘要卡片（`components/bazi-share-card/`）
 - [x] 保存到相册 + 权限引导
-- [x] 卡片不含出生日期 / 时辰 / 完整报告 / 小程序码
+- [x] 卡片不含出生日期 / 时辰 / 完整报告全文 / session_key / payload / 小程序码
 - [x] 生成中 / 保存中 / 删除中 / 解锁中互斥
+
+**产品规则（Phase E6 修订）：**
+
+- 结果卡片是**解锁完整报告后的权益**，未解锁不允许生成
+- 生成卡片仍只展示摘要（干支示意、五行倾向、反思焦点、行动建议 1–2 条、免责声明）
+- 不展示出生日期、出生时辰、完整报告全文、`session_key`、`input_payload` / `result_payload`
+
+**操作区 UI（Phase E6 修订）：**
+
+- 未解锁：单行主按钮「观看视频，解锁完整报告」+ 说明文案
+- 已解锁：完整报告 → 「生成结果卡片」+ 摘要说明
+- 底部弱化「删除记录」，不与主操作抢视觉
 
 **明确未做：**
 
@@ -912,7 +925,7 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 | Phase E3 v1 | 小程序八字页面 + API 联调（免费简析 + 删除；不含 unlock / AI / 奇门） |
 | Phase E5 v1 | 八字模板完整报告 + `rewarded_video_mock` unlock（不接 DeepSeek / 真实广告） |
 | Phase E6（部署）v1 | ECS 后端部署 Phase E5 unlock API（仅 rebuild backend，未改 `.env`） |
-| Phase E6（小程序）v1 | 八字结果页本地 canvas 分享卡片（摘要，不含出生信息） |
+| Phase E6（小程序）v1 | 八字结果页本地 canvas 分享卡片（解锁后权益；摘要不含出生信息） |
 
 ---
 

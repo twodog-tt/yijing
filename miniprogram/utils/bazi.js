@@ -84,6 +84,16 @@ function buildElementSummary(elements) {
 
 function buildBaziCardData(recordId, view) {
   if (!recordId || !view) return null;
+
+  const pillars = {
+    year: view.pillars?.year || "—",
+    month: view.pillars?.month || "—",
+    day: view.pillars?.day || "—",
+    hour: view.pillars?.hour || "",
+  };
+  const hourUnknown =
+    Boolean(view.hourUnknown) || !String(pillars.hour || "").trim();
+
   const suggestions = Array.isArray(view.actionSuggestions)
     ? view.actionSuggestions
         .slice(0, 2)
@@ -91,13 +101,20 @@ function buildBaziCardData(recordId, view) {
         .filter(Boolean)
     : [];
 
+  const reflectionFocus =
+    summarizeText(view.reflectionFocus, 80) ||
+    "可从简化干支示意与五行倾向出发，做自我观察与行动整理。";
+
   return {
     id: String(recordId),
-    pillars: view.pillars,
-    hourUnknown: Boolean(view.hourUnknown),
+    pillars,
+    hourUnknown,
     elementSummary: buildElementSummary(view.elements),
-    reflectionFocus: summarizeText(view.reflectionFocus, 80),
-    actionSuggestions: suggestions,
+    reflectionFocus,
+    actionSuggestions:
+      suggestions.length > 0
+        ? suggestions
+        : ["记录一周内的精力变化，做行动整理。"],
   };
 }
 

@@ -82,6 +82,7 @@ Page({
     elementRows: [],
     fullStatus: "locked",
     fullContent: "",
+    isUnlocked: false,
     unlockError: "",
     unlockFlowRunning: false,
     unlocking: false,
@@ -174,7 +175,9 @@ Page({
     this.safeSetData({
       fullStatus: "loaded",
       fullContent,
+      isUnlocked: true,
       unlockError: "",
+      cardData: buildBaziCardData(this.data.recordId, this.data.view),
     });
   },
 
@@ -189,23 +192,25 @@ Page({
     try {
       const record = await getAnalysis(this.data.recordId);
       const view = buildAnalysisView(record);
-      const unlocked = Number(record.unlock_status) === 1;
-      const fullContent = unlocked ? String(record.full_content || "").trim() : "";
+      const isUnlocked = Number(record.unlock_status) === 1;
+      const fullContent = isUnlocked ? String(record.full_content || "").trim() : "";
 
       this.setData({
         loading: false,
         view,
         createdAtDisplay: formatDateTime(record.created_at) || "—",
         elementRows: this.buildElementRows(view.elements),
-        fullStatus: unlocked && fullContent ? "loaded" : "locked",
+        isUnlocked,
+        fullStatus: isUnlocked ? "loaded" : "locked",
         fullContent,
-        cardData: buildBaziCardData(this.data.recordId, view),
+        cardData: isUnlocked ? buildBaziCardData(this.data.recordId, view) : null,
       });
     } catch (error) {
       this.setData({
         loading: false,
         error: mapLoadError(error),
         view: null,
+        isUnlocked: false,
         fullStatus: "locked",
         fullContent: "",
         cardData: null,
@@ -246,7 +251,7 @@ Page({
   },
 
   handleUnlock() {
-    if (!this.data.recordId || this.data.fullStatus === "loaded") return;
+    if (!this.data.recordId || this.data.isUnlocked) return;
     if (this.data.deleting || this.data.cardGenerating) return;
     if (!this.rewardedAdController) {
       wx.showToast({ title: "广告模块暂不可用", icon: "none" });
@@ -347,24 +352,29 @@ Page({
       this.data.deleting ||
       this.data.unlockFlowRunning ||
       this.data.unlocking ||
+      !this.data.isUnlocked ||
       !this.data.view ||
       !this.data.recordId
     ) {
-      if (!this.data.view) {
-        wx.showToast({ title: "结果尚未加载完成", icon: "none" });
-      }
+      return;
+    }
+
+    const cardData =
+      buildBaziCardData(this.data.recordId, this.data.view) || this.data.cardData;
+    if (!cardData?.id) {
+      wx.showToast({ title: "卡片数据暂不可用，请刷新后重试", icon: "none" });
       return;
     }
 
     const card = this.selectComponent("#baziShareCard");
-    if (!card) {
-      wx.showToast({ title: "卡片模块暂不可用", icon: "none" });
+    if (!card || typeof card.open !== "function") {
+      wx.showToast({ title: "卡片画布初始化失败，请重新进入页面", icon: "none" });
       return;
     }
 
     this.setData({ cardGenerating: true });
     try {
-      await card.open();
+      await card.open(cardData);
     } finally {
       if (!this.pageUnloaded) {
         this.setData({ cardGenerating: false });
