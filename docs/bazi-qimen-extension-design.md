@@ -823,6 +823,35 @@ WHERE id = ? AND session_id = ? AND status = 1
 - [ ] DeepSeek / AI 完整解读
 - [ ] 真实广告 / 付费
 
+### 10.9 Phase E6 交付清单（ECS 后端部署，已完成）
+
+**部署目标：** 将 Phase E5 unlock API 发布到内测 ECS，供小程序 `http://123.57.48.214/api/v1` 联调。
+
+**执行步骤（`/opt/yijing`）：**
+
+```bash
+git pull origin main
+docker compose -f docker-compose.prod.yml --env-file .env build backend
+docker compose -f docker-compose.prod.yml --env-file .env up -d backend
+docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migrate
+```
+
+**未改动：** 服务器 `.env`、Nginx、frontend 镜像、MySQL volume、安全组。
+
+**远程验收（2026-06-25）：**
+
+| 项 | 结果 |
+|---|---|
+| `GET /api/v1/health` | ok / db ok |
+| `POST /analysis/bazi` | 创建成功 |
+| `POST /analysis/{id}/unlock`（`rewarded_video_mock` + `X-Session-Key`） | 返回 `full_content` |
+| `GET /analysis/{id}` 已解锁 | 含 `full_content` |
+| 非法 `unlock_type` | 400 |
+| query `session_key` | 400 |
+| `DELETE /analysis/{id}` | 成功；再次 GET → 404 |
+
+**小程序侧：** 微信开发者工具关闭合法域名校验后，可验收八字结果页 mock 解锁完整报告（见 `docs/miniprogram-dev.md` §15–§16）。
+
 ---
 
 ## 11. 合规与文案检查清单
@@ -864,7 +893,8 @@ WHERE id = ? AND session_id = ? AND status = 1
 | Phase E2 v1 | 八字记录硬删除 API + 隐私删除闭环 |
 | Phase E3 v1 | 小程序八字页面 + API 联调（免费简析 + 删除；不含 unlock / AI / 奇门） |
 | Phase E5 v1 | 八字模板完整报告 + `rewarded_video_mock` unlock（不接 DeepSeek / 真实广告） |
+| Phase E6 v1 | ECS 后端部署 Phase E5 unlock API（仅 rebuild backend，未改 `.env`） |
 
 ---
 
-*Phase E1–E3 基础闭环与 Phase E5 mock 解锁均已就绪。后续可接入 DeepSeek 完整解读或真实激励视频广告。*
+*Phase E1–E5 功能与 Phase E6 内测部署已完成。小程序可在开发者工具联调八字 mock 解锁；后续可接入 DeepSeek 或真实激励视频。*

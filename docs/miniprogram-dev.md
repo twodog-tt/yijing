@@ -698,7 +698,33 @@ Phase E5 在八字结果页新增「完整报告」与 `rewarded_video_mock` 解
 - [ ] 删除已解锁记录成功；再次打开提示不存在
 - [ ] Console 不打印敏感信息
 
-## 16. 当前明确不做
+## 16. Phase E6：ECS 后端部署（Phase E5 unlock）
+
+Phase E6 将 Phase E5 后端发布到内测 ECS（`http://123.57.48.214/api/v1`），**仅 rebuild backend**，不改服务器 `.env`、Nginx、frontend。
+
+### 16.1 部署命令（服务器 `/opt/yijing`）
+
+```bash
+git pull origin main
+docker compose -f docker-compose.prod.yml --env-file .env build backend
+docker compose -f docker-compose.prod.yml --env-file .env up -d backend
+docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migrate
+curl -s http://127.0.0.1:8080/api/v1/health
+```
+
+### 16.2 远程 API 验收（已通过）
+
+- [x] `GET /api/v1/health` → db ok
+- [x] `POST /analysis/bazi` 创建记录
+- [x] `POST /analysis/{id}/unlock`（`X-Session-Key` + `rewarded_video_mock`）→ `full_content`
+- [x] 非法 unlock_type / query session_key → 400
+- [x] `DELETE /analysis/{id}` → 404 不可再读
+
+### 16.3 微信开发者工具联调（需人工）
+
+关闭合法域名校验后，在八字结果页验证 mock 解锁 → 完整报告展示 → 刷新仍已解锁 → 删除后不可再开。
+
+## 17. 当前明确不做
 
 - 不提交微信审核或正式发布
 - 不配置正式 request 合法域名
