@@ -322,6 +322,9 @@ func toAnalysisResponse(record *model.AnalysisRecord) map[string]any {
 	if record.UnlockStatus == model.AnalysisUnlockStatusUnlocked && record.FullContent != nil {
 		resp["full_content"] = *record.FullContent
 	}
+	if record.AIProvider != nil {
+		resp["ai_provider"] = *record.AIProvider
+	}
 	return resp
 }
 

@@ -12,7 +12,7 @@ import (
 
 const unlockWithFullContentSQL = `
 		UPDATE analysis_records
-		SET unlock_status = ?, unlock_type = ?, full_content = ?, generation_status = ?, updated_at = NOW()
+	 SET unlock_status = ?, unlock_type = ?, full_content = ?, generation_status = ?, ai_provider = ?, updated_at = NOW()
 		WHERE id = ? AND session_id = ? AND status = ? AND unlock_status = ?
 	`
 
@@ -29,6 +29,7 @@ func TestUnlockWithFullContentSuccess(t *testing.T) {
 			model.UnlockTypeRewardedVideoMock,
 			"full report",
 			model.AnalysisGenerationStatusFullDone,
+			model.AIProviderTemplateFallback,
 			int64(5),
 			int64(10),
 			model.AnalysisStatusActive,
@@ -43,6 +44,7 @@ func TestUnlockWithFullContentSuccess(t *testing.T) {
 		10,
 		model.UnlockTypeRewardedVideoMock,
 		"full report",
+		model.AIProviderTemplateFallback,
 	)
 	if err != nil {
 		t.Fatalf("UnlockWithFullContent: %v", err)
@@ -65,6 +67,7 @@ func TestUnlockWithFullContentRequiresSessionMatch(t *testing.T) {
 			model.UnlockTypeRewardedVideoMock,
 			"full report",
 			model.AnalysisGenerationStatusFullDone,
+			model.AIProviderTemplateFallback,
 			int64(5),
 			int64(99),
 			model.AnalysisStatusActive,
@@ -79,6 +82,7 @@ func TestUnlockWithFullContentRequiresSessionMatch(t *testing.T) {
 		99,
 		model.UnlockTypeRewardedVideoMock,
 		"full report",
+		model.AIProviderTemplateFallback,
 	)
 	if !errors.Is(err, ErrAnalysisNotFound) {
 		t.Fatalf("expected not found for session mismatch, got %v", err)
@@ -93,6 +97,9 @@ func TestUnlockWithFullContentSQLScopesBySessionAndLockedStatus(t *testing.T) {
 	if stringsContains(unlockWithFullContentSQL, "input_payload") || stringsContains(unlockWithFullContentSQL, "result_payload") {
 		t.Fatalf("unlock SQL must not update input_payload or result_payload")
 	}
+	if !stringsContains(unlockWithFullContentSQL, "ai_provider = ?") {
+		t.Fatalf("unlock SQL must update ai_provider")
+	}
 }
 
 func stringsContains(haystack, needle string) bool {
@@ -101,7 +108,7 @@ func stringsContains(haystack, needle string) bool {
 
 func TestUnlockWithFullContentRejectsInvalidParams(t *testing.T) {
 	repo := NewAnalysisRepository(nil)
-	err := repo.UnlockWithFullContent(context.Background(), 0, 10, model.UnlockTypeRewardedVideoMock, "full")
+	err := repo.UnlockWithFullContent(context.Background(), 0, 10, model.UnlockTypeRewardedVideoMock, "full", model.AIProviderTemplateFallback)
 	if !errors.Is(err, ErrInvalidAnalysisParams) {
 		t.Fatalf("expected invalid params, got %v", err)
 	}

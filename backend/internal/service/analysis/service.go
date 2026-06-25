@@ -2,6 +2,7 @@ package analysis
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -21,19 +22,37 @@ type recordRepository interface {
 	FindOwnedByID(ctx context.Context, id, sessionID int64) (*model.AnalysisRecord, error)
 	ListBySession(ctx context.Context, sessionID int64, moduleType *int, page, pageSize int) ([]model.AnalysisListItem, int64, int, int, error)
 	DeleteOwnedByID(ctx context.Context, id, sessionID int64) error
-	UnlockWithFullContent(ctx context.Context, id, sessionID int64, unlockType, fullContent string) error
+	UnlockWithFullContent(ctx context.Context, id, sessionID int64, unlockType, fullContent, aiProvider string) error
+}
+
+type fullReportGenerator interface {
+	Generate(ctx context.Context, analysisID int64, resultPayload json.RawMessage, freeContent string) (content string, aiProvider string, err error)
 }
 
 type Service struct {
-	repo recordRepository
+	repo       recordRepository
+	fullReport fullReportGenerator
 }
 
-func NewService(repo *repository.AnalysisRepository) *Service {
-	return &Service{repo: repo}
+func NewService(repo *repository.AnalysisRepository, generator *bazi.FullReportGenerator) *Service {
+	var gen fullReportGenerator
+	if generator == nil {
+		gen = bazi.NewFullReportGenerator(nil)
+	} else {
+		gen = generator
+	}
+	return &Service{repo: repo, fullReport: gen}
 }
 
 func NewServiceWithRepo(repo recordRepository) *Service {
-	return &Service{repo: repo}
+	return NewServiceWithRepoAndGenerator(repo, bazi.NewFullReportGenerator(nil))
+}
+
+func NewServiceWithRepoAndGenerator(repo recordRepository, generator fullReportGenerator) *Service {
+	if generator == nil {
+		generator = bazi.NewFullReportGenerator(nil)
+	}
+	return &Service{repo: repo, fullReport: generator}
 }
 
 func (s *Service) Get(ctx context.Context, sessionID, id int64) (*model.AnalysisRecord, error) {
@@ -73,12 +92,14 @@ func (s *Service) Unlock(ctx context.Context, sessionID, id int64, unlockType st
 
 	if record.UnlockStatus == model.AnalysisUnlockStatusUnlocked {
 		fullContent := strings.TrimSpace(derefString(record.FullContent))
+		aiProvider := derefString(record.AIProvider)
 		if fullContent == "" {
-			generated, genErr := bazi.BuildFullContent(record.ResultPayload, derefString(record.FreeContent))
+			generated, provider, genErr := s.fullReport.Generate(ctx, id, record.ResultPayload, derefString(record.FreeContent))
 			if genErr != nil {
 				return nil, genErr
 			}
 			fullContent = generated
+			aiProvider = provider
 		}
 		return &model.AnalysisUnlockResult{
 			ID:               record.ID,
@@ -86,15 +107,16 @@ func (s *Service) Unlock(ctx context.Context, sessionID, id int64, unlockType st
 			UnlockType:       unlockType,
 			FullContent:      fullContent,
 			GenerationStatus: record.GenerationStatus,
+			AIProvider:       aiProvider,
 		}, nil
 	}
 
-	fullContent, err := bazi.BuildFullContent(record.ResultPayload, derefString(record.FreeContent))
+	fullContent, aiProvider, err := s.fullReport.Generate(ctx, id, record.ResultPayload, derefString(record.FreeContent))
 	if err != nil {
 		return nil, ErrInvalidParams
 	}
 
-	if err := s.repo.UnlockWithFullContent(ctx, id, sessionID, unlockType, fullContent); err != nil {
+	if err := s.repo.UnlockWithFullContent(ctx, id, sessionID, unlockType, fullContent, aiProvider); err != nil {
 		if errors.Is(err, repository.ErrAnalysisNotFound) {
 			return nil, ErrNotFound
 		}
@@ -110,6 +132,7 @@ func (s *Service) Unlock(ctx context.Context, sessionID, id int64, unlockType st
 		UnlockType:       unlockType,
 		FullContent:      fullContent,
 		GenerationStatus: model.AnalysisGenerationStatusFullDone,
+		AIProvider:       aiProvider,
 	}, nil
 }
 

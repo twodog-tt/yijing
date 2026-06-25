@@ -137,4 +137,5 @@ type AnalysisUnlockResult struct {
 	UnlockType       string `json:"unlock_type"`
 	FullContent      string `json:"full_content"`
 	GenerationStatus int    `json:"generation_status"`
+	AIProvider       string `json:"ai_provider"`
 }

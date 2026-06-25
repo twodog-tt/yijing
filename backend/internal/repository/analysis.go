@@ -120,22 +120,23 @@ func (r *AnalysisRepository) FindOwnedByID(ctx context.Context, id, sessionID in
 func (r *AnalysisRepository) UnlockWithFullContent(
 	ctx context.Context,
 	id, sessionID int64,
-	unlockType, fullContent string,
+	unlockType, fullContent, aiProvider string,
 ) error {
 	if id <= 0 || sessionID <= 0 {
 		return ErrInvalidAnalysisParams
 	}
 	unlockType = strings.TrimSpace(unlockType)
 	fullContent = strings.TrimSpace(fullContent)
-	if unlockType == "" || fullContent == "" {
+	aiProvider = strings.TrimSpace(aiProvider)
+	if unlockType == "" || fullContent == "" || aiProvider == "" {
 		return ErrInvalidAnalysisParams
 	}
 
 	res, err := r.db.ExecContext(ctx, `
 		UPDATE analysis_records
-		SET unlock_status = ?, unlock_type = ?, full_content = ?, generation_status = ?, updated_at = NOW()
+	 SET unlock_status = ?, unlock_type = ?, full_content = ?, generation_status = ?, ai_provider = ?, updated_at = NOW()
 		WHERE id = ? AND session_id = ? AND status = ? AND unlock_status = ?
-	`, model.AnalysisUnlockStatusUnlocked, unlockType, fullContent, model.AnalysisGenerationStatusFullDone,
+	`, model.AnalysisUnlockStatusUnlocked, unlockType, fullContent, model.AnalysisGenerationStatusFullDone, aiProvider,
 		id, sessionID, model.AnalysisStatusActive, model.AnalysisUnlockStatusLocked)
 	if err != nil {
 		return err

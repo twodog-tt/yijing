@@ -5,19 +5,38 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/wangxintong/yijing/backend/internal/model"
 	"github.com/wangxintong/yijing/backend/internal/repository"
 	"github.com/wangxintong/yijing/backend/internal/service/analysis"
+	"github.com/wangxintong/yijing/backend/internal/service/bazi"
 )
 
 type mockAnalysisRepo struct {
 	findFn   func(ctx context.Context, id, sessionID int64) (*model.AnalysisRecord, error)
 	listFn   func(ctx context.Context, sessionID int64, moduleType *int, page, pageSize int) ([]model.AnalysisListItem, int64, int, int, error)
 	deleteFn func(ctx context.Context, id, sessionID int64) error
-	unlockFn func(ctx context.Context, id, sessionID int64, unlockType, fullContent string) error
+	unlockFn func(ctx context.Context, id, sessionID int64, unlockType, fullContent, aiProvider string) error
+}
+
+type stubFullReportGenerator struct {
+	generateFn func(ctx context.Context, analysisID int64, resultPayload json.RawMessage, freeContent string) (string, string, error)
+	calls      int
+}
+
+func (s *stubFullReportGenerator) Generate(ctx context.Context, analysisID int64, resultPayload json.RawMessage, freeContent string) (string, string, error) {
+	s.calls++
+	if s.generateFn != nil {
+		return s.generateFn(ctx, analysisID, resultPayload, freeContent)
+	}
+	content, err := bazi.BuildFullContent(resultPayload, freeContent)
+	if err != nil {
+		return "", "", err
+	}
+	return content, model.AIProviderTemplateFallback, nil
 }
 
 func (m *mockAnalysisRepo) FindOwnedByID(ctx context.Context, id, sessionID int64) (*model.AnalysisRecord, error) {
@@ -35,9 +54,9 @@ func (m *mockAnalysisRepo) DeleteOwnedByID(ctx context.Context, id, sessionID in
 	return nil
 }
 
-func (m *mockAnalysisRepo) UnlockWithFullContent(ctx context.Context, id, sessionID int64, unlockType, fullContent string) error {
+func (m *mockAnalysisRepo) UnlockWithFullContent(ctx context.Context, id, sessionID int64, unlockType, fullContent, aiProvider string) error {
 	if m.unlockFn != nil {
-		return m.unlockFn(ctx, id, sessionID, unlockType, fullContent)
+		return m.unlockFn(ctx, id, sessionID, unlockType, fullContent, aiProvider)
 	}
 	return nil
 }
@@ -200,30 +219,103 @@ func sampleBaziRecord(id, sessionID int64) *model.AnalysisRecord {
 	}
 }
 
-func TestUnlockSuccess(t *testing.T) {
-	var unlockCalled bool
-	svc := analysis.NewServiceWithRepo(&mockAnalysisRepo{
+func TestUnlockSuccessUsesTemplateFallbackByDefault(t *testing.T) {
+	var savedProvider string
+	gen := &stubFullReportGenerator{}
+	svc := analysis.NewServiceWithRepoAndGenerator(&mockAnalysisRepo{
 		findFn: func(_ context.Context, id, sessionID int64) (*model.AnalysisRecord, error) {
 			return sampleBaziRecord(id, sessionID), nil
 		},
-		unlockFn: func(_ context.Context, id, sessionID int64, unlockType, fullContent string) error {
-			unlockCalled = true
+		unlockFn: func(_ context.Context, id, sessionID int64, unlockType, fullContent, aiProvider string) error {
+			savedProvider = aiProvider
 			if id != 5 || sessionID != 10 || unlockType != model.UnlockTypeRewardedVideoMock || fullContent == "" {
 				t.Fatalf("unexpected unlock args id=%d sessionID=%d type=%q", id, sessionID, unlockType)
 			}
 			return nil
 		},
-	})
+	}, gen)
 
 	result, err := svc.Unlock(context.Background(), 10, 5, model.UnlockTypeRewardedVideoMock)
 	if err != nil {
 		t.Fatalf("Unlock: %v", err)
 	}
-	if !unlockCalled {
-		t.Fatalf("expected unlock repository call")
+	if gen.calls != 1 {
+		t.Fatalf("expected generator called once, got %d", gen.calls)
+	}
+	if savedProvider != model.AIProviderTemplateFallback {
+		t.Fatalf("expected template_fallback provider, got %q", savedProvider)
+	}
+	if result.AIProvider != model.AIProviderTemplateFallback {
+		t.Fatalf("expected template_fallback in result, got %q", result.AIProvider)
 	}
 	if result.UnlockStatus != model.AnalysisUnlockStatusUnlocked || result.FullContent == "" {
 		t.Fatalf("unexpected unlock result: %#v", result)
+	}
+}
+
+func TestUnlockSuccessUsesDeepSeekProvider(t *testing.T) {
+	aiContent := strings.Repeat("完整报告内容。", 30) + "\n免责声明：仅供学习参考。"
+	gen := &stubFullReportGenerator{
+		generateFn: func(_ context.Context, _ int64, _ json.RawMessage, _ string) (string, string, error) {
+			return aiContent, model.AIProviderDeepSeek, nil
+		},
+	}
+	var savedProvider string
+	svc := analysis.NewServiceWithRepoAndGenerator(&mockAnalysisRepo{
+		findFn: func(_ context.Context, id, sessionID int64) (*model.AnalysisRecord, error) {
+			return sampleBaziRecord(id, sessionID), nil
+		},
+		unlockFn: func(_ context.Context, _, _ int64, _, fullContent, aiProvider string) error {
+			savedProvider = aiProvider
+			if fullContent != aiContent {
+				t.Fatalf("unexpected full content saved")
+			}
+			return nil
+		},
+	}, gen)
+
+	result, err := svc.Unlock(context.Background(), 10, 5, model.UnlockTypeRewardedVideoMock)
+	if err != nil {
+		t.Fatalf("Unlock: %v", err)
+	}
+	if savedProvider != model.AIProviderDeepSeek {
+		t.Fatalf("expected deepseek provider, got %q", savedProvider)
+	}
+	if result.AIProvider != model.AIProviderDeepSeek {
+		t.Fatalf("expected deepseek in result, got %q", result.AIProvider)
+	}
+	if result.FullContent != aiContent {
+		t.Fatalf("unexpected full content in result")
+	}
+}
+
+func TestUnlockDeepSeekFailureFallsBackToTemplate(t *testing.T) {
+	gen := &stubFullReportGenerator{
+		generateFn: func(_ context.Context, _ int64, resultPayload json.RawMessage, freeContent string) (string, string, error) {
+			content, err := bazi.BuildFullContent(resultPayload, freeContent)
+			if err != nil {
+				return "", "", err
+			}
+			return content, model.AIProviderTemplateFallback, nil
+		},
+	}
+	var savedProvider string
+	svc := analysis.NewServiceWithRepoAndGenerator(&mockAnalysisRepo{
+		findFn: func(_ context.Context, id, sessionID int64) (*model.AnalysisRecord, error) {
+			return sampleBaziRecord(id, sessionID), nil
+		},
+		unlockFn: func(_ context.Context, _, _ int64, _, _, aiProvider string) error {
+			savedProvider = aiProvider
+			return nil
+		},
+	}, gen)
+
+	_, err := svc.Unlock(context.Background(), 10, 5, model.UnlockTypeRewardedVideoMock)
+	if err != nil {
+		t.Fatalf("Unlock: %v", err)
+	}
+	if savedProvider != model.AIProviderTemplateFallback {
+		t.Fatalf("expected template_fallback provider, got %q", savedProvider)
 	}
 }
 
@@ -235,21 +327,29 @@ func TestUnlockRejectsInvalidUnlockType(t *testing.T) {
 	}
 }
 
-func TestUnlockAlreadyUnlockedSkipsRepositoryUpdate(t *testing.T) {
+func TestUnlockAlreadyUnlockedSkipsRepositoryUpdateAndGenerator(t *testing.T) {
 	full := "existing full content"
 	record := sampleBaziRecord(5, 10)
 	record.UnlockStatus = model.AnalysisUnlockStatusUnlocked
 	record.FullContent = &full
+	provider := model.AIProviderDeepSeek
+	record.AIProvider = &provider
+	gen := &stubFullReportGenerator{
+		generateFn: func(_ context.Context, _ int64, _ json.RawMessage, _ string) (string, string, error) {
+			t.Fatalf("expected no generator call for already unlocked record")
+			return "", "", nil
+		},
+	}
 
-	svc := analysis.NewServiceWithRepo(&mockAnalysisRepo{
+	svc := analysis.NewServiceWithRepoAndGenerator(&mockAnalysisRepo{
 		findFn: func(_ context.Context, id, sessionID int64) (*model.AnalysisRecord, error) {
 			return record, nil
 		},
-		unlockFn: func(_ context.Context, _, _ int64, _, _ string) error {
+		unlockFn: func(_ context.Context, _, _ int64, _, _, _ string) error {
 			t.Fatalf("expected no repository unlock for already unlocked record")
 			return nil
 		},
-	})
+	}, gen)
 
 	result, err := svc.Unlock(context.Background(), 10, 5, model.UnlockTypeRewardedVideoMock)
 	if err != nil {
@@ -257,6 +357,25 @@ func TestUnlockAlreadyUnlockedSkipsRepositoryUpdate(t *testing.T) {
 	}
 	if result.FullContent != full {
 		t.Fatalf("expected existing full content, got %q", result.FullContent)
+	}
+	if result.AIProvider != model.AIProviderDeepSeek {
+		t.Fatalf("expected existing ai_provider, got %q", result.AIProvider)
+	}
+}
+
+func TestNewServiceNilGeneratorUsesTemplateFallback(t *testing.T) {
+	svc := analysis.NewServiceWithRepoAndGenerator(&mockAnalysisRepo{
+		findFn: func(_ context.Context, id, sessionID int64) (*model.AnalysisRecord, error) {
+			return sampleBaziRecord(id, sessionID), nil
+		},
+		unlockFn: func(_ context.Context, _, _ int64, _, _, _ string) error { return nil },
+	}, nil)
+	result, err := svc.Unlock(context.Background(), 10, 5, model.UnlockTypeRewardedVideoMock)
+	if err != nil {
+		t.Fatalf("Unlock: %v", err)
+	}
+	if result.AIProvider != model.AIProviderTemplateFallback {
+		t.Fatalf("expected template_fallback, got %q", result.AIProvider)
 	}
 }
 

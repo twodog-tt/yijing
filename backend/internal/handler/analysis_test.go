@@ -106,7 +106,7 @@ func (s *stubAnalysisRepo) DeleteOwnedByID(_ context.Context, id, sessionID int6
 	return nil
 }
 
-func (s *stubAnalysisRepo) UnlockWithFullContent(_ context.Context, id, sessionID int64, unlockType, fullContent string) error {
+func (s *stubAnalysisRepo) UnlockWithFullContent(_ context.Context, id, sessionID int64, unlockType, fullContent, aiProvider string) error {
 	record, ok := s.records[id]
 	if !ok || record.SessionID != sessionID || record.Status != model.AnalysisStatusActive || record.UnlockStatus != model.AnalysisUnlockStatusLocked {
 		return repository.ErrAnalysisNotFound
@@ -114,6 +114,7 @@ func (s *stubAnalysisRepo) UnlockWithFullContent(_ context.Context, id, sessionI
 	record.UnlockStatus = model.AnalysisUnlockStatusUnlocked
 	record.UnlockType = &unlockType
 	record.FullContent = &fullContent
+	record.AIProvider = &aiProvider
 	record.GenerationStatus = model.AnalysisGenerationStatusFullDone
 	return nil
 }
@@ -520,6 +521,7 @@ func TestUnlockAnalysisSuccess(t *testing.T) {
 			UnlockStatus int    `json:"unlock_status"`
 			UnlockType   string `json:"unlock_type"`
 			FullContent  string `json:"full_content"`
+			AIProvider   string `json:"ai_provider"`
 		} `json:"data"`
 	}
 	if err := json.Unmarshal(rec.Body.Bytes(), &unlockResp); err != nil {
@@ -534,8 +536,52 @@ func TestUnlockAnalysisSuccess(t *testing.T) {
 	if strings.TrimSpace(unlockResp.Data.FullContent) == "" {
 		t.Fatalf("expected full content")
 	}
+	if unlockResp.Data.AIProvider != model.AIProviderTemplateFallback {
+		t.Fatalf("expected ai_provider template_fallback, got %q", unlockResp.Data.AIProvider)
+	}
 	if strings.Contains(rec.Body.String(), "birth_date") || strings.Contains(rec.Body.String(), "input_payload") {
 		t.Fatalf("unlock response must not contain birth info: %s", rec.Body.String())
+	}
+}
+
+func TestGetAnalysisUnlockedIncludesAIProvider(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	id := createBaziRecord(t, h, sessions, "sess-a")
+
+	unlockReq := httptest.NewRequest(http.MethodPost, "/api/v1/analysis/"+strconv.FormatInt(id, 10)+"/unlock", bytes.NewBufferString(`{"unlock_type":"rewarded_video_mock"}`))
+	unlockReq.Header.Set(sessionkey.HeaderName, "sess-a")
+	unlockRec := httptest.NewRecorder()
+	h.Unlock(unlockRec, unlockReq)
+	if unlockRec.Code != http.StatusOK {
+		t.Fatalf("unlock expected 200, got %d", unlockRec.Code)
+	}
+
+	getReq := httptest.NewRequest(http.MethodGet, "/api/v1/analysis/"+strconv.FormatInt(id, 10), nil)
+	getReq.Header.Set(sessionkey.HeaderName, "sess-a")
+	getRec := httptest.NewRecorder()
+	h.Get(getRec, getReq)
+	if getRec.Code != http.StatusOK {
+		t.Fatalf("get expected 200, got %d body=%s", getRec.Code, getRec.Body.String())
+	}
+
+	var getResp struct {
+		Data struct {
+			UnlockStatus int    `json:"unlock_status"`
+			AIProvider   string `json:"ai_provider"`
+			FullContent  string `json:"full_content"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(getRec.Body.Bytes(), &getResp); err != nil {
+		t.Fatalf("decode get response: %v", err)
+	}
+	if getResp.Data.UnlockStatus != model.AnalysisUnlockStatusUnlocked {
+		t.Fatalf("expected unlocked status")
+	}
+	if getResp.Data.AIProvider != model.AIProviderTemplateFallback {
+		t.Fatalf("expected ai_provider template_fallback, got %q", getResp.Data.AIProvider)
+	}
+	if strings.TrimSpace(getResp.Data.FullContent) == "" {
+		t.Fatalf("expected full_content in detail response")
 	}
 }
 

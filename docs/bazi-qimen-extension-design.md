@@ -807,12 +807,36 @@ WHERE id = ? AND session_id = ? AND status = 1
 
 **Phase E5 明确未做：**
 
-- [ ] DeepSeek / 真实 AI 完整解读
+- [x] DeepSeek / 真实 AI 完整解读（**Phase E7 已实现 DeepSeek + fallback**）
 - [ ] 真实微信激励视频广告
 - [ ] 付费解锁
 - [ ] 奇门 unlock
 - [ ] 独立 `analysis_unlock_record` 审计表
 - [ ] `GET /analysis/{id}/interpretation/full` 分离接口（**仍未实现**；当前 unlock / GET 详情直接返回模板 `full_content`）
+
+### 10.11 Phase E7 交付清单（八字 DeepSeek 完整报告，已完成）
+
+**已实现：**
+
+- [x] unlock 时优先生成 DeepSeek 完整报告（复用 DeepSeek Chat Completions 机制）
+- [x] DeepSeek 失败 / 空内容 / 未配置 → 模板 fallback（`ai_provider=template_fallback`）
+- [x] DeepSeek 成功 → `ai_provider=deepseek`
+- [x] `UnlockWithFullContent` 同步写入 `ai_provider`（SQL 仍限定 `unlock_status=0`）
+- [x] 已解锁重复 unlock 不重复调用 DeepSeek
+- [x] Prompt 合规边界 + 隐私最小化（不发送完整出生日期）
+- [x] 错误响应不暴露 DeepSeek 细节
+
+**仍仅支持：**
+
+- `unlock_type=rewarded_video_mock`（mock 视频，非真实广告）
+
+**Phase E7 明确未做：**
+
+- [ ] 真实微信激励视频
+- [ ] 付费解锁
+- [ ] 奇门 unlock
+- [ ] 新 SQL
+- [ ] 小程序 / Web 大改版
 
 ### 10.8 Phase E 交付清单（摘要）
 
@@ -926,7 +950,8 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 | Phase E5 v1 | 八字模板完整报告 + `rewarded_video_mock` unlock（不接 DeepSeek / 真实广告） |
 | Phase E6（部署）v1 | ECS 后端部署 Phase E5 unlock API（仅 rebuild backend，未改 `.env`） |
 | Phase E6（小程序）v1 | 八字结果页本地 canvas 分享卡片（解锁后权益；摘要不含出生信息） |
+| Phase E7 v1 | 八字 unlock DeepSeek 完整报告 + 模板 fallback |
 
 ---
 
-*Phase E1–E5 功能、Phase E6（部署）内测发布与 Phase E6（小程序）分享卡片均已完成。后续可接入 DeepSeek 或真实激励视频。*
+*Phase E1–E7 功能、Phase E6（部署）内测发布与 Phase E6（小程序）分享卡片均已完成。后续可接入真实激励视频。*

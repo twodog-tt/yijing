@@ -64,7 +64,7 @@ func main() {
 	unlockSvc := unlock.NewService(divinationRepo, sessionRepo, unlockRepo, interpretationSvc, hexagramRepo, categoryRepo)
 	divinationSvc := divination.NewService(divinationRepo, hexagramRepo, categoryRepo, sessionRepo, sensitiveSvc, interpretationSvc)
 	dailyFortuneSvc := dailyfortune.NewService(dailyFortuneRepo, sessionSvc, divinationSvc, interpretationSvc)
-	analysisSvc := analysis.NewService(analysisRepo)
+	analysisSvc := analysis.NewService(analysisRepo, bazi.NewFullReportGenerator(cfg))
 	baziSvc := bazi.NewService(sessionRepo, analysisRepo)
 
 	healthHandler := &handler.HealthHandler{DB: mysqlDB}

@@ -665,7 +665,9 @@ Phase E5 在八字结果页新增「完整报告」与 `rewarded_video_mock` 解
 }
 ```
 
-本阶段 **仅支持** `rewarded_video_mock`。完整报告由后端模板生成，**不接 DeepSeek / 真实 AI**。
+本阶段 **仅支持** `rewarded_video_mock`。完整报告由后端优先生成（Phase E7：DeepSeek，失败 fallback 模板）；小程序调用方式不变。
+
+> **Phase E7 更新：** 当服务器 `AI_PROVIDER=deepseek` 且配置 Key 时，unlock 会尝试 DeepSeek 生成完整报告；失败或未配置时自动 fallback 到模板，用户仍可解锁。
 
 ### 15.2 结果页解锁流程
 
@@ -807,7 +809,32 @@ node --check miniprogram/utils/bazi.js
 node --check miniprogram/utils/poster-canvas.js
 ```
 
-## 19. 当前明确不做
+## 19. Phase E7：八字完整报告 DeepSeek（后端）
+
+Phase E7 将八字 unlock 完整报告从纯模板升级为 **DeepSeek 优先生成 + 模板 fallback**。
+
+### 19.1 行为
+
+- `POST /api/v1/analysis/{id}/unlock` 调用方式不变（仍仅 `rewarded_video_mock`）
+- 服务器 `AI_PROVIDER=deepseek` 且配置 Key 时：尝试 DeepSeek 生成 `full_content`，`ai_provider=deepseek`
+- DeepSeek 失败 / 空内容 / 未配置：fallback 到现有模板，`ai_provider=template_fallback`
+- 已解锁重复 unlock：返回已有 `full_content`，**不重复调用 DeepSeek**
+- 小程序无需改版；GET 详情在已解锁时仍返回 `full_content`（及 `ai_provider` 字段）
+
+### 19.2 合规与隐私
+
+- Prompt 禁止精准算命、婚姻财运预测、改运化解、疾病寿命等表述
+- DeepSeek 输入仅发送简化干支结果（pillars、day_master、five_elements 等），不发送完整出生日期
+- 日志不打印 session_key、出生信息、payload、full_content、DeepSeek 原始响应、API Key
+
+### 19.3 明确未做
+
+- 真实微信激励视频
+- 付费解锁
+- 奇门 unlock
+- 新 SQL / 小程序大改版
+
+## 20. 当前明确不做
 
 - 不提交微信审核或正式发布
 - 不配置正式 request 合法域名

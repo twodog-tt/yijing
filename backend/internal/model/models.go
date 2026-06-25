@@ -10,29 +10,30 @@ const (
 	UnlockStatusUnlocked   = 1
 	MethodCoinThree        = "coin_three"
 
-	AIProviderMock         = "mock"
-	AIProviderDeepSeek     = "deepseek"
-	AIProviderMockFallback = "mock_fallback"
+	AIProviderMock             = "mock"
+	AIProviderDeepSeek         = "deepseek"
+	AIProviderMockFallback     = "mock_fallback"
+	AIProviderTemplateFallback = "template_fallback"
 
-	GenerationStatusPending   = 0
-	GenerationStatusFreeDone    = 1
-	GenerationStatusFullDone    = 2
-	GenerationStatusFailed      = 3
+	GenerationStatusPending  = 0
+	GenerationStatusFreeDone = 1
+	GenerationStatusFullDone = 2
+	GenerationStatusFailed   = 3
 
-	UnlockTypeMockAd              = "mock_ad"
-	UnlockTypeMockButton          = "mock_button"
-	UnlockTypeRewardedVideoMock   = "rewarded_video_mock"
-	UnlockTypeRewardedVideo       = "rewarded_video"
+	UnlockTypeMockAd            = "mock_ad"
+	UnlockTypeMockButton        = "mock_button"
+	UnlockTypeRewardedVideoMock = "rewarded_video_mock"
+	UnlockTypeRewardedVideo     = "rewarded_video"
 
 	AILogStatusSuccess         = 1
 	AILogStatusFailed          = 2
 	AILogStatusFallbackSuccess = 3
 
-	DailyFortuneCategoryID     int64 = 6
-	DailyFortuneCategoryName         = "今日运势"
-	DailyFortuneQuestion             = "我今天的整体状态和行动节奏如何？"
-	DailyFortuneStatusActive         = 1
-	DailyFortuneStatusDeleted        = 0
+	DailyFortuneCategoryID    int64 = 6
+	DailyFortuneCategoryName        = "今日运势"
+	DailyFortuneQuestion            = "我今天的整体状态和行动节奏如何？"
+	DailyFortuneStatusActive        = 1
+	DailyFortuneStatusDeleted       = 0
 )
 
 type Session struct {
@@ -84,23 +85,23 @@ type Divination struct {
 	Status            int       `json:"-"`
 	CreatedAt         time.Time `json:"created_at"`
 
-	Category         *Category `json:"category,omitempty"`
-	PrimaryHexagram  *Hexagram `json:"primary_hexagram,omitempty"`
-	ChangedHexagram  *Hexagram `json:"changed_hexagram,omitempty"`
-	Lines            []Line    `json:"lines,omitempty"`
-	MovingLinesArray []int     `json:"moving_lines,omitempty"`
-	FreeInterpretation string  `json:"free_interpretation,omitempty"`
+	Category           *Category `json:"category,omitempty"`
+	PrimaryHexagram    *Hexagram `json:"primary_hexagram,omitempty"`
+	ChangedHexagram    *Hexagram `json:"changed_hexagram,omitempty"`
+	Lines              []Line    `json:"lines,omitempty"`
+	MovingLinesArray   []int     `json:"moving_lines,omitempty"`
+	FreeInterpretation string    `json:"free_interpretation,omitempty"`
 }
 
 type DivinationListItem struct {
-	ID               int64     `json:"id"`
-	Question         string    `json:"question"`
-	Category         *Category `json:"category"`
-	PrimaryHexagram  *Hexagram `json:"primary_hexagram"`
-	ChangedHexagram  *Hexagram `json:"changed_hexagram"`
-	MovingLines      []int     `json:"moving_lines"`
-	UnlockStatus     int       `json:"unlock_status"`
-	CreatedAt        string    `json:"created_at"`
+	ID              int64     `json:"id"`
+	Question        string    `json:"question"`
+	Category        *Category `json:"category"`
+	PrimaryHexagram *Hexagram `json:"primary_hexagram"`
+	ChangedHexagram *Hexagram `json:"changed_hexagram"`
+	MovingLines     []int     `json:"moving_lines"`
+	UnlockStatus    int       `json:"unlock_status"`
+	CreatedAt       string    `json:"created_at"`
 }
 
 type PaginatedDivinations struct {
@@ -151,10 +152,10 @@ type UnlockRequest struct {
 }
 
 type UnlockResult struct {
-	DivinationID      int64  `json:"divination_id"`
-	UnlockStatus      int    `json:"unlock_status"`
-	MockTransactionID string `json:"mock_transaction_id"`
-	FullInterpretation any `json:"full_interpretation"`
+	DivinationID       int64  `json:"divination_id"`
+	UnlockStatus       int    `json:"unlock_status"`
+	MockTransactionID  string `json:"mock_transaction_id"`
+	FullInterpretation any    `json:"full_interpretation"`
 }
 
 type AIGenerationLog struct {
