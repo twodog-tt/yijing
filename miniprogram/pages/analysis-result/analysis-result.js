@@ -3,6 +3,7 @@ const { getAdConfig, getCurrentEnvironment } = require("../../utils/config");
 const { createRewardedAdController } = require("../../utils/rewarded-ad");
 const {
   buildAnalysisView,
+  buildBaziCardData,
   ELEMENT_LABELS,
   MODULE_BAZI_LABEL,
 } = require("../../utils/bazi");
@@ -86,6 +87,8 @@ Page({
     unlocking: false,
     deleting: false,
     deleteError: "",
+    cardData: null,
+    cardGenerating: false,
   },
 
   onLoad(options) {
@@ -136,7 +139,7 @@ Page({
   },
 
   beginUnlockFlow() {
-    if (this.pageUnloaded || this.data.deleting) return null;
+    if (this.pageUnloaded || this.data.deleting || this.data.cardGenerating) return null;
     if (this.unlockFlowRunning) {
       wx.showToast({ title: "正在处理中，请稍候", icon: "none" });
       return null;
@@ -196,6 +199,7 @@ Page({
         elementRows: this.buildElementRows(view.elements),
         fullStatus: unlocked && fullContent ? "loaded" : "locked",
         fullContent,
+        cardData: buildBaziCardData(this.data.recordId, view),
       });
     } catch (error) {
       this.setData({
@@ -204,6 +208,7 @@ Page({
         view: null,
         fullStatus: "locked",
         fullContent: "",
+        cardData: null,
       });
     }
   },
@@ -242,7 +247,7 @@ Page({
 
   handleUnlock() {
     if (!this.data.recordId || this.data.fullStatus === "loaded") return;
-    if (this.data.deleting) return;
+    if (this.data.deleting || this.data.cardGenerating) return;
     if (!this.rewardedAdController) {
       wx.showToast({ title: "广告模块暂不可用", icon: "none" });
       return;
@@ -293,7 +298,7 @@ Page({
   },
 
   handleDelete() {
-    if (this.data.deleting || this.data.unlockFlowRunning || !this.data.recordId) {
+    if (this.data.deleting || this.data.unlockFlowRunning || this.data.cardGenerating || !this.data.recordId) {
       return;
     }
 
@@ -309,7 +314,7 @@ Page({
   },
 
   async deleteRecord() {
-    if (this.data.deleting || this.data.unlockFlowRunning) return;
+    if (this.data.deleting || this.data.unlockFlowRunning || this.data.cardGenerating) return;
 
     this.setData({
       deleting: true,
@@ -332,6 +337,38 @@ Page({
         deleting: false,
         deleteError: mapDeleteError(error),
       });
+    }
+  },
+
+  async handleGenerateCard() {
+    if (
+      this.data.loading ||
+      this.data.cardGenerating ||
+      this.data.deleting ||
+      this.data.unlockFlowRunning ||
+      this.data.unlocking ||
+      !this.data.view ||
+      !this.data.recordId
+    ) {
+      if (!this.data.view) {
+        wx.showToast({ title: "结果尚未加载完成", icon: "none" });
+      }
+      return;
+    }
+
+    const card = this.selectComponent("#baziShareCard");
+    if (!card) {
+      wx.showToast({ title: "卡片模块暂不可用", icon: "none" });
+      return;
+    }
+
+    this.setData({ cardGenerating: true });
+    try {
+      await card.open();
+    } finally {
+      if (!this.pageUnloaded) {
+        this.setData({ cardGenerating: false });
+      }
     }
   },
 });

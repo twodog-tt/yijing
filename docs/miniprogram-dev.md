@@ -698,9 +698,9 @@ Phase E5 在八字结果页新增「完整报告」与 `rewarded_video_mock` 解
 - [ ] 删除已解锁记录成功；再次打开提示不存在
 - [ ] Console 不打印敏感信息
 
-## 16. Phase E6：ECS 后端部署（Phase E5 unlock）
+## 16. Phase E6（部署）：ECS 后端部署（Phase E5 unlock）
 
-Phase E6 将 Phase E5 后端发布到内测 ECS（`http://123.57.48.214/api/v1`），**仅 rebuild backend**，不改服务器 `.env`、Nginx、frontend。
+Phase E6（部署）将 Phase E5 后端发布到内测 ECS（`http://123.57.48.214/api/v1`），**仅 rebuild backend**，不改服务器 `.env`、Nginx、frontend。
 
 ### 16.1 部署命令（服务器 `/opt/yijing`）
 
@@ -724,7 +724,52 @@ curl -s http://127.0.0.1:8080/api/v1/health
 
 关闭合法域名校验后，在八字结果页验证 mock 解锁 → 完整报告展示 → 刷新仍已解锁 → 删除后不可再开。
 
-## 17. 当前明确不做
+## 18. Phase E6（小程序）：八字结果分享卡片
+
+在八字结果页新增「生成结果卡片」，使用本地 canvas 生成竖版摘要卡片，支持预览与保存到相册。
+
+### 18.1 功能范围
+
+- 按钮文案：**生成结果卡片**
+- 未解锁 / 已解锁均可生成（均为摘要，不含完整报告全文）
+- 本地 canvas 生成，不请求后端、不生成小程序码
+- 复用六爻海报的 canvas / 相册权限模式（`components/bazi-share-card/` + `utils/poster-canvas.js`）
+
+### 18.2 卡片展示内容
+
+- 文易传统文化 / 八字简析
+- 简化干支文化规则说明
+- 年柱 / 月柱 / 日柱 / 时柱（时辰未知时显示提示文案）
+- 五行倾向摘要
+- 反思焦点摘要
+- 行动建议 1–2 条
+- 底部免责声明
+
+**不展示：** 出生日期、出生时辰、session_key、完整报告、`input_payload` / `result_payload`
+
+### 18.3 微信开发者工具验收清单
+
+- [ ] 八字结果页显示「生成结果卡片」
+- [ ] 未解锁 / 已解锁状态均可生成摘要卡片
+- [ ] 卡片不展示出生日期 / 出生时辰
+- [ ] 卡片不展示完整报告全文
+- [ ] 时辰未知时显示「时辰未知，本次不生成时柱」
+- [ ] 保存相册成功
+- [ ] 拒绝相册权限有友好提示
+- [ ] Console 不打印 session_key / 出生信息 / full_content
+- [ ] 删除中 / 解锁中 / 生成中不可重复操作
+- [ ] 记录不存在时不可生成
+
+### 18.4 语法检查
+
+```bash
+node --check miniprogram/pages/analysis-result/analysis-result.js
+node --check miniprogram/components/bazi-share-card/bazi-share-card.js
+node --check miniprogram/utils/bazi.js
+node --check miniprogram/utils/poster-canvas.js
+```
+
+## 19. 当前明确不做
 
 - 不提交微信审核或正式发布
 - 不配置正式 request 合法域名

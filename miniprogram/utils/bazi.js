@@ -69,10 +69,43 @@ function buildAnalysisView(record) {
   };
 }
 
+function summarizeText(text, maxLength = 72) {
+  const normalized = String(text || "").replace(/\s+/g, " ").trim();
+  if (!normalized) return "";
+  if (normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, maxLength)}…`;
+}
+
+function buildElementSummary(elements) {
+  return ["wood", "fire", "earth", "metal", "water"]
+    .map((key) => `${ELEMENT_LABELS[key]} ${Number(elements?.[key]) || 0}`)
+    .join(" · ");
+}
+
+function buildBaziCardData(recordId, view) {
+  if (!recordId || !view) return null;
+  const suggestions = Array.isArray(view.actionSuggestions)
+    ? view.actionSuggestions
+        .slice(0, 2)
+        .map((item) => summarizeText(item, 56))
+        .filter(Boolean)
+    : [];
+
+  return {
+    id: String(recordId),
+    pillars: view.pillars,
+    hourUnknown: Boolean(view.hourUnknown),
+    elementSummary: buildElementSummary(view.elements),
+    reflectionFocus: summarizeText(view.reflectionFocus, 80),
+    actionSuggestions: suggestions,
+  };
+}
+
 module.exports = {
   ELEMENT_LABELS,
   HOUR_BRANCHES,
   MODULE_BAZI_LABEL,
   buildAnalysisView,
+  buildBaziCardData,
   parseJSONField,
 };

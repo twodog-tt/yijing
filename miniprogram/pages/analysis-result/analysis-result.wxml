@@ -92,8 +92,15 @@
       </view>
     </view>
 
+    <view class="card-section">
+      <button class="secondary-button card-button" loading="{{cardGenerating}}" disabled="{{cardGenerating || deleting || unlockFlowRunning || unlocking || !view}}" bindtap="handleGenerateCard">生成结果卡片</button>
+      <text class="card-hint">卡片仅展示摘要，不包含出生信息、完整报告或小程序码。</text>
+    </view>
+
+    <bazi-share-card id="baziShareCard" card-data="{{cardData}}"></bazi-share-card>
+
     <error-state wx:if="{{deleteError}}" visible="{{true}}" message="{{deleteError}}" show-retry="{{false}}"></error-state>
-    <button class="secondary-button delete-button" loading="{{deleting}}" disabled="{{deleting || unlockFlowRunning || unlocking}}" bindtap="handleDelete">删除这条记录</button>
+    <button class="secondary-button delete-button" loading="{{deleting}}" disabled="{{deleting || unlockFlowRunning || unlocking || cardGenerating}}" bindtap="handleDelete">删除这条记录</button>
 
     <text class="disclaimer">内容仅用于传统文化学习、自我反思和行动整理，不构成现实决策建议。</text>
   </block>

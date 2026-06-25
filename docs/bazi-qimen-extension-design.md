@@ -456,7 +456,7 @@ Phase F 将细化：起局简化规则、Prompt 红线、与八字 schema 的 UI
 | 路径 | 阶段 | 说明 |
 |------|------|------|
 | `pages/bazi/bazi` | **Phase E3** ✅ | 八字表单：出生日期、时辰、免责声明 |
-| `pages/analysis-result/analysis-result` | **Phase E3/E5** ✅ | 八字结果页：免费简析、mock 解锁完整报告、删除 |
+| `pages/analysis-result/analysis-result` | **Phase E3/E5/E6（小程序）** ✅ | 八字结果页：免费简析、mock 解锁、本地结果卡片、删除 |
 | `pages/qimen/qimen` | **Phase G** | 奇门问事表单；Phase C–F **仅预留**路由与导航位 |
 | 首页入口「八字简析」 | **Phase E3** ✅ | 稳文案，见 §1.1 |
 
@@ -823,7 +823,9 @@ WHERE id = ? AND session_id = ? AND status = 1
 - [ ] DeepSeek / AI 完整解读
 - [ ] 真实广告 / 付费
 
-### 10.9 Phase E6 交付清单（ECS 后端部署，已完成）
+> **Phase E6 命名说明：** **Phase E6（部署）** 指 ECS 发布 E5 unlock API；**Phase E6（小程序）** 指八字结果页本地分享卡片。二者独立交付，编号并列，避免与部署阶段混淆。
+
+### 10.9 Phase E6（部署）交付清单（ECS 后端部署，已完成）
 
 **部署目标：** 将 Phase E5 unlock API 发布到内测 ECS，供小程序 `http://123.57.48.214/api/v1` 联调。
 
@@ -851,6 +853,22 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 | `DELETE /analysis/{id}` | 成功；再次 GET → 404 |
 
 **小程序侧：** 微信开发者工具关闭合法域名校验后，可验收八字结果页 mock 解锁完整报告（见 `docs/miniprogram-dev.md` §15–§16）。
+
+### 10.10 Phase E6（小程序）交付清单（八字结果分享卡片，已完成）
+
+**已实现：**
+
+- [x] 八字结果页「生成结果卡片」按钮
+- [x] 本地 canvas 竖版摘要卡片（`components/bazi-share-card/`）
+- [x] 保存到相册 + 权限引导
+- [x] 卡片不含出生日期 / 时辰 / 完整报告 / 小程序码
+- [x] 生成中 / 保存中 / 删除中 / 解锁中互斥
+
+**明确未做：**
+
+- [ ] 后端生成图片
+- [ ] 小程序码
+- [ ] 分享完整报告到卡片
 
 ---
 
@@ -893,8 +911,9 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 | Phase E2 v1 | 八字记录硬删除 API + 隐私删除闭环 |
 | Phase E3 v1 | 小程序八字页面 + API 联调（免费简析 + 删除；不含 unlock / AI / 奇门） |
 | Phase E5 v1 | 八字模板完整报告 + `rewarded_video_mock` unlock（不接 DeepSeek / 真实广告） |
-| Phase E6 v1 | ECS 后端部署 Phase E5 unlock API（仅 rebuild backend，未改 `.env`） |
+| Phase E6（部署）v1 | ECS 后端部署 Phase E5 unlock API（仅 rebuild backend，未改 `.env`） |
+| Phase E6（小程序）v1 | 八字结果页本地 canvas 分享卡片（摘要，不含出生信息） |
 
 ---
 
-*Phase E1–E5 功能与 Phase E6 内测部署已完成。小程序可在开发者工具联调八字 mock 解锁；后续可接入 DeepSeek 或真实激励视频。*
+*Phase E1–E5 功能、Phase E6（部署）内测发布与 Phase E6（小程序）分享卡片均已完成。后续可接入 DeepSeek 或真实激励视频。*
