@@ -102,14 +102,20 @@
       </view>
     </view>
 
-    <view wx:if="{{isUnlocked}}" class="action-block">
-      <button
-        class="action-button action-button--card"
-        loading="{{cardGenerating}}"
-        disabled="{{cardGenerating || deleting || unlockFlowRunning || unlocking}}"
-        bindtap="handleGenerateCard"
-      >生成分享长图</button>
-      <text class="action-hint">长图包含免费解读与完整报告，不包含出生日期、时辰或小程序码。</text>
+    <view class="card share-section">
+      <text class="section-title">分享这份简析</text>
+      <text class="share-hint">发送微信分享卡片，邀请朋友体验八字简析。分享为入口引导，不包含出生信息。</text>
+      <view class="share-actions">
+        <button class="secondary-button share-button" open-type="share">分享给朋友</button>
+        <button
+          wx:if="{{isUnlocked}}"
+          class="primary-button share-button"
+          loading="{{cardGenerating}}"
+          disabled="{{cardGenerating || deleting || unlockFlowRunning || unlocking}}"
+          bindtap="handleGenerateCard"
+        >生成分享长图</button>
+      </view>
+      <text wx:if="{{isUnlocked}}" class="share-hint share-hint--secondary">长图包含免费解读与完整报告，不包含出生日期、时辰或小程序码。</text>
     </view>
 
     <bazi-share-card id="baziShareCard" card-data="{{cardData}}"></bazi-share-card>
