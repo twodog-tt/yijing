@@ -939,3 +939,70 @@ node --check miniprogram/components/share-poster/share-poster.js
 - 不写入 AppSecret、DeepSeek API Key、服务器密码或私钥
 
 所有卦象内容保持传统文化学习、趣味解读、自我反思和行动整理定位，不作为预测或医疗、法律、投资等现实决策建议。
+
+## 22. Phase F2：小程序奇门问事页面
+
+Phase F2 接入 Phase F1 奇门后端 API，提供表单、结果展示、最近记录与删除能力。
+
+### 22.1 新增页面
+
+| 页面 | 路径 | 说明 |
+|---|---|---|
+| 奇门问事表单 | `pages/qimen/qimen` | 问题 + 分类 + 免责声明；最近记录列表 |
+| 奇门问事结果 | `pages/qimen-result/qimen-result` | 展示结构化简析 + 免费解读 + 删除 |
+
+首页新增「奇门问事」入口卡片。
+
+### 22.2 API 封装（`miniprogram/utils/api.js`）
+
+| 方法 | 后端 |
+|---|---|
+| `createQimenAnalysis(params)` | `POST /analysis/qimen` |
+| `getQimenAnalysisList({ page, page_size })` | `GET /analysis?module=qimen` |
+| `getAnalysis(id)` | `GET /analysis/{id}`（复用） |
+| `deleteAnalysis(id)` | `DELETE /analysis/{id}`（复用） |
+
+Session：`POST` body + `X-Session-Key` header；`GET`/`DELETE` 仅 header，**不放 query**。
+
+### 22.3 表单与校验
+
+- `question` 必填，4–120 字
+- `category`：`career` / `relationship` / `study` / `decision` / `general`
+- `confirm_disclaimer` 必须勾选
+- 不采集姓名、手机号、身份证、地址、性别、地理位置
+- 提交中防重复点击；`40002` 敏感问题友好提示
+
+### 22.4 结果展示
+
+展示：方法说明、局势梳理、风险观察、行动节奏、自我反思、行动建议、免费解读、简化说明、免责声明。
+
+**不展示：** 完整原问题、session_key、原始 payload JSON。
+
+**本阶段不显示：** 解锁完整报告、观看视频、生成长图、DeepSeek。
+
+### 22.5 最近记录
+
+- 调用 `getQimenAnalysisList`
+- 列表仅展示「奇门问事」+ 安全摘要 + 创建时间
+- 点击进入 `qimen-result`
+
+### 22.6 语法检查
+
+```bash
+node --check miniprogram/utils/api.js
+node --check miniprogram/utils/qimen.js
+node --check miniprogram/pages/qimen/qimen.js
+node --check miniprogram/pages/qimen-result/qimen-result.js
+```
+
+### 22.7 微信开发者工具验收清单
+
+- [ ] 首页可见「奇门问事」入口
+- [ ] 表单校验：空问题 / 过短 / 过长 / 未勾选免责声明
+- [ ] 提交成功跳转结果页
+- [ ] 结果页展示局势梳理、风险观察、行动节奏等字段
+- [ ] 结果页不展示完整原问题
+- [ ] 最近记录不展示完整原问题
+- [ ] 删除记录确认后返回奇门页
+- [ ] 敏感问题（如投资类）有友好提示
+- [ ] Console 不打印 question / session_key / payload

@@ -1,0 +1,51 @@
+@import "../ask/ask.wxss";
+
+.question-label {
+  margin-top: 32rpx;
+}
+
+.history-section {
+  margin-top: 16rpx;
+}
+
+.history-list {
+  margin-top: 8rpx;
+}
+
+.history-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24rpx;
+  margin-bottom: 16rpx;
+  padding: 28rpx;
+  border: 1rpx solid #e7e5e4;
+  border-radius: 20rpx;
+  background: #ffffff;
+}
+
+.history-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.history-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #292524;
+}
+
+.history-subtitle {
+  display: block;
+  margin-top: 8rpx;
+  color: #78716c;
+  font-size: 22rpx;
+}
+
+.history-time {
+  flex-shrink: 0;
+  color: #a8a29e;
+  font-size: 22rpx;
+  white-space: nowrap;
+}

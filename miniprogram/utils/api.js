@@ -15,6 +15,7 @@ const API_PATHS = Object.freeze({
   divinations: "/divinations",
   dailyFortuneToday: "/daily-fortune/today",
   analysisBazi: "/analysis/bazi",
+  analysisQimen: "/analysis/qimen",
   analysis: "/analysis",
 });
 
@@ -201,6 +202,36 @@ async function createBaziAnalysis(params = {}) {
   });
 }
 
+async function createQimenAnalysis(params = {}) {
+  const session = await ensureSession();
+  return request({
+    path: API_PATHS.analysisQimen,
+    method: "POST",
+    data: {
+      session_key: session.session_key,
+      question: String(params.question || "").trim(),
+      category: String(params.category || "general").trim(),
+      confirm_disclaimer: true,
+    },
+    header: sessionHeader(session.session_key),
+  });
+}
+
+async function getQimenAnalysisList({ page = 1, page_size = 20 } = {}) {
+  const session = await ensureSession();
+  const query = [
+    "module=qimen",
+    `page=${positiveInteger(page, 1)}`,
+    `page_size=${positiveInteger(page_size, 20)}`,
+  ].join("&");
+
+  return request({
+    path: `${API_PATHS.analysis}?${query}`,
+    method: "GET",
+    header: sessionHeader(session.session_key),
+  });
+}
+
 async function getAnalysis(id) {
   const session = await ensureSession();
   return request({
@@ -258,11 +289,13 @@ module.exports = {
   API_PATHS,
   SESSION_HEADER,
   createBaziAnalysis,
+  createQimenAnalysis,
   createDivination,
   createSession,
   deleteAnalysis,
   getAnalysis,
   getAnalysisList,
+  getQimenAnalysisList,
   getCategories,
   getDivination,
   getDivinationHistory,

@@ -6,6 +6,8 @@
     "pages/result/result",
     "pages/history/history",
     "pages/bazi/bazi",
+    "pages/qimen/qimen",
+    "pages/qimen-result/qimen-result",
     "pages/analysis-result/analysis-result",
     "pages/about/about",
     "pages/debug/debug"

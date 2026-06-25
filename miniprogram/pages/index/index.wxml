@@ -22,6 +22,13 @@
     </view>
     <text>→</text>
   </navigator>
+  <navigator class="nav-link qimen-link" url="/pages/qimen/qimen">
+    <view class="nav-link-content">
+      <text>奇门问事</text>
+      <text class="nav-subtitle">基于传统奇门文化的局势梳理与行动节奏参考</text>
+    </view>
+    <text>→</text>
+  </navigator>
   <navigator class="nav-link today-link" url="/pages/today/today">
     <text>今日一卦</text><text>→</text>
   </navigator>

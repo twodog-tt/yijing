@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "奇门问事",
+  "usingComponents": {
+    "loading-state": "/components/loading-state/loading-state",
+    "error-state": "/components/error-state/error-state"
+  }
+}

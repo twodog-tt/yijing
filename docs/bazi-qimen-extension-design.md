@@ -80,7 +80,7 @@
 
 ---
 
-### 1.2 奇门问事（简化学习版）（Phase F1 后端 ✅ · Phase F2 小程序规划）
+### 1.2 奇门问事（简化学习版）（Phase F1 后端 ✅ · Phase F2 小程序 ✅）
 
 **定位：**
 
@@ -480,7 +480,8 @@ Phase F 将细化：起局简化规则、Prompt 红线、与八字 schema 的 UI
 |------|------|------|
 | `pages/bazi/bazi` | **Phase E3** ✅ | 八字表单：出生日期、时辰、免责声明 |
 | `pages/analysis-result/analysis-result` | **Phase E3/E5/E6/E9（小程序）** ✅ | 八字结果页：免费简析、mock 解锁、微信分享、解锁后完整分享长图、删除 |
-| `pages/qimen/qimen` | **Phase G** | 奇门问事表单；Phase C–F **仅预留**路由与导航位 |
+| `pages/qimen/qimen` | **Phase F2** ✅ | 奇门问事表单 + 最近记录 |
+| `pages/qimen-result/qimen-result` | **Phase F2** ✅ | 奇门结果页（仅免费解读 + 删除） |
 | 首页入口「八字简析」 | **Phase E3** ✅ | 稳文案，见 §1.1 |
 
 ### 6.2 结果页复用策略
@@ -1026,11 +1027,32 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 
 **明确未做：**
 
-- [ ] 小程序奇门页面（Phase F2）
+- [x] 小程序奇门页面（Phase F2 已完成，见 §10.14）
 - [ ] 奇门 unlock / DeepSeek 完整报告
 - [ ] 完整九宫盘 UI / 专业排盘
 - [ ] 军事、赌博、投资、医疗、法律具体建议
 
 ---
 
-*Phase F1 后端基础 API 已交付。Phase F2 计划接入小程序奇门页面。*
+### 10.14 Phase F2 交付清单（小程序奇门问事页面，已完成）
+
+**已实现：**
+
+- [x] `pages/qimen/qimen` 表单页：question / category / confirm_disclaimer
+- [x] `pages/qimen-result/qimen-result` 结果页：局势梳理、风险观察、行动节奏、反思、建议、免费解读
+- [x] 首页「奇门问事」入口卡片
+- [x] `createQimenAnalysis` / `getQimenAnalysisList` API 封装
+- [x] 最近记录列表 + 详情跳转
+- [x] 详情页删除（确认后返回奇门页）
+- [x] 不展示完整原问题、session_key、原始 payload
+- [x] 不显示 unlock / 视频 / 长图 / DeepSeek
+
+**明确未做：**
+
+- [ ] 奇门 unlock / DeepSeek 完整报告
+- [ ] 完整九宫盘 UI / 专业排盘
+- [ ] 长图分享
+
+---
+
+*Phase F1 后端基础 API 已交付。Phase F2 小程序奇门页面已交付。后续可接入 unlock / 长图 / 高级 UI。*

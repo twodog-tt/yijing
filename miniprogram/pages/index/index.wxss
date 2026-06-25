@@ -42,6 +42,12 @@
   color: #292524;
 }
 
+.qimen-link {
+  border-color: #d6d3d1;
+  background: #fafaf9;
+  color: #292524;
+}
+
 .nav-link-content {
   display: flex;
   flex-direction: column;

@@ -1,0 +1,85 @@
+<view class="page">
+  <navigator class="back-link" open-type="navigateBack" delta="1">← 返回</navigator>
+
+  <loading-state wx:if="{{loading}}" text="正在加载奇门简析…"></loading-state>
+
+  <view wx:if="{{!loading && error}}" class="page-error">
+    <error-state visible="{{true}}" message="{{error}}" bindretry="loadResult"></error-state>
+    <navigator class="nav-link error-link" url="/pages/qimen/qimen">返回奇门问事 →</navigator>
+  </view>
+
+  <block wx:if="{{!loading && view}}">
+    <view class="page-header">
+      <text class="eyebrow">奇门问事</text>
+      <text class="page-title">{{moduleLabel}}</text>
+      <view class="result-meta">
+        <text>{{view.algorithmVersion}}</text>
+        <text>{{view.categoryLabel}}</text>
+        <text wx:if="{{view.timeBucketLabel}}">{{view.timeBucketLabel}}</text>
+        <text>{{createdAtDisplay}}</text>
+      </view>
+    </view>
+
+    <view class="card">
+      <text class="card-title">方法说明</text>
+      <text class="card-text">{{view.methodNote}}</text>
+      <text class="muted-text privacy-note">{{privacyNote}}</text>
+    </view>
+
+    <view class="card">
+      <text class="section-title">局势梳理</text>
+      <text class="card-text pre-wrap">{{view.situationOverview}}</text>
+    </view>
+
+    <view wx:if="{{view.riskObservations.length}}" class="card">
+      <text class="section-title">风险观察</text>
+      <view class="bullet-list">
+        <text class="bullet-item" wx:for="{{view.riskObservations}}" wx:key="*this">· {{item}}</text>
+      </view>
+    </view>
+
+    <view wx:if="{{view.actionPacing}}" class="card">
+      <text class="section-title">行动节奏</text>
+      <text class="card-text pre-wrap">{{view.actionPacing}}</text>
+    </view>
+
+    <view wx:if="{{view.reflectionQuestions.length}}" class="card">
+      <text class="section-title">自我反思问题</text>
+      <view class="bullet-list">
+        <text class="bullet-item" wx:for="{{view.reflectionQuestions}}" wx:key="*this">· {{item}}</text>
+      </view>
+    </view>
+
+    <view wx:if="{{view.actionSuggestions.length}}" class="card">
+      <text class="section-title">行动建议</text>
+      <view class="bullet-list">
+        <text class="bullet-item" wx:for="{{view.actionSuggestions}}" wx:key="*this">· {{item}}</text>
+      </view>
+    </view>
+
+    <view wx:if="{{view.freeContent}}" class="card free-card">
+      <text class="section-title">免费解读</text>
+      <text class="free-content pre-wrap">{{view.freeContent}}</text>
+    </view>
+
+    <view wx:if="{{view.limits.length}}" class="card limits-card">
+      <text class="section-title">简化说明</text>
+      <view class="bullet-list">
+        <text class="bullet-item" wx:for="{{view.limits}}" wx:key="*this">· {{item}}</text>
+      </view>
+    </view>
+
+    <view class="danger-section">
+      <text class="danger-label">危险操作</text>
+      <error-state wx:if="{{deleteError}}" visible="{{true}}" message="{{deleteError}}" show-retry="{{false}}"></error-state>
+      <button
+        class="danger-button"
+        loading="{{deleting}}"
+        disabled="{{deleting}}"
+        bindtap="handleDelete"
+      >删除记录</button>
+    </view>
+
+    <text class="disclaimer">内容仅用于传统文化学习、自我反思和行动整理，不构成现实决策建议。</text>
+  </block>
+</view>
