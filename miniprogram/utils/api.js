@@ -234,6 +234,26 @@ async function deleteAnalysis(id) {
   });
 }
 
+async function unlockAnalysis(id, { unlockType } = {}) {
+  const session = await ensureSession();
+  const normalizedType = String(unlockType || "").trim();
+  if (!normalizedType) {
+    throw new RequestError({
+      type: ERROR_TYPES.CONFIG,
+      message: "unlock_type 不能为空。",
+    });
+  }
+
+  return request({
+    path: `${API_PATHS.analysis}/${requireId(id)}/unlock`,
+    method: "POST",
+    data: {
+      unlock_type: normalizedType,
+    },
+    header: sessionHeader(session.session_key),
+  });
+}
+
 module.exports = {
   API_PATHS,
   SESSION_HEADER,
@@ -250,5 +270,6 @@ module.exports = {
   getFullInterpretation,
   getTodayFortune,
   health,
+  unlockAnalysis,
   unlockDivination,
 };

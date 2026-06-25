@@ -2,6 +2,7 @@ package analysis_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"testing"
@@ -16,6 +17,7 @@ type mockAnalysisRepo struct {
 	findFn   func(ctx context.Context, id, sessionID int64) (*model.AnalysisRecord, error)
 	listFn   func(ctx context.Context, sessionID int64, moduleType *int, page, pageSize int) ([]model.AnalysisListItem, int64, int, int, error)
 	deleteFn func(ctx context.Context, id, sessionID int64) error
+	unlockFn func(ctx context.Context, id, sessionID int64, unlockType, fullContent string) error
 }
 
 func (m *mockAnalysisRepo) FindOwnedByID(ctx context.Context, id, sessionID int64) (*model.AnalysisRecord, error) {
@@ -29,6 +31,13 @@ func (m *mockAnalysisRepo) ListBySession(ctx context.Context, sessionID int64, m
 func (m *mockAnalysisRepo) DeleteOwnedByID(ctx context.Context, id, sessionID int64) error {
 	if m.deleteFn != nil {
 		return m.deleteFn(ctx, id, sessionID)
+	}
+	return nil
+}
+
+func (m *mockAnalysisRepo) UnlockWithFullContent(ctx context.Context, id, sessionID int64, unlockType, fullContent string) error {
+	if m.unlockFn != nil {
+		return m.unlockFn(ctx, id, sessionID, unlockType, fullContent)
 	}
 	return nil
 }
@@ -176,5 +185,91 @@ func TestDeleteInvalidParams(t *testing.T) {
 	err := svc.Delete(context.Background(), 0, 5)
 	if !errors.Is(err, analysis.ErrInvalidParams) {
 		t.Fatalf("expected invalid params, got %v", err)
+	}
+}
+
+func sampleBaziRecord(id, sessionID int64) *model.AnalysisRecord {
+	free := "free content"
+	return &model.AnalysisRecord{
+		ID:            id,
+		SessionID:     sessionID,
+		ModuleType:    model.ModuleTypeBazi,
+		ResultPayload: json.RawMessage(`{"day_master":"甲","pillars":{"year":"乙亥","month":"己丑","day":"甲子","hour":"甲子"},"five_elements":{"wood":2,"fire":1,"earth":1,"metal":1,"water":1},"reflection_focus":"观察节奏","action_suggestions":["记录一周状态"]}`),
+		FreeContent:   &free,
+		UnlockStatus:  model.AnalysisUnlockStatusLocked,
+	}
+}
+
+func TestUnlockSuccess(t *testing.T) {
+	var unlockCalled bool
+	svc := analysis.NewServiceWithRepo(&mockAnalysisRepo{
+		findFn: func(_ context.Context, id, sessionID int64) (*model.AnalysisRecord, error) {
+			return sampleBaziRecord(id, sessionID), nil
+		},
+		unlockFn: func(_ context.Context, id, sessionID int64, unlockType, fullContent string) error {
+			unlockCalled = true
+			if id != 5 || sessionID != 10 || unlockType != model.UnlockTypeRewardedVideoMock || fullContent == "" {
+				t.Fatalf("unexpected unlock args id=%d sessionID=%d type=%q", id, sessionID, unlockType)
+			}
+			return nil
+		},
+	})
+
+	result, err := svc.Unlock(context.Background(), 10, 5, model.UnlockTypeRewardedVideoMock)
+	if err != nil {
+		t.Fatalf("Unlock: %v", err)
+	}
+	if !unlockCalled {
+		t.Fatalf("expected unlock repository call")
+	}
+	if result.UnlockStatus != model.AnalysisUnlockStatusUnlocked || result.FullContent == "" {
+		t.Fatalf("unexpected unlock result: %#v", result)
+	}
+}
+
+func TestUnlockRejectsInvalidUnlockType(t *testing.T) {
+	svc := analysis.NewServiceWithRepo(&mockAnalysisRepo{})
+	_, err := svc.Unlock(context.Background(), 10, 5, "mock_button")
+	if !errors.Is(err, analysis.ErrInvalidParams) {
+		t.Fatalf("expected invalid params, got %v", err)
+	}
+}
+
+func TestUnlockAlreadyUnlockedSkipsRepositoryUpdate(t *testing.T) {
+	full := "existing full content"
+	record := sampleBaziRecord(5, 10)
+	record.UnlockStatus = model.AnalysisUnlockStatusUnlocked
+	record.FullContent = &full
+
+	svc := analysis.NewServiceWithRepo(&mockAnalysisRepo{
+		findFn: func(_ context.Context, id, sessionID int64) (*model.AnalysisRecord, error) {
+			return record, nil
+		},
+		unlockFn: func(_ context.Context, _, _ int64, _, _ string) error {
+			t.Fatalf("expected no repository unlock for already unlocked record")
+			return nil
+		},
+	})
+
+	result, err := svc.Unlock(context.Background(), 10, 5, model.UnlockTypeRewardedVideoMock)
+	if err != nil {
+		t.Fatalf("Unlock: %v", err)
+	}
+	if result.FullContent != full {
+		t.Fatalf("expected existing full content, got %q", result.FullContent)
+	}
+}
+
+func TestUnlockModuleNotSupported(t *testing.T) {
+	record := sampleBaziRecord(5, 10)
+	record.ModuleType = model.ModuleTypeQimen
+	svc := analysis.NewServiceWithRepo(&mockAnalysisRepo{
+		findFn: func(_ context.Context, id, sessionID int64) (*model.AnalysisRecord, error) {
+			return record, nil
+		},
+	})
+	_, err := svc.Unlock(context.Background(), 10, 5, model.UnlockTypeRewardedVideoMock)
+	if !errors.Is(err, analysis.ErrModuleNotSupported) {
+		t.Fatalf("expected module not supported, got %v", err)
 	}
 }

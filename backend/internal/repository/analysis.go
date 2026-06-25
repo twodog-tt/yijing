@@ -117,6 +117,39 @@ func (r *AnalysisRepository) FindOwnedByID(ctx context.Context, id, sessionID in
 	return scanAnalysisRecord(row)
 }
 
+func (r *AnalysisRepository) UnlockWithFullContent(
+	ctx context.Context,
+	id, sessionID int64,
+	unlockType, fullContent string,
+) error {
+	if id <= 0 || sessionID <= 0 {
+		return ErrInvalidAnalysisParams
+	}
+	unlockType = strings.TrimSpace(unlockType)
+	fullContent = strings.TrimSpace(fullContent)
+	if unlockType == "" || fullContent == "" {
+		return ErrInvalidAnalysisParams
+	}
+
+	res, err := r.db.ExecContext(ctx, `
+		UPDATE analysis_records
+		SET unlock_status = ?, unlock_type = ?, full_content = ?, generation_status = ?, updated_at = NOW()
+		WHERE id = ? AND session_id = ? AND status = ? AND unlock_status = ?
+	`, model.AnalysisUnlockStatusUnlocked, unlockType, fullContent, model.AnalysisGenerationStatusFullDone,
+		id, sessionID, model.AnalysisStatusActive, model.AnalysisUnlockStatusLocked)
+	if err != nil {
+		return err
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return ErrAnalysisNotFound
+	}
+	return nil
+}
+
 func (r *AnalysisRepository) DeleteOwnedByID(ctx context.Context, id, sessionID int64) error {
 	if id <= 0 || sessionID <= 0 {
 		return ErrInvalidAnalysisParams

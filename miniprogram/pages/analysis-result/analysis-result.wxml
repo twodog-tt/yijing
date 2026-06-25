@@ -79,8 +79,21 @@
       <text class="free-content pre-wrap">{{view.freeContent}}</text>
     </view>
 
+    <view class="full-section">
+      <loading-state wx:if="{{unlocking}}" text="正在解锁完整报告…"></loading-state>
+      <error-state wx:if="{{unlockError}}" visible="{{true}}" message="{{unlockError}}" show-retry="{{false}}"></error-state>
+
+      <button wx:if="{{fullStatus === 'locked' && !unlockFlowRunning}}" class="unlock-button" loading="{{unlockFlowRunning}}" disabled="{{unlockFlowRunning || deleting}}" bindtap="handleUnlock">观看视频，解锁完整报告</button>
+      <text wx:if="{{fullStatus === 'locked' && !unlockFlowRunning}}" class="unlock-hint">完整报告仍基于简化干支文化规则，仅供学习与自我反思参考。</text>
+
+      <view wx:if="{{fullStatus === 'loaded'}}" id="full-report" class="card full-card">
+        <text class="section-title">完整报告</text>
+        <text class="full-content pre-wrap">{{fullContent}}</text>
+      </view>
+    </view>
+
     <error-state wx:if="{{deleteError}}" visible="{{true}}" message="{{deleteError}}" show-retry="{{false}}"></error-state>
-    <button class="secondary-button delete-button" loading="{{deleting}}" disabled="{{deleting}}" bindtap="handleDelete">删除这条记录</button>
+    <button class="secondary-button delete-button" loading="{{deleting}}" disabled="{{deleting || unlockFlowRunning || unlocking}}" bindtap="handleDelete">删除这条记录</button>
 
     <text class="disclaimer">内容仅用于传统文化学习、自我反思和行动整理，不构成现实决策建议。</text>
   </block>

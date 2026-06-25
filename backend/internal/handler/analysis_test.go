@@ -106,6 +106,18 @@ func (s *stubAnalysisRepo) DeleteOwnedByID(_ context.Context, id, sessionID int6
 	return nil
 }
 
+func (s *stubAnalysisRepo) UnlockWithFullContent(_ context.Context, id, sessionID int64, unlockType, fullContent string) error {
+	record, ok := s.records[id]
+	if !ok || record.SessionID != sessionID || record.Status != model.AnalysisStatusActive || record.UnlockStatus != model.AnalysisUnlockStatusLocked {
+		return repository.ErrAnalysisNotFound
+	}
+	record.UnlockStatus = model.AnalysisUnlockStatusUnlocked
+	record.UnlockType = &unlockType
+	record.FullContent = &fullContent
+	record.GenerationStatus = model.AnalysisGenerationStatusFullDone
+	return nil
+}
+
 func newTestAnalysisHandler(t *testing.T) (*handler.AnalysisHandler, *stubSessionRepo) {
 	t.Helper()
 	sessions := &stubSessionRepo{sessions: map[string]*model.Session{}}
@@ -487,5 +499,241 @@ func TestDeleteAnalysisInvalidID(t *testing.T) {
 	h.Delete(rec, req)
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400 for invalid id, got %d", rec.Code)
+	}
+}
+
+func TestUnlockAnalysisSuccess(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	id := createBaziRecord(t, h, sessions, "sess-a")
+
+	body := bytes.NewBufferString(`{"unlock_type":"rewarded_video_mock"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/analysis/"+strconv.FormatInt(id, 10)+"/unlock", body)
+	req.Header.Set(sessionkey.HeaderName, "sess-a")
+	rec := httptest.NewRecorder()
+	h.Unlock(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", rec.Code, rec.Body.String())
+	}
+
+	var unlockResp struct {
+		Data struct {
+			UnlockStatus int    `json:"unlock_status"`
+			UnlockType   string `json:"unlock_type"`
+			FullContent  string `json:"full_content"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &unlockResp); err != nil {
+		t.Fatalf("decode unlock response: %v", err)
+	}
+	if unlockResp.Data.UnlockStatus != model.AnalysisUnlockStatusUnlocked {
+		t.Fatalf("expected unlocked status")
+	}
+	if unlockResp.Data.UnlockType != model.UnlockTypeRewardedVideoMock {
+		t.Fatalf("unexpected unlock type: %s", unlockResp.Data.UnlockType)
+	}
+	if strings.TrimSpace(unlockResp.Data.FullContent) == "" {
+		t.Fatalf("expected full content")
+	}
+	if strings.Contains(rec.Body.String(), "birth_date") || strings.Contains(rec.Body.String(), "input_payload") {
+		t.Fatalf("unlock response must not contain birth info: %s", rec.Body.String())
+	}
+}
+
+func TestUnlockAnalysisRejectsInvalidUnlockType(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	id := createBaziRecord(t, h, sessions, "sess-a")
+
+	body := bytes.NewBufferString(`{"unlock_type":"mock_button"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/analysis/"+strconv.FormatInt(id, 10)+"/unlock", body)
+	req.Header.Set(sessionkey.HeaderName, "sess-a")
+	rec := httptest.NewRecorder()
+	h.Unlock(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestUnlockAnalysisRejectsQuerySessionKey(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	id := createBaziRecord(t, h, sessions, "sess-a")
+
+	body := bytes.NewBufferString(`{"unlock_type":"rewarded_video_mock"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/analysis/"+strconv.FormatInt(id, 10)+"/unlock?session_key=sess-a", body)
+	rec := httptest.NewRecorder()
+	h.Unlock(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestUnlockAnalysisRequiresHeaderSessionKey(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	id := createBaziRecord(t, h, sessions, "sess-a")
+
+	body := bytes.NewBufferString(`{"unlock_type":"rewarded_video_mock"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/analysis/"+strconv.FormatInt(id, 10)+"/unlock", body)
+	rec := httptest.NewRecorder()
+	h.Unlock(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestUnlockAnalysisOtherSessionNotFound(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	sessions.sessions["sess-b"] = &model.Session{ID: 11, SessionKey: "sess-b"}
+	id := createBaziRecord(t, h, sessions, "sess-a")
+
+	body := bytes.NewBufferString(`{"unlock_type":"rewarded_video_mock"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/analysis/"+strconv.FormatInt(id, 10)+"/unlock", body)
+	req.Header.Set(sessionkey.HeaderName, "sess-b")
+	rec := httptest.NewRecorder()
+	h.Unlock(rec, req)
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", rec.Code)
+	}
+}
+
+func TestUnlockAnalysisAlreadyUnlockedReturnsExistingContent(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	id := createBaziRecord(t, h, sessions, "sess-a")
+
+	unlockOnce := func() string {
+		body := bytes.NewBufferString(`{"unlock_type":"rewarded_video_mock"}`)
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/analysis/"+strconv.FormatInt(id, 10)+"/unlock", body)
+		req.Header.Set(sessionkey.HeaderName, "sess-a")
+		rec := httptest.NewRecorder()
+		h.Unlock(rec, req)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("expected 200, got %d body=%s", rec.Code, rec.Body.String())
+		}
+		var resp struct {
+			Data struct {
+				FullContent string `json:"full_content"`
+			} `json:"data"`
+		}
+		if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+			t.Fatalf("decode unlock response: %v", err)
+		}
+		return resp.Data.FullContent
+	}
+
+	first := unlockOnce()
+	second := unlockOnce()
+	if first == "" || second == "" {
+		t.Fatalf("expected full content on repeated unlock")
+	}
+	if first != second {
+		t.Fatalf("expected repeated unlock to return same full content")
+	}
+}
+
+func unlockAnalysisRequest(t *testing.T, h *handler.AnalysisHandler, id int64, sessionKey, body string) *httptest.ResponseRecorder {
+	t.Helper()
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/analysis/"+strconv.FormatInt(id, 10)+"/unlock", bytes.NewBufferString(body))
+	if sessionKey != "" {
+		req.Header.Set(sessionkey.HeaderName, sessionKey)
+	}
+	rec := httptest.NewRecorder()
+	h.Unlock(rec, req)
+	return rec
+}
+
+func TestUnlockAnalysisRejectsTooLongSessionKey(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	id := createBaziRecord(t, h, sessions, "sess-a")
+
+	rec := unlockAnalysisRequest(t, h, id, strings.Repeat("a", 65), `{"unlock_type":"rewarded_video_mock"}`)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for long session key, got %d", rec.Code)
+	}
+}
+
+func TestUnlockAnalysisRejectsEmptyUnlockType(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	id := createBaziRecord(t, h, sessions, "sess-a")
+
+	rec := unlockAnalysisRequest(t, h, id, "sess-a", `{"unlock_type":""}`)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for empty unlock_type, got %d", rec.Code)
+	}
+}
+
+func TestUnlockAnalysisRejectsDisallowedUnlockTypes(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	id := createBaziRecord(t, h, sessions, "sess-a")
+
+	rejected := []string{
+		"mock_ad",
+		"rewarded_video",
+		"paid",
+		"admin",
+		"unknown",
+	}
+	for _, unlockType := range rejected {
+		t.Run(unlockType, func(t *testing.T) {
+			body := `{"unlock_type":"` + unlockType + `"}`
+			rec := unlockAnalysisRequest(t, h, id, "sess-a", body)
+			if rec.Code != http.StatusBadRequest {
+				t.Fatalf("expected 400 for unlock_type=%q, got %d", unlockType, rec.Code)
+			}
+		})
+	}
+}
+
+func TestUnlockAnalysisRejectsUnknownJSONFields(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	id := createBaziRecord(t, h, sessions, "sess-a")
+
+	rec := unlockAnalysisRequest(t, h, id, "sess-a", `{"unlock_type":"rewarded_video_mock","session_key":"sess-a"}`)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for unknown json field, got %d body=%s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestUnlockAnalysisNotFound(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	sessions.sessions["sess-a"] = &model.Session{ID: 10, SessionKey: "sess-a"}
+
+	rec := unlockAnalysisRequest(t, h, 99999, "sess-a", `{"unlock_type":"rewarded_video_mock"}`)
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 for missing id, got %d body=%s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestUnlockAnalysisUnsupportedModuleForbidden(t *testing.T) {
+	sessions := &stubSessionRepo{sessions: map[string]*model.Session{
+		"sess-a": {ID: 10, SessionKey: "sess-a"},
+	}}
+	analysisRepo := &stubAnalysisRepo{records: map[int64]*model.AnalysisRecord{}, nextID: 99}
+	free := "free"
+	record := &model.AnalysisRecord{
+		ID:               99,
+		SessionID:        10,
+		ModuleType:       model.ModuleTypeQimen,
+		AlgorithmVersion: model.AlgorithmVersionQimenSimpleV1,
+		InputPayload:     json.RawMessage(`{"question":"test"}`),
+		ResultPayload:    json.RawMessage(`{"day_master":"甲","pillars":{"year":"甲子","month":"乙丑","day":"丙寅"},"five_elements":{"wood":1,"fire":1,"earth":1,"metal":1,"water":1}}`),
+		FreeContent:      &free,
+		UnlockStatus:     model.AnalysisUnlockStatusLocked,
+		GenerationStatus: model.AnalysisGenerationStatusFreeDone,
+		Status:           model.AnalysisStatusActive,
+		CreatedAt:        time.Now(),
+		UpdatedAt:        time.Now(),
+	}
+	analysisRepo.records[record.ID] = record
+
+	sessionSvc := session.NewServiceWithRepo(sessions)
+	baziSvc := bazi.NewServiceWithRepos(sessions, analysisRepo)
+	analysisSvc := analysis.NewServiceWithRepo(analysisRepo)
+	customHandler := handler.NewAnalysisHandler(baziSvc, analysisSvc, sessionSvc)
+
+	body := bytes.NewBufferString(`{"unlock_type":"rewarded_video_mock"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/analysis/99/unlock", body)
+	req.Header.Set(sessionkey.HeaderName, "sess-a")
+	rec := httptest.NewRecorder()
+	customHandler.Unlock(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("expected 403 for qimen unlock, got %d body=%s", rec.Code, rec.Body.String())
 	}
 }

@@ -104,6 +104,45 @@
   line-height: 1.8;
 }
 
+.full-section {
+  margin-top: 8rpx;
+}
+
+.unlock-button {
+  min-height: 96rpx;
+  border: 1rpx solid #fcd34d;
+  border-radius: 20rpx;
+  background: #fffbeb;
+  color: #78350f;
+  font-size: 28rpx;
+  font-weight: 600;
+  line-height: 96rpx;
+}
+
+.unlock-button::after {
+  border: 0;
+}
+
+.unlock-hint {
+  display: block;
+  margin-top: 16rpx;
+  color: #78716c;
+  font-size: 22rpx;
+  line-height: 1.7;
+}
+
+.full-card {
+  margin-top: 24rpx;
+}
+
+.full-content {
+  display: block;
+  margin-top: 12rpx;
+  color: #44403c;
+  font-size: 28rpx;
+  line-height: 1.8;
+}
+
 .pre-wrap {
   white-space: pre-wrap;
 }

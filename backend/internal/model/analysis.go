@@ -130,3 +130,11 @@ type PaginatedAnalysisList struct {
 	PageSize int                `json:"page_size"`
 	Total    int64              `json:"total"`
 }
+
+type AnalysisUnlockResult struct {
+	ID               int64  `json:"id"`
+	UnlockStatus     int    `json:"unlock_status"`
+	UnlockType       string `json:"unlock_type"`
+	FullContent      string `json:"full_content"`
+	GenerationStatus int    `json:"generation_status"`
+}

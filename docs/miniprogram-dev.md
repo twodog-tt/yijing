@@ -550,18 +550,18 @@ dev 环境结果页提供：
 
 ## 14. Phase E3：八字简析小程序页面
 
-Phase E3 已在小程序接入 Phase E1/E2 后端 API，形成「八字简析」基础体验闭环。
+Phase E3 已在小程序接入 Phase E1/E2 后端 API，形成「八字简析」基础体验闭环（**当时**仅免费简析 + 删除；mock 解锁完整报告见 **§15 Phase E5**）。
 
 ### 14.1 新增页面
 
-| 页面 | 路径 | 说明 |
+| 页面 | 路径 | Phase E3 交付范围 |
 |---|---|---|
 | 八字简析表单 | `pages/bazi/bazi` | 采集出生日期、时辰（或时辰未知）、免责声明；提交后创建记录 |
-| 八字简析结果 | `pages/analysis-result/analysis-result?id={id}` | 展示免费简析、删除记录；不展示完整解读 / 广告解锁 / DeepSeek |
+| 八字简析结果 | `pages/analysis-result/analysis-result?id={id}` | 展示免费简析、删除记录；**不含**完整报告解锁（Phase E5 新增） |
 
 首页新增「八字简析」入口卡片，文案为传统文化学习定位，不使用「精准算命」「命运测算」等表述。
 
-### 14.2 API 封装（`miniprogram/utils/api.js`）
+### 14.2 API 封装（Phase E3 范围，`miniprogram/utils/api.js`）
 
 | 方法 | 后端 | Session 传递 |
 |---|---|---|
@@ -569,6 +569,8 @@ Phase E3 已在小程序接入 Phase E1/E2 后端 API，形成「八字简析」
 | `getAnalysis(id)` | `GET /analysis/{id}` | **仅** `X-Session-Key` header |
 | `getAnalysisList({ page, page_size })` | `GET /analysis?module=bazi` | **仅** `X-Session-Key` header |
 | `deleteAnalysis(id)` | `DELETE /analysis/{id}` | **仅** `X-Session-Key` header |
+
+Phase E5 另增 `unlockAnalysis`；见 §15。
 
 **隐私约束：**
 
@@ -585,9 +587,9 @@ Phase E3 已在小程序接入 Phase E1/E2 后端 API，形成「八字简析」
 
 八字记录 **不混入** 六爻 `pages/history/history`，避免分页与排序混乱。
 
-### 14.4 结果页展示范围
+### 14.4 结果页展示范围（Phase E3 交付时）
 
-本阶段 **仅展示免费八字简析**：
+Phase E3 交付时，结果页 **仅展示免费八字简析**：
 
 - 方法说明（`bazi-simple-v1`）
 - 简化干支示意（年 / 月 / 日 / 时柱；时辰未知时不显示时柱）
@@ -595,13 +597,8 @@ Phase E3 已在小程序接入 Phase E1/E2 后端 API，形成「八字简析」
 - `free_content`
 - 免责声明
 
-**明确未接入：**
-
-- 完整解读
-- 广告解锁
-- DeepSeek / AI
-- 奇门
-- 分享海报
+Phase E3 当时 **未接入**：完整报告解锁、DeepSeek / AI、奇门、分享海报。  
+**Phase E5** 已在同一结果页新增 mock 激励视频解锁与模板完整报告；见 §15。
 
 ### 14.5 删除能力
 
@@ -612,7 +609,7 @@ Phase E3 已在小程序接入 Phase E1/E2 后端 API，形成「八字简析」
 3. 成功后返回上一页或跳转八字页
 4. 删除后再次打开该 ID 应提示记录不存在
 
-### 14.6 微信开发者工具验收清单
+### 14.6 微信开发者工具验收清单（Phase E3 范围）
 
 开始前确认 Health 正常，并已关闭合法域名校验。
 
@@ -650,7 +647,58 @@ node --check miniprogram/pages/bazi/bazi.js
 node --check miniprogram/pages/analysis-result/analysis-result.js
 ```
 
-## 15. 当前明确不做
+## 15. Phase E5：八字完整报告 mock 解锁
+
+Phase E5 在八字结果页新增「完整报告」与 `rewarded_video_mock` 解锁能力。
+
+### 15.1 新增 API
+
+| 方法 | 后端 | Session 传递 |
+|---|---|---|
+| `unlockAnalysis(id, { unlockType })` | `POST /analysis/{id}/unlock` | **仅** `X-Session-Key` header |
+
+请求体：
+
+```json
+{
+  "unlock_type": "rewarded_video_mock"
+}
+```
+
+本阶段 **仅支持** `rewarded_video_mock`。完整报告由后端模板生成，**不接 DeepSeek / 真实 AI**。
+
+### 15.2 结果页解锁流程
+
+1. 未解锁：展示免费解读 +「观看视频，解锁完整报告」
+2. 点击后走 `rewarded-ad.js` mock 流程
+3. mock 完整观看 → 调用 `unlockAnalysis`
+4. mock 取消 → 不调用 unlock，提示「需要完整观看后才能解锁」
+5. 解锁成功 → 展示完整报告；刷新页面仍保持已解锁状态
+6. 删除功能继续可用；解锁中 / 删除中防重复点击
+
+**文案边界：**
+
+- 使用「观看视频，解锁完整报告」「完整报告仍基于简化干支文化规则…」
+- 不使用「看广告改运」「解锁精准财运婚姻」等表述
+
+### 15.3 隐私约束
+
+- GET / DELETE / UNLOCK 均使用 `X-Session-Key` header
+- **不得**把 `session_key` 放入 query
+- Console 与错误提示 **不得**打印 `session_key`、出生日期、`input_payload`、`result_payload`、`full_content`
+
+### 15.4 微信开发者工具验收清单
+
+- [ ] 未解锁时显示解锁按钮
+- [ ] 点击解锁出现 mock 广告流程
+- [ ] 取消 mock 广告不调用 unlock
+- [ ] 完整 mock 观看后调用 unlock（URL 无 `session_key` query）
+- [ ] unlock 成功后展示完整报告
+- [ ] 刷新结果页仍显示已解锁完整报告
+- [ ] 删除已解锁记录成功；再次打开提示不存在
+- [ ] Console 不打印敏感信息
+
+## 16. 当前明确不做
 
 - 不提交微信审核或正式发布
 - 不配置正式 request 合法域名

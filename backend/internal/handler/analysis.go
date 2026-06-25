@@ -175,6 +175,76 @@ func (h *AnalysisHandler) List(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, result)
 }
 
+type unlockAnalysisRequest struct {
+	UnlockType string `json:"unlock_type"`
+}
+
+func (h *AnalysisHandler) Unlock(w http.ResponseWriter, r *http.Request) {
+	if sessionkey.FromQuery(r) != "" {
+		response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "session_key must be sent via X-Session-Key header")
+		return
+	}
+
+	sessionKey := sessionkey.FromHeader(r)
+	if strings.TrimSpace(sessionKey) == "" {
+		response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "session_key is required")
+		return
+	}
+	if err := sessionkey.ValidateLength(sessionKey); err != nil {
+		if errors.Is(err, sessionkey.ErrTooLong) {
+			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "session_key exceeds max length")
+			return
+		}
+		response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "invalid session_key")
+		return
+	}
+
+	sessionID, err := h.sessionSvc.SessionIDByKey(r.Context(), sessionKey)
+	if err != nil {
+		if errors.Is(err, session.ErrSessionKeyEmpty) {
+			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "session_key is required")
+			return
+		}
+		response.Error(w, http.StatusInternalServerError, response.CodeInternalError, "resolve session failed")
+		return
+	}
+	if sessionID == 0 {
+		response.Error(w, http.StatusNotFound, response.CodeNotFound, "analysis not found")
+		return
+	}
+
+	id, err := parseAnalysisIDFromPath(r.URL.Path)
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "invalid analysis id")
+		return
+	}
+
+	var req unlockAnalysisRequest
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&req); err != nil {
+		response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "invalid json body")
+		return
+	}
+
+	result, err := h.analysisSvc.Unlock(r.Context(), sessionID, id, req.UnlockType)
+	if err != nil {
+		switch {
+		case errors.Is(err, analysis.ErrInvalidParams):
+			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "invalid params: unlock_type must be rewarded_video_mock")
+		case errors.Is(err, analysis.ErrModuleNotSupported):
+			response.Error(w, http.StatusForbidden, response.CodeForbidden, "analysis unlock not supported for this module")
+		case errors.Is(err, analysis.ErrNotFound):
+			response.Error(w, http.StatusNotFound, response.CodeNotFound, "analysis not found")
+		default:
+			response.Error(w, http.StatusInternalServerError, response.CodeInternalError, "unlock analysis failed")
+		}
+		return
+	}
+
+	response.OK(w, result)
+}
+
 func (h *AnalysisHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	if sessionkey.FromQuery(r) != "" {
 		response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "session_key must be sent via X-Session-Key header")
@@ -245,6 +315,12 @@ func toAnalysisResponse(record *model.AnalysisRecord) map[string]any {
 	}
 	if record.FreeContent != nil {
 		resp["free_content"] = *record.FreeContent
+	}
+	if record.UnlockType != nil {
+		resp["unlock_type"] = *record.UnlockType
+	}
+	if record.UnlockStatus == model.AnalysisUnlockStatusUnlocked && record.FullContent != nil {
+		resp["full_content"] = *record.FullContent
 	}
 	return resp
 }
