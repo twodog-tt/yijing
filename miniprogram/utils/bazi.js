@@ -118,11 +118,38 @@ function buildBaziCardData(recordId, view) {
   };
 }
 
+function buildBaziLongPosterData(recordId, view, fullContent) {
+  if (!recordId || !view) return null;
+
+  const pillars = {
+    year: view.pillars?.year || "—",
+    month: view.pillars?.month || "—",
+    day: view.pillars?.day || "—",
+    hour: view.pillars?.hour || "",
+  };
+  const hourUnknown =
+    Boolean(view.hourUnknown) || !String(pillars.hour || "").trim();
+
+  return {
+    id: String(recordId),
+    methodNote: view.methodNote || "本功能采用简化干支文化规则，不等同于专业八字排盘。",
+    pillars,
+    hourUnknown,
+    dayMaster: view.dayMaster || "—",
+    elementSummary: buildElementSummary(view.elements),
+    reflectionFocus: view.reflectionFocus || "",
+    actionSuggestions: Array.isArray(view.actionSuggestions) ? view.actionSuggestions : [],
+    freeContent: view.freeContent || "",
+    fullContent: String(fullContent || "").trim(),
+  };
+}
+
 module.exports = {
   ELEMENT_LABELS,
   HOUR_BRANCHES,
   MODULE_BAZI_LABEL,
   buildAnalysisView,
   buildBaziCardData,
+  buildBaziLongPosterData,
   parseJSONField,
 };

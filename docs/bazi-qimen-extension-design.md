@@ -456,7 +456,7 @@ Phase F 将细化：起局简化规则、Prompt 红线、与八字 schema 的 UI
 | 路径 | 阶段 | 说明 |
 |------|------|------|
 | `pages/bazi/bazi` | **Phase E3** ✅ | 八字表单：出生日期、时辰、免责声明 |
-| `pages/analysis-result/analysis-result` | **Phase E3/E5/E6（小程序）** ✅ | 八字结果页：免费简析、mock 解锁、本地结果卡片、删除 |
+| `pages/analysis-result/analysis-result` | **Phase E3/E5/E6/E9（小程序）** ✅ | 八字结果页：免费简析、mock 解锁、微信分享、解锁后完整分享长图、删除 |
 | `pages/qimen/qimen` | **Phase G** | 奇门问事表单；Phase C–F **仅预留**路由与导航位 |
 | 首页入口「八字简析」 | **Phase E3** ✅ | 稳文案，见 §1.1 |
 
@@ -951,7 +951,38 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 | Phase E6（部署）v1 | ECS 后端部署 Phase E5 unlock API（仅 rebuild backend，未改 `.env`） |
 | Phase E6（小程序）v1 | 八字结果页本地 canvas 分享卡片（解锁后权益；摘要不含出生信息） |
 | Phase E7 v1 | 八字 unlock DeepSeek 完整报告 + 模板 fallback |
+| Phase E9 v1 | 八字分享给朋友 + 解锁后完整分享长图；卦象去除 mock 视频解锁 + 完整解析长图 |
 
 ---
 
-*Phase E1–E7 功能、Phase E6（部署）内测发布与 Phase E6（小程序）分享卡片均已完成。后续可接入真实激励视频。*
+### 10.12 Phase E9 交付清单（小程序长图分享 + 卦象解锁调整，已完成）
+
+**八字（`pages/analysis-result`）：**
+
+- [x] `onShareAppMessage`：通用标题；分享路径为 `/pages/bazi/bazi`（入口分享，因匿名 session 不同，朋友无法直达私有记录）
+- [x] 手动带 `id` 打开失败时展示通用错误 + 返回八字页入口，不泄露记录归属
+- [x] 解锁后「生成分享长图」（含免费解读 + `full_content`）
+- [x] 超长长图：限制绘制行数 + 底部「仅展示前半部分」说明；高长图降低 pixelRatio
+- [x] 长图不展示出生日期/时辰、session_key、payload、小程序码
+- [x] 八字仍保留「观看视频，解锁完整报告」（`rewarded_video_mock`）
+
+**卦象（`pages/result`）：**
+
+- [x] 去除 mock 观看视频 UI 与 `rewarded-ad` 流程
+- [x] 「查看完整解析」直接 `mock_button` unlock（后端已有支持，未改 backend）
+- [x] 「生成解析长图」覆盖完整解析主要内容
+- [x] 长图不展示完整原问题（仅分类 +「问事主题已用于本次解析」）
+
+**Canvas：**
+
+- [x] `utils/long-poster-canvas.js`：`computePosterDimensions`、`resolveExportPixelRatio`、动态高度长图工具
+- [x] `bazi-share-card` / `share-poster` 升级完整长图；超长内容真实截断而非 silent crop
+
+**明确未做：**
+
+- [ ] 真实微信激励视频（卦象侧已去除 mock；八字侧仍保留 mock 解锁入口）
+- [ ] 后端生成图片 / 小程序码 / AppSecret
+
+---
+
+*Phase E1–E9 小程序分享与长图能力已交付。八字 mock 视频解锁仍保留；卦象改为直接查看完整解析。后续可接入真实激励视频（仅八字或统一策略待定）。*

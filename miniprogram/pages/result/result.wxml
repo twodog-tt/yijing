@@ -37,21 +37,18 @@
     </view>
 
     <view class="full-section">
-      <loading-state wx:if="{{unlocking}}" text="正在生成完整解读，可能需要几十秒…"></loading-state>
-      <loading-state wx:if="{{loadingFull}}" text="正在加载完整解读…"></loading-state>
+      <loading-state wx:if="{{unlocking || unlockFlowRunning}}" text="正在加载完整解析，可能需要几十秒…"></loading-state>
+      <loading-state wx:if="{{loadingFull}}" text="正在加载完整解析…"></loading-state>
 
       <error-state wx:if="{{fullError}}" visible="{{true}}" message="{{fullError}}" show-retry="{{false}}"></error-state>
 
-      <button wx:if="{{fullStatus === 'locked' && !unlockFlowRunning}}" class="unlock-button" bindtap="handleUnlock">解锁完整解读</button>
-      <text wx:if="{{fullStatus === 'locked' && !unlockFlowRunning}}" class="unlock-hint">观看一段视频，解锁完整解读。完整观看后可以解锁；中途退出不会解锁。</text>
-      <view wx:if="{{isDevEnv && fullStatus === 'locked' && !unlockFlowRunning}}" class="dev-ad-tools">
-        <text class="dev-ad-label">开发调试：mock 激励视频</text>
-        <view class="dev-ad-actions">
-          <button class="secondary-button dev-ad-button" size="mini" data-outcome="completed" bindtap="handleDevMockAdTest">模拟看完</button>
-          <button class="secondary-button dev-ad-button" size="mini" data-outcome="cancelled" bindtap="handleDevMockAdTest">模拟退出</button>
-        </view>
-      </view>
-      <button wx:if="{{fullStatus === 'error' && !unlockFlowRunning && !loadingFull}}" class="secondary-button retry-full" bindtap="loadFullOnly">重新加载完整解读</button>
+      <button
+        wx:if="{{fullStatus === 'locked' && !unlockFlowRunning && !unlocking}}"
+        class="unlock-button"
+        bindtap="handleViewFullReport"
+      >查看完整解析</button>
+
+      <button wx:if="{{fullStatus === 'error' && !unlockFlowRunning && !loadingFull}}" class="secondary-button retry-full" bindtap="loadFullOnly">重新加载完整解析</button>
 
       <view wx:if="{{fullStatus === 'loaded'}}" id="full-report">
         <text wx:if="{{aiProvider}}" class="provider-hint">解读来源：{{aiProvider}}</text>
@@ -59,12 +56,12 @@
       </view>
     </view>
 
-    <view class="card share-section">
+    <view wx:if="{{fullStatus === 'loaded'}}" class="card share-section">
       <text class="section-title">分享这份解读</text>
-      <text class="share-hint">可以发送克制的微信分享卡片，或生成一张不含完整报告的本地海报。</text>
+      <text class="share-hint">可以发送克制的微信分享卡片，或生成包含完整解析的本地长图。</text>
       <view class="share-actions">
         <button class="secondary-button share-button" open-type="share">分享给朋友</button>
-        <button class="primary-button share-button" loading="{{posterGenerating}}" disabled="{{posterGenerating}}" bindtap="handleGeneratePoster">生成分享海报</button>
+        <button class="primary-button share-button" loading="{{posterGenerating}}" disabled="{{posterGenerating}}" bindtap="handleGeneratePoster">生成解析长图</button>
       </view>
     </view>
 

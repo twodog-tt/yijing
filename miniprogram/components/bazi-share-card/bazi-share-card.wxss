@@ -3,7 +3,7 @@
   left: -9999px;
   top: -9999px;
   width: 600px;
-  height: 960px;
+  min-height: 960px;
   opacity: 0;
   pointer-events: none;
 }
@@ -47,6 +47,14 @@
   color: #78716c;
   font-size: 22rpx;
   line-height: 1.6;
+}
+
+.card-dialog__warning {
+  display: block;
+  margin-top: 8rpx;
+  color: #b45309;
+  font-size: 22rpx;
+  line-height: 1.5;
 }
 
 .card-preview {

@@ -470,8 +470,9 @@ POST /daily-fortune/today
 
 - 适配层：`miniprogram/utils/rewarded-ad.js`
 - 配置：`miniprogram/utils/config.js` 中 `ad` 字段
-- 结果页主流程：确认弹窗 → `controller.show()` → `completed === true` 才调用 unlock
-- 后端 unlock_type：`rewarded_video_mock`（Phase B 允许）
+- **八字**结果页主流程：确认弹窗 → `controller.show()` → `completed === true` 才调用 unlock（`rewarded_video_mock`）
+- **卦象**结果页（Phase E9 起）：不再使用激励视频 mock；改为「查看完整解析」+ `mock_button` unlock
+- 后端 unlock_type：`rewarded_video_mock`（Phase B 允许，八字仍在用）
 
 ### 13.2 环境默认
 
@@ -509,6 +510,8 @@ POST /daily-fortune/today
 
 结果页主流程使用 `rewarded_video_mock`，不再默认 `mock_button`。
 
+> **Phase E9 更新（卦象）：** `pages/result/result` 已改为「查看完整解析」+ `mock_button` 直接解锁，**不再**走 mock 激励视频。八字结果页 `pages/analysis-result/analysis-result` **仍保留** `rewarded_video_mock` 解锁流程。
+
 `unlockDivination(id, options)` 必须显式传入 `unlockType`；缺少时 API 层直接抛出配置错误（fail closed）。
 
 ### 13.4 流程锁与页面卸载防护
@@ -520,12 +523,9 @@ POST /daily-fortune/today
 
 ### 13.5 开发调试
 
-dev 环境结果页提供：
+dev 环境 **卦象**结果页曾提供 mock 激励视频调试按钮；**Phase E9 已移除**。八字结果页仍可通过 `rewarded-ad` mock 流程验收解锁。
 
-- 「模拟看完」→ mock `completed`
-- 「模拟退出」→ mock `cancelled`，不调用 unlock
-
-也可通过 `config.ad.mockOutcome = "completed" | "cancelled"` 切换。
+也可通过 `config.ad.mockOutcome = "completed" | "cancelled"` 切换（仅影响仍接入 `rewarded-ad` 的页面，当前为八字）。
 
 广告失败提示按 `reason` 区分（如 `disabled`、`invalid_config`、`load_failed` 等），不再一律显示「完整观看后才能解锁」。
 
@@ -833,6 +833,98 @@ Phase E7 将八字 unlock 完整报告从纯模板升级为 **DeepSeek 优先生
 - 付费解锁
 - 奇门 unlock
 - 新 SQL / 小程序大改版
+
+## 21. Phase E9：八字/卦象长图分享 + 卦象去除 mock 视频解锁
+
+Phase E9 在小程序侧升级分享能力：**八字**支持微信分享给朋友 + 解锁后生成完整分享长图；**卦象**去除 mock 观看视频解锁 UI，改为直接「查看完整解析」，并升级完整解析长图。
+
+### 21.1 八字结果页（`pages/analysis-result/analysis-result`）
+
+**分享给朋友：**
+
+- 实现 `onShareAppMessage`
+- 分享标题：「一份传统文化视角的八字简析」（通用标题，不含出生日期/时辰）
+- **分享路径：`/pages/bazi/bazi`（入口分享，非私有记录直达）**
+- 记录基于匿名 `session_key` 绑定；朋友 session 不同，**无法**通过分享打开你的私有结果页
+- 若用户手动访问 `/pages/analysis-result/analysis-result?id={id}` 且 session 不匹配，会显示「记录不存在或已被删除」等通用错误，并提供「返回八字简析 →」入口；**不泄露**记录归属或他人隐私
+- 记录加载失败时分享同样回退到 `/pages/bazi/bazi`
+
+**完整分享长图（解锁后权益）：**
+
+- 未解锁：仅显示「观看视频，解锁完整报告」（仍走 `rewarded_video_mock`）
+- 已解锁：显示「生成分享长图」
+- 长图内容：方法说明、简化干支示意、五行倾向、反思焦点、行动建议、免费解读、完整报告、免责声明
+- **不展示：** 出生日期、出生时辰、session_key、input_payload / result_payload 原始 JSON、小程序码
+- 本地 canvas 动态高度（`utils/long-poster-canvas.js` + `components/bazi-share-card/`）
+- 数据构建：`buildBaziLongPosterData(recordId, view, fullContent)`
+- **超长内容：** `estimateRawLongPosterHeight` 返回原始高度；超过 12000px 时在 canvas 内限制 `fullContent` 绘制行数，并在长图底部写入「内容较长，长图仅展示前半部分内容…」；预览弹窗同步提示，**不**称「摘要」
+- **真机导出：** 长图较高时通过 `resolveExportPixelRatio` 降低 pixelRatio（最高 12000px 时用 1x），避免内存/导出失败
+
+### 21.2 卦象结果页（`pages/result/result`）
+
+**去除 mock 观看视频：**
+
+- 不再显示「观看视频」「mock 广告」「看广告解锁」相关 UI
+- 不再触发 `rewarded-ad.js` / dev mock 广告工具
+- 未解锁时显示「查看完整解析」，点击直接调用 `unlockDivination`（`unlock_type: mock_button`）
+- 已解锁时直接展示完整解析
+
+**完整解析长图：**
+
+- 按钮文案：「生成解析长图」（仅完整解析已加载后显示）
+- 长图内容：问事分类（不展示完整原问题）、本卦/变卦/动爻、免费解读、完整解析、免责声明
+- **不展示：** session_key、原始 payload JSON、小程序码
+- 本地 canvas 动态高度（`components/share-poster/` 复用 `long-poster-canvas.js`）
+- 超长完整解析同样限制绘制行数 + 底部截断说明；高长图降低 pixelRatio
+
+> **与 Phase B / §13 的关系：** 卦象结果页 Phase E9 起使用 `mock_button`；§13 Phase B 原文中「结果页主流程使用 rewarded_video_mock」**仅适用于八字**，卦象已调整，见 §13.3 注记。
+
+### 21.3 Canvas 工具
+
+- 新增 `miniprogram/utils/long-poster-canvas.js`：动态高度、全文换行、`computePosterDimensions`（原始高度 vs canvas 高度）、`resolveExportPixelRatio`、`exportCanvasToTempFile`、`getAlbumPermissionHelpers`
+- 保留 `poster-canvas.js` 供旧逻辑兼容
+
+### 21.4 隐私与合规
+
+- Console 不打印 `full_content`、出生信息、session_key、完整 payload
+- 不接真实广告、不接 AppSecret、不请求后端生成图片
+
+### 21.5 语法检查
+
+```bash
+node --check miniprogram/pages/analysis-result/analysis-result.js
+node --check miniprogram/pages/result/result.js
+node --check miniprogram/utils/bazi.js
+node --check miniprogram/utils/poster-canvas.js
+node --check miniprogram/utils/long-poster-canvas.js
+node --check miniprogram/components/bazi-share-card/bazi-share-card.js
+node --check miniprogram/components/share-poster/share-poster.js
+```
+
+### 21.6 微信开发者工具验收清单
+
+**八字：**
+
+- [ ] 结果页支持右上角分享给朋友
+- [ ] 分享标题不包含出生日期/时辰
+- [ ] 分享路径为 `/pages/bazi/bazi`（入口分享，朋友不会直达私有记录）
+- [ ] 未解锁时不显示「生成分享长图」
+- [ ] 解锁后显示「生成分享长图」
+- [ ] 长图包含免费解读和完整报告
+- [ ] 长图不展示出生日期/时辰 / session_key / payload
+- [ ] 保存相册成功；拒绝权限有友好提示
+- [ ] Console 不打印 full_content / 出生信息 / session_key
+
+**卦象：**
+
+- [ ] 结果页不再显示 mock 观看视频
+- [ ] 不再触发 rewarded video mock
+- [ ] 可「查看完整解析」
+- [ ] 可「生成解析长图」
+- [ ] 长图包含卦象解析主要内容
+- [ ] 长图不展示 session_key / 原始 payload / 完整原问题
+- [ ] 保存相册成功
+- [ ] Console 不打印完整 payload / session_key
 
 ## 20. 当前明确不做
 

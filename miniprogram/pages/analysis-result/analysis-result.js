@@ -3,7 +3,7 @@ const { getAdConfig, getCurrentEnvironment } = require("../../utils/config");
 const { createRewardedAdController } = require("../../utils/rewarded-ad");
 const {
   buildAnalysisView,
-  buildBaziCardData,
+  buildBaziLongPosterData,
   ELEMENT_LABELS,
   MODULE_BAZI_LABEL,
 } = require("../../utils/bazi");
@@ -177,7 +177,11 @@ Page({
       fullContent,
       isUnlocked: true,
       unlockError: "",
-      cardData: buildBaziCardData(this.data.recordId, this.data.view),
+      cardData: buildBaziLongPosterData(
+        this.data.recordId,
+        this.data.view,
+        fullContent
+      ),
     });
   },
 
@@ -203,7 +207,9 @@ Page({
         isUnlocked,
         fullStatus: isUnlocked ? "loaded" : "locked",
         fullContent,
-        cardData: isUnlocked ? buildBaziCardData(this.data.recordId, view) : null,
+        cardData: isUnlocked
+          ? buildBaziLongPosterData(this.data.recordId, view, fullContent)
+          : null,
       });
     } catch (error) {
       this.setData({
@@ -360,15 +366,19 @@ Page({
     }
 
     const cardData =
-      buildBaziCardData(this.data.recordId, this.data.view) || this.data.cardData;
+      buildBaziLongPosterData(
+        this.data.recordId,
+        this.data.view,
+        this.data.fullContent
+      ) || this.data.cardData;
     if (!cardData?.id) {
-      wx.showToast({ title: "卡片数据暂不可用，请刷新后重试", icon: "none" });
+      wx.showToast({ title: "长图数据暂不可用，请刷新后重试", icon: "none" });
       return;
     }
 
     const card = this.selectComponent("#baziShareCard");
     if (!card || typeof card.open !== "function") {
-      wx.showToast({ title: "卡片画布初始化失败，请重新进入页面", icon: "none" });
+      wx.showToast({ title: "长图画布初始化失败，请重新进入页面", icon: "none" });
       return;
     }
 
@@ -380,5 +390,19 @@ Page({
         this.setData({ cardGenerating: false });
       }
     }
+  },
+
+  onShareAppMessage() {
+    const { view, error, loading } = this.data;
+    if (loading || error || !view) {
+      return {
+        title: "文易传统文化",
+        path: "/pages/bazi/bazi",
+      };
+    }
+    return {
+      title: "一份传统文化视角的八字简析",
+      path: "/pages/bazi/bazi",
+    };
   },
 });

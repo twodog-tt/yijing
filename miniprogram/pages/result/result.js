@@ -4,8 +4,6 @@ const {
   getFullInterpretation,
   unlockDivination,
 } = require("../../utils/api");
-const { getAdConfig, getCurrentEnvironment } = require("../../utils/config");
-const { createRewardedAdController } = require("../../utils/rewarded-ad");
 const { formatDateTime } = require("../../utils/date");
 
 const POSITION_LABELS = ["", "初爻", "二爻", "三爻", "四爻", "五爻", "上爻"];
@@ -31,12 +29,6 @@ function prepareLines(lines) {
       meaning: lineMeaning(line.value),
     }))
     .sort((a, b) => b.position - a.position);
-}
-
-function summarizeText(text, maxLength = 500) {
-  const normalized = String(text || "").replace(/\s+/g, " ").trim();
-  if (normalized.length <= maxLength) return normalized;
-  return `${normalized.slice(0, maxLength)}…`;
 }
 
 function normalizeReport(report) {
@@ -69,40 +61,34 @@ function parseFullContent(content) {
       const report = normalizeReport(parsed);
       if (report) return { report, fallbackText: "" };
     } catch (_error) {
-      // 非 JSON 内容降级为文本摘要，避免影响结果页。
+      // 非 JSON 内容降级为文本展示。
     }
-    return { report: null, fallbackText: summarizeText(content) };
+    return { report: null, fallbackText: String(content).trim() };
   }
 
   return { report: null, fallbackText: "" };
 }
 
-function buildPosterData(divination, freeContent, movingLinesDisplay, displayLines) {
+function buildPosterData(
+  divination,
+  freeContent,
+  movingLinesDisplay,
+  displayLines,
+  fullReport,
+  fullFallbackText
+) {
   return {
     id: Number(divination?.id) || 0,
     categoryName: divination?.category?.name || "未分类",
-    question: summarizeText(divination?.question || "一次卦象记录", 72),
+    themeNote: "问事主题已用于本次解析",
     primaryHexagram: divination?.primary_hexagram || null,
     changedHexagram: divination?.changed_hexagram || null,
     movingLinesDisplay,
     lines: displayLines,
-    freeSummary: summarizeText(freeContent, 150),
+    freeContent: String(freeContent || "").trim(),
+    fullReport: fullReport || null,
+    fullFallbackText: String(fullFallbackText || "").trim(),
   };
-}
-
-const AD_RESULT_MESSAGES = Object.freeze({
-  cancelled: "完整观看后才能解锁",
-  disabled: "当前环境暂未开启视频解锁",
-  invalid_config: "视频解锁配置未完成",
-  load_failed: "视频加载失败，请稍后再试",
-  show_failed: "视频展示失败，请稍后再试",
-  unsupported: "当前微信版本暂不支持视频解锁",
-  busy: "正在处理中，请稍候",
-  page_unloaded: "",
-});
-
-function getAdResultMessage(reason) {
-  return AD_RESULT_MESSAGES[reason] || AD_RESULT_MESSAGES.cancelled;
 }
 
 Page({
@@ -123,7 +109,6 @@ Page({
     unlocking: false,
     unlockFlowRunning: false,
     loadingFull: false,
-    isDevEnv: false,
     posterData: null,
     posterGenerating: false,
   },
@@ -137,14 +122,10 @@ Page({
       });
       return;
     }
-    this.setData({ id, isDevEnv: getCurrentEnvironment() === "dev" });
+    this.setData({ id });
     this.pageUnloaded = false;
     this.unlockFlowToken = 0;
     this.scrollTimerId = null;
-    this.rewardedAdController = createRewardedAdController({
-      ...getAdConfig(),
-      env: getCurrentEnvironment(),
-    });
     this.loadResult();
   },
 
@@ -153,10 +134,6 @@ Page({
     this.unlockFlowToken += 1;
     this.unlockFlowRunning = false;
     this.clearScrollTimer();
-    if (this.rewardedAdController) {
-      this.rewardedAdController.dispose();
-      this.rewardedAdController = null;
-    }
   },
 
   safeSetData(data) {
@@ -173,13 +150,6 @@ Page({
       clearTimeout(this.scrollTimerId);
       this.scrollTimerId = null;
     }
-  },
-
-  showAdResultToast(reason) {
-    if (this.pageUnloaded || reason === "page_unloaded") return;
-    const message = getAdResultMessage(reason);
-    if (!message) return;
-    wx.showToast({ title: message, icon: "none" });
   },
 
   beginUnlockFlow() {
@@ -201,6 +171,21 @@ Page({
     this.unlockFlowRunning = false;
     if (this.pageUnloaded) return;
     this.safeSetData({ unlockFlowRunning: false, unlocking: false });
+  },
+
+  refreshPosterData(overrides = {}) {
+    const divination = overrides.divination || this.data.divination;
+    if (!divination) return null;
+
+    const posterData = buildPosterData(
+      divination,
+      overrides.freeContent ?? this.data.freeContent,
+      overrides.movingLinesDisplay ?? this.data.movingLinesDisplay,
+      overrides.displayLines ?? this.data.displayLines,
+      overrides.fullReport ?? this.data.fullReport,
+      overrides.fullFallbackText ?? this.data.fullFallbackText
+    );
+    return posterData;
   },
 
   async loadResult() {
@@ -226,34 +211,46 @@ Page({
       const displayLines = prepareLines(divination.lines);
       const freeContent =
         free?.free_content || divination.free_interpretation || "暂无免费解读。";
-      const nextData = {
+
+      let fullStatus = "locked";
+      let fullReport = null;
+      let fullFallbackText = "";
+      let aiProvider = "";
+      let fullError = "";
+
+      if (full?._loadError) {
+        fullStatus = "error";
+        fullError = full._loadError.message || "完整解读状态加载失败。";
+      } else if (full?.unlocked) {
+        const parsed = parseFullContent(full.full_content);
+        fullStatus = "loaded";
+        fullReport = parsed.report;
+        fullFallbackText = parsed.fallbackText;
+        aiProvider = full.ai_provider || "";
+      }
+
+      const posterData = buildPosterData(
+        divination,
+        freeContent,
+        movingLinesDisplay,
+        displayLines,
+        fullReport,
+        fullFallbackText
+      );
+
+      this.setData({
         divination,
         createdAtDisplay: formatDateTime(divination.created_at),
         movingLinesDisplay,
         displayLines,
         freeContent,
-        posterData: buildPosterData(
-          divination,
-          freeContent,
-          movingLinesDisplay,
-          displayLines
-        ),
-      };
-
-      if (full?._loadError) {
-        nextData.fullStatus = "error";
-        nextData.fullError = full._loadError.message || "完整解读状态加载失败。";
-      } else if (full?.unlocked) {
-        const parsed = parseFullContent(full.full_content);
-        nextData.fullStatus = "loaded";
-        nextData.fullReport = parsed.report;
-        nextData.fullFallbackText = parsed.fallbackText;
-        nextData.aiProvider = full.ai_provider || "";
-      } else {
-        nextData.fullStatus = "locked";
-      }
-
-      this.setData(nextData);
+        fullStatus,
+        fullReport,
+        fullFallbackText,
+        aiProvider,
+        fullError,
+        posterData,
+      });
     } catch (error) {
       this.setData({
         error: error?.message || "结果加载失败，请稍后重试。",
@@ -286,12 +283,17 @@ Page({
   applyFullContent(content, aiProvider = "") {
     if (this.pageUnloaded) return;
     const parsed = parseFullContent(content);
+    const posterData = this.refreshPosterData({
+      fullReport: parsed.report,
+      fullFallbackText: parsed.fallbackText,
+    });
     this.safeSetData({
       fullStatus: "loaded",
       fullReport: parsed.report,
       fullFallbackText: parsed.fallbackText,
       aiProvider,
       fullError: "",
+      posterData,
     });
   },
 
@@ -305,7 +307,7 @@ Page({
 
     try {
       const unlockResult = await unlockDivination(this.data.id, {
-        unlockType: "rewarded_video_mock",
+        unlockType: "mock_button",
       });
       if (!this.isFlowActive(flowToken)) return;
 
@@ -327,7 +329,7 @@ Page({
       if (!content) throw new Error("完整解读暂未返回，请稍后重新加载。");
 
       this.applyFullContent(content, aiProvider);
-      wx.showToast({ title: "完整解读已解锁", icon: "success" });
+      wx.showToast({ title: "完整解析已加载", icon: "success" });
 
       this.clearScrollTimer();
       this.scrollTimerId = setTimeout(() => {
@@ -338,119 +340,59 @@ Page({
       if (!this.isFlowActive(flowToken)) return;
       this.safeSetData({
         fullStatus: "error",
-        fullError: error?.message || "解锁失败，请稍后重试。",
+        fullError: error?.message || "加载完整解析失败，请稍后重试。",
       });
     } finally {
       this.endUnlockFlow(flowToken);
     }
   },
 
-  handleUnlock() {
-    if (!this.data.id) return;
-    if (!this.rewardedAdController) {
-      wx.showToast({ title: "广告模块暂不可用", icon: "none" });
-      return;
-    }
+  handleViewFullReport() {
+    if (!this.data.id || this.data.fullStatus === "loaded") return;
 
     const flowToken = this.beginUnlockFlow();
     if (flowToken === null) return;
 
-    wx.showModal({
-      title: "解锁完整解读",
-      content:
-        "观看一段视频，解锁完整解读。完整观看后可以解锁；中途退出不会解锁。",
-      confirmText: "观看视频",
-      cancelText: "取消",
-      success: async (res) => {
-        if (!this.isFlowActive(flowToken)) {
-          this.endUnlockFlow(flowToken);
-          return;
-        }
-
-        if (!res.confirm) {
-          this.endUnlockFlow(flowToken);
-          return;
-        }
-
-        try {
-          const adResult = await this.rewardedAdController.show();
-          if (!this.isFlowActive(flowToken)) return;
-
-          if (adResult.completed !== true) {
-            this.showAdResultToast(adResult.reason);
-            this.endUnlockFlow(flowToken);
-            return;
-          }
-
-          await this.performUnlock(flowToken);
-        } catch (_error) {
-          if (this.isFlowActive(flowToken)) {
-            this.showAdResultToast("cancelled");
-            this.endUnlockFlow(flowToken);
-          }
-        }
-      },
-      fail: () => {
-        this.endUnlockFlow(flowToken);
-      },
-    });
-  },
-
-  async handleDevMockAdTest(event) {
-    if (!this.data.isDevEnv || !this.rewardedAdController) return;
-
-    const flowToken = this.beginUnlockFlow();
-    if (flowToken === null) return;
-
-    try {
-      const outcome = event?.currentTarget?.dataset?.outcome || "completed";
-      if (this.rewardedAdController.dispose) {
-        this.rewardedAdController.dispose();
-      }
-      this.rewardedAdController = createRewardedAdController({
-        ...getAdConfig(),
-        env: getCurrentEnvironment(),
-        mockOutcome: outcome,
-      });
-
-      const adResult = await this.rewardedAdController.show();
-      if (!this.isFlowActive(flowToken)) return;
-
-      if (adResult.completed !== true) {
-        this.showAdResultToast(adResult.reason);
-        this.endUnlockFlow(flowToken);
-        return;
-      }
-
-      await this.performUnlock(flowToken);
-    } catch (_error) {
-      if (this.isFlowActive(flowToken)) {
-        this.showAdResultToast("cancelled");
-        this.endUnlockFlow(flowToken);
-      }
-    }
+    this.performUnlock(flowToken);
   },
 
   async handleGeneratePoster() {
-    if (this.data.posterGenerating || !this.data.posterData) return;
+    if (
+      this.data.posterGenerating ||
+      !this.data.posterData ||
+      this.data.fullStatus !== "loaded"
+    ) {
+      if (this.data.fullStatus !== "loaded") {
+        wx.showToast({ title: "请先查看完整解析", icon: "none" });
+      }
+      return;
+    }
+
     const poster = this.selectComponent("#sharePoster");
     if (!poster) {
-      wx.showToast({ title: "海报组件暂不可用", icon: "none" });
+      wx.showToast({ title: "长图组件暂不可用", icon: "none" });
       return;
     }
 
     this.setData({ posterGenerating: true });
     try {
-      await poster.open();
+      await poster.open(this.data.posterData);
     } finally {
       this.setData({ posterGenerating: false });
     }
   },
 
   onShareAppMessage() {
+    const { id, divination, error, loading } = this.data;
+    if (loading || error || !divination || !id) {
+      return {
+        title: "文易传统文化",
+        path: "/pages/index/index",
+      };
+    }
     return {
       title: "一份基于传统文化的趣味解读",
-      path: `/pages/result/result?id=${this.data.id}`,
+      path: `/pages/result/result?id=${id}`,
     };
   },
 });

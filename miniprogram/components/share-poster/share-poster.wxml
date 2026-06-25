@@ -1,10 +1,11 @@
-<canvas type="2d" id="sharePosterCanvas" class="poster-canvas"></canvas>
+<canvas type="2d" id="sharePosterCanvas" class="poster-canvas" style="width: 600px; height: {{canvasHeight}}px;"></canvas>
 
 <view wx:if="{{previewVisible}}" class="poster-overlay" catchtouchmove="preventTouchMove" bindtap="closePreview">
   <view class="poster-dialog" catchtap="preventTouchMove">
     <view class="poster-dialog__header">
-      <text class="poster-dialog__title">分享海报</text>
-      <text class="poster-dialog__hint">海报不包含完整报告，也不包含小程序码</text>
+      <text class="poster-dialog__title">解析长图</text>
+      <text class="poster-dialog__hint">长图不包含完整原问题、session_key、原始 payload 或小程序码</text>
+      <text wx:if="{{truncatedHint}}" class="poster-dialog__warning">{{truncatedHint}}</text>
     </view>
     <scroll-view class="poster-preview" scroll-y="true">
       <image class="poster-image" src="{{imagePath}}" mode="widthFix"></image>

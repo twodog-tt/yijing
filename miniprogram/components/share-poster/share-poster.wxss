@@ -3,7 +3,7 @@
   left: -10000rpx;
   top: 0;
   width: 600rpx;
-  height: 800rpx;
+  min-height: 800rpx;
   opacity: 0;
   pointer-events: none;
 }
@@ -51,6 +51,14 @@
   color: #78716c;
   font-size: 22rpx;
   line-height: 1.55;
+}
+
+.poster-dialog__warning {
+  display: block;
+  margin-top: 8rpx;
+  color: #b45309;
+  font-size: 22rpx;
+  line-height: 1.5;
 }
 
 .poster-preview {

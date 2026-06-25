@@ -1,75 +1,161 @@
-const CARD_WIDTH = 600;
-const CARD_HEIGHT = 960;
+const {
+  POSTER_WIDTH,
+  CONTENT_WIDTH,
+  PADDING_X,
+  FOOTER_RESERVE,
+  MIN_POSTER_HEIGHT,
+  TRUNCATION_NOTICE,
+  computePosterDimensions,
+  drawDivider,
+  drawRoundedRect,
+  drawSectionTitle,
+  drawTitle,
+  drawWrappedParagraph,
+  estimateParagraphHeight,
+  exportCanvasToTempFile,
+  getAlbumPermissionHelpers,
+  normalizeText,
+  remainingLines,
+  resolveExportPixelRatio,
+  wrapAllLines,
+} = require("../../utils/long-poster-canvas");
 
-function normalizeText(value) {
-  return String(value || "").replace(/\s+/g, " ").trim();
-}
-
-function fitLine(ctx, text, maxWidth, suffix = "…") {
-  let output = normalizeText(text);
-  while (output && ctx.measureText(`${output}${suffix}`).width > maxWidth) {
-    output = output.slice(0, -1);
+function estimateRawLongPosterHeight(data) {
+  let height = 120;
+  height += 80;
+  height += estimateParagraphHeight(data.methodNote, 22, 30);
+  height += 140;
+  height += 40;
+  height += estimateParagraphHeight(data.elementSummary, 24, 30);
+  if (data.reflectionFocus) {
+    height += 40 + estimateParagraphHeight(data.reflectionFocus, 24, 30);
   }
-  return `${output}${suffix}`;
-}
-
-function wrapLines(ctx, text, maxWidth, maxLines) {
-  const normalized = normalizeText(text);
-  if (!normalized) return [];
-
-  const lines = [];
-  let current = "";
-  for (const character of normalized) {
-    const candidate = `${current}${character}`;
-    if (current && ctx.measureText(candidate).width > maxWidth) {
-      lines.push(current);
-      current = character;
-    } else {
-      current = candidate;
-    }
+  if (Array.isArray(data.actionSuggestions) && data.actionSuggestions.length) {
+    height += 40;
+    data.actionSuggestions.forEach((item) => {
+      height += estimateParagraphHeight(item, 24, 30);
+    });
   }
-  if (current) lines.push(current);
-
-  if (lines.length <= maxLines) return lines;
-  const visible = lines.slice(0, maxLines);
-  visible[maxLines - 1] = fitLine(ctx, visible[maxLines - 1], maxWidth);
-  return visible;
+  if (data.freeContent) {
+    height += 40 + estimateParagraphHeight(data.freeContent, 24, 28);
+  }
+  if (data.fullContent) {
+    height += 40 + estimateParagraphHeight(data.fullContent, 24, 28);
+  }
+  height += 80;
+  return height;
 }
 
-function drawWrappedText(ctx, text, options) {
-  const {
-    x,
+function layoutLongPoster(ctx, data, canvasHeight, options) {
+  const { isTruncated = false } = options || {};
+  const contentStopY = canvasHeight - FOOTER_RESERVE;
+
+  ctx.fillStyle = "#f4efe5";
+  ctx.fillRect(0, 0, POSTER_WIDTH, canvasHeight);
+  drawRoundedRect(ctx, 24, 24, 552, canvasHeight - 48, 22, "#fffdf8");
+
+  let y = 72;
+  y = drawTitle(ctx, "文易传统文化", PADDING_X, y);
+  ctx.fillStyle = "#92400e";
+  ctx.font = "14px sans-serif";
+  ctx.fillText("传统文化学习 · 自我观察 · 行动整理", PADDING_X, y);
+  y += 28;
+  y = drawDivider(ctx, PADDING_X, y);
+  y = drawTitle(ctx, "八字简析", PADDING_X, y, { font: "bold 26px sans-serif" });
+  y = drawWrappedParagraph(
+    ctx,
+    "基于简化干支文化规则，仅供传统文化学习与自我反思。不等同于专业八字排盘，不构成现实决策依据。",
+    PADDING_X,
     y,
-    maxWidth,
-    lineHeight,
-    maxLines,
-    color = "#44403c",
-    font = "16px sans-serif",
-  } = options;
-  ctx.fillStyle = color;
-  ctx.font = font;
-  const lines = wrapLines(ctx, text, maxWidth, maxLines);
-  lines.forEach((line, index) => {
-    ctx.fillText(line, x, y + index * lineHeight);
+    { lineHeight: 22, font: "14px sans-serif", color: "#57534e" }
+  );
+  y += 12;
+  y = drawWrappedParagraph(ctx, normalizeText(data.methodNote), PADDING_X, y, {
+    lineHeight: 22,
+    font: "14px sans-serif",
+    color: "#78716c",
   });
-  return y + lines.length * lineHeight;
-}
+  y += 16;
 
-function drawRoundedRect(ctx, x, y, width, height, radius, fillStyle) {
-  const safeRadius = Math.min(radius, width / 2, height / 2);
-  ctx.beginPath();
-  ctx.moveTo(x + safeRadius, y);
-  ctx.lineTo(x + width - safeRadius, y);
-  ctx.quadraticCurveTo(x + width, y, x + width, y + safeRadius);
-  ctx.lineTo(x + width, y + height - safeRadius);
-  ctx.quadraticCurveTo(x + width, y + height, x + width - safeRadius, y + height);
-  ctx.lineTo(x + safeRadius, y + height);
-  ctx.quadraticCurveTo(x, y + height, x, y + height - safeRadius);
-  ctx.lineTo(x, y + safeRadius);
-  ctx.quadraticCurveTo(x, y, x + safeRadius, y);
-  ctx.closePath();
-  ctx.fillStyle = fillStyle;
-  ctx.fill();
+  drawRoundedRect(ctx, PADDING_X, y, CONTENT_WIDTH, 132, 16, "#faf8f3");
+  ctx.fillStyle = "#292524";
+  ctx.font = "bold 16px sans-serif";
+  ctx.fillText("简化干支示意", PADDING_X + 20, y + 30);
+  ctx.fillStyle = "#57534e";
+  ctx.font = "15px sans-serif";
+  ctx.fillText(`年柱 · ${normalizeText(data.pillars?.year || "—")}`, PADDING_X + 20, y + 60);
+  ctx.fillText(`月柱 · ${normalizeText(data.pillars?.month || "—")}`, PADDING_X + 20, y + 86);
+  ctx.fillText(`日柱 · ${normalizeText(data.pillars?.day || "—")}`, PADDING_X + 20, y + 112);
+  if (data.hourUnknown) {
+    ctx.fillText("时柱 · 时辰未知，本次不生成时柱", PADDING_X + 20, y + 138);
+  } else {
+    ctx.fillText(`时柱 · ${normalizeText(data.pillars?.hour || "—")}`, PADDING_X + 20, y + 138);
+  }
+  y += 156;
+
+  y = drawSectionTitle(ctx, "日主", PADDING_X, y);
+  y = drawWrappedParagraph(ctx, normalizeText(data.dayMaster || "—"), PADDING_X, y);
+  y += 8;
+
+  y = drawSectionTitle(ctx, "五行倾向", PADDING_X, y);
+  y = drawWrappedParagraph(ctx, data.elementSummary || "木 0 · 火 0 · 土 0 · 金 0 · 水 0", PADDING_X, y);
+  y += 8;
+
+  if (data.reflectionFocus) {
+    y = drawSectionTitle(ctx, "反思焦点", PADDING_X, y);
+    y = drawWrappedParagraph(ctx, data.reflectionFocus, PADDING_X, y);
+    y += 8;
+  }
+
+  if (Array.isArray(data.actionSuggestions) && data.actionSuggestions.length) {
+    y = drawSectionTitle(ctx, "行动建议", PADDING_X, y);
+    data.actionSuggestions.forEach((item, index) => {
+      y = drawWrappedParagraph(ctx, `${index + 1}. ${item}`, PADDING_X, y);
+      y += 4;
+    });
+    y += 4;
+  }
+
+  if (data.freeContent) {
+    y = drawSectionTitle(ctx, "免费解读", PADDING_X, y);
+    y = drawWrappedParagraph(ctx, data.freeContent, PADDING_X, y);
+    y += 8;
+  }
+
+  let contentTruncated = false;
+  if (data.fullContent) {
+    y = drawSectionTitle(ctx, "完整报告", PADDING_X, y);
+    if (isTruncated) {
+      const maxLines = remainingLines(contentStopY, y, 28);
+      const totalLines = wrapAllLines(ctx, data.fullContent, CONTENT_WIDTH);
+      contentTruncated = totalLines.length > maxLines;
+      y = drawWrappedParagraph(ctx, data.fullContent, PADDING_X, y, {
+        lineHeight: 28,
+        maxLines,
+      });
+    } else {
+      y = drawWrappedParagraph(ctx, data.fullContent, PADDING_X, y, { lineHeight: 28 });
+    }
+    y += 8;
+  }
+
+  if (isTruncated && contentTruncated) {
+    y = drawWrappedParagraph(ctx, TRUNCATION_NOTICE, PADDING_X, y, {
+      lineHeight: 22,
+      font: "13px sans-serif",
+      color: "#b45309",
+    });
+    y += 8;
+  }
+
+  y = drawDivider(ctx, PADDING_X, y + 8);
+  drawWrappedParagraph(
+    ctx,
+    "内容仅用于传统文化学习、自我反思和行动整理，不构成现实决策依据。",
+    PADDING_X,
+    y,
+    { lineHeight: 20, font: "12px sans-serif", color: "#78716c" }
+  );
 }
 
 Component({
@@ -85,9 +171,14 @@ Component({
     imagePath: "",
     generating: false,
     saving: false,
+    canvasHeight: MIN_POSTER_HEIGHT,
+    truncatedHint: "",
   },
 
   lifetimes: {
+    attached() {
+      this.albumHelpers = getAlbumPermissionHelpers(this);
+    },
     detached() {
       this.isDetached = true;
       this.canvasNode = null;
@@ -100,13 +191,13 @@ Component({
 
       const cardData = cardDataOverride || this.properties.cardData;
       if (!cardData?.id) {
-        wx.showToast({ title: "卡片数据暂不可用，请刷新后重试", icon: "none" });
+        wx.showToast({ title: "长图数据暂不可用，请刷新后重试", icon: "none" });
         return false;
       }
 
-      this.setData({ generating: true });
+      this.setData({ generating: true, truncatedHint: "" });
       try {
-        const imagePath = await this.generateCard(cardData);
+        const imagePath = await this.generateLongPoster(cardData);
         if (this.isDetached) return false;
         this.setData({ imagePath, previewVisible: true });
         return true;
@@ -114,8 +205,8 @@ Component({
         if (!this.isDetached) {
           const message =
             error?.message === "Canvas 初始化失败"
-              ? "卡片画布初始化失败，请重新进入页面"
-              : "卡片生成失败，请稍后重试";
+              ? "长图画布初始化失败，请重新进入页面"
+              : "长图生成失败，请稍后重试";
           wx.showToast({ title: message, icon: "none" });
         }
         return false;
@@ -138,170 +229,33 @@ Component({
             }
             resolve({
               node: canvasInfo.node,
-              width: canvasInfo.width || CARD_WIDTH,
-              height: canvasInfo.height || CARD_HEIGHT,
+              width: canvasInfo.width || POSTER_WIDTH,
+              height: canvasInfo.height || this.data.canvasHeight || MIN_POSTER_HEIGHT,
             });
           });
       });
     },
 
-    async generateCard(cardData) {
-      const { node: canvas, width, height } = await this.getCanvasNode();
-      const pixelRatio = Math.min(wx.getSystemInfoSync().pixelRatio || 2, 3);
+    async generateLongPoster(cardData) {
+      const rawHeight = estimateRawLongPosterHeight(cardData);
+      const { canvasHeight, isTruncated, truncatedHint } = computePosterDimensions(rawHeight);
+
+      await new Promise((resolve) => {
+        this.setData({ canvasHeight, truncatedHint }, resolve);
+      });
+
+      const { node: canvas, width } = await this.getCanvasNode();
+      const systemRatio = wx.getSystemInfoSync().pixelRatio || 2;
+      const pixelRatio = resolveExportPixelRatio(canvasHeight, systemRatio);
       canvas.width = width * pixelRatio;
-      canvas.height = height * pixelRatio;
+      canvas.height = canvasHeight * pixelRatio;
       const ctx = canvas.getContext("2d");
       ctx.scale(pixelRatio, pixelRatio);
       this.canvasNode = canvas;
-      this.drawCard(ctx, cardData, width, height);
+      layoutLongPoster(ctx, cardData, canvasHeight, { isTruncated });
 
       await new Promise((resolve) => setTimeout(resolve, 60));
-      return new Promise((resolve, reject) => {
-        wx.canvasToTempFilePath(
-          {
-            canvas,
-            x: 0,
-            y: 0,
-            width,
-            height,
-            destWidth: width * pixelRatio,
-            destHeight: height * pixelRatio,
-            fileType: "png",
-            quality: 1,
-            success: (result) => resolve(result.tempFilePath),
-            fail: reject,
-          },
-          this
-        );
-      });
-    },
-
-    drawCard(ctx, data, canvasWidth, canvasHeight) {
-      const scaleX = canvasWidth / CARD_WIDTH;
-      const scaleY = canvasHeight / CARD_HEIGHT;
-      ctx.save();
-      ctx.scale(scaleX, scaleY);
-
-      ctx.fillStyle = "#f4efe5";
-      ctx.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
-      drawRoundedRect(ctx, 24, 24, 552, 912, 22, "#fffdf8");
-
-      ctx.fillStyle = "#292524";
-      ctx.font = "bold 30px sans-serif";
-      ctx.fillText("文易传统文化", 48, 72);
-      ctx.fillStyle = "#92400e";
-      ctx.font = "14px sans-serif";
-      ctx.fillText("传统文化学习 · 自我观察 · 行动整理", 48, 100);
-
-      ctx.strokeStyle = "#e7e5e4";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(48, 122);
-      ctx.lineTo(552, 122);
-      ctx.stroke();
-
-      ctx.fillStyle = "#292524";
-      ctx.font = "bold 26px sans-serif";
-      ctx.fillText("八字简析", 48, 162);
-      drawWrappedText(
-        ctx,
-        "基于简化干支文化规则，仅供传统文化学习与自我反思。",
-        {
-          x: 48,
-          y: 194,
-          maxWidth: 504,
-          lineHeight: 24,
-          maxLines: 2,
-          color: "#57534e",
-          font: "14px sans-serif",
-        }
-      );
-
-      drawRoundedRect(ctx, 48, 248, 504, 132, 16, "#faf8f3");
-      ctx.fillStyle = "#292524";
-      ctx.font = "bold 16px sans-serif";
-      ctx.fillText("简化干支示意", 68, 278);
-      ctx.fillStyle = "#57534e";
-      ctx.font = "15px sans-serif";
-      ctx.fillText(`年柱 · ${normalizeText(data.pillars?.year || "—")}`, 68, 308);
-      ctx.fillText(`月柱 · ${normalizeText(data.pillars?.month || "—")}`, 68, 334);
-      ctx.fillText(`日柱 · ${normalizeText(data.pillars?.day || "—")}`, 68, 360);
-      if (data.hourUnknown) {
-        ctx.fillText("时柱 · 时辰未知，本次不生成时柱", 68, 386);
-      } else {
-        ctx.fillText(`时柱 · ${normalizeText(data.pillars?.hour || "—")}`, 68, 386);
-      }
-
-      let cursorY = 408;
-      ctx.fillStyle = "#292524";
-      ctx.font = "bold 16px sans-serif";
-      ctx.fillText("五行倾向", 48, cursorY);
-      cursorY += 28;
-      drawWrappedText(ctx, data.elementSummary || "木 0 · 火 0 · 土 0 · 金 0 · 水 0", {
-        x: 48,
-        y: cursorY,
-        maxWidth: 504,
-        lineHeight: 24,
-        maxLines: 2,
-        color: "#57534e",
-        font: "15px sans-serif",
-      });
-      cursorY += 52;
-
-      if (data.reflectionFocus) {
-        ctx.fillStyle = "#292524";
-        ctx.font = "bold 16px sans-serif";
-        ctx.fillText("反思焦点", 48, cursorY);
-        cursorY += 28;
-        cursorY = drawWrappedText(ctx, data.reflectionFocus, {
-          x: 48,
-          y: cursorY,
-          maxWidth: 504,
-          lineHeight: 24,
-          maxLines: 3,
-          color: "#57534e",
-          font: "15px sans-serif",
-        }) + 12;
-      }
-
-      if (Array.isArray(data.actionSuggestions) && data.actionSuggestions.length) {
-        ctx.fillStyle = "#292524";
-        ctx.font = "bold 16px sans-serif";
-        ctx.fillText("行动建议", 48, cursorY);
-        cursorY += 28;
-        data.actionSuggestions.forEach((item, index) => {
-          cursorY = drawWrappedText(ctx, `${index + 1}. ${item}`, {
-            x: 48,
-            y: cursorY,
-            maxWidth: 504,
-            lineHeight: 24,
-            maxLines: 2,
-            color: "#57534e",
-            font: "15px sans-serif",
-          }) + 8;
-        });
-      }
-
-      ctx.strokeStyle = "#e7e5e4";
-      ctx.beginPath();
-      ctx.moveTo(48, 820);
-      ctx.lineTo(552, 820);
-      ctx.stroke();
-      drawWrappedText(
-        ctx,
-        "不等同于专业八字排盘，不构成现实决策依据。",
-        {
-          x: 48,
-          y: 848,
-          maxWidth: 504,
-          lineHeight: 20,
-          maxLines: 2,
-          color: "#78716c",
-          font: "12px sans-serif",
-        }
-      );
-
-      ctx.restore();
+      return exportCanvasToTempFile(canvas, width, canvasHeight, this, pixelRatio);
     },
 
     closePreview() {
@@ -311,67 +265,11 @@ Component({
 
     preventTouchMove() {},
 
-    getSetting() {
-      return new Promise((resolve, reject) => {
-        wx.getSetting({ success: resolve, fail: reject });
-      });
-    },
-
-    authorizeAlbum() {
-      return new Promise((resolve, reject) => {
-        wx.authorize({ scope: "scope.writePhotosAlbum", success: resolve, fail: reject });
-      });
-    },
-
-    async guideToSettings() {
-      const modal = await new Promise((resolve) => {
-        wx.showModal({
-          title: "需要相册权限",
-          content: "保存卡片需要相册权限。你可以前往设置开启，也可以取消后仅查看预览。",
-          confirmText: "打开设置",
-          success: resolve,
-          fail: () => resolve({ confirm: false }),
-        });
-      });
-      if (!modal.confirm) return false;
-
-      const setting = await new Promise((resolve) => {
-        wx.openSetting({ success: resolve, fail: () => resolve({ authSetting: {} }) });
-      });
-      return setting.authSetting?.["scope.writePhotosAlbum"] === true;
-    },
-
-    async ensureAlbumPermission() {
-      const setting = await this.getSetting();
-      const permission = setting.authSetting?.["scope.writePhotosAlbum"];
-      if (permission === true) return true;
-      if (permission === false) return this.guideToSettings();
-
-      try {
-        await this.authorizeAlbum();
-        return true;
-      } catch (_error) {
-        return this.guideToSettings();
-      }
-    },
-
     async saveCard() {
       if (this.data.saving || !this.data.imagePath) return;
       this.setData({ saving: true });
       try {
-        const allowed = await this.ensureAlbumPermission();
-        if (!allowed) {
-          wx.showToast({ title: "未获得相册权限，可稍后在设置中开启", icon: "none" });
-          return;
-        }
-        await new Promise((resolve, reject) => {
-          wx.saveImageToPhotosAlbum({
-            filePath: this.data.imagePath,
-            success: resolve,
-            fail: reject,
-          });
-        });
-        wx.showToast({ title: "卡片已保存到相册", icon: "success" });
+        await this.albumHelpers.saveImageToAlbum(this.data.imagePath);
       } catch (_error) {
         wx.showToast({ title: "保存失败，请稍后重试", icon: "none" });
       } finally {

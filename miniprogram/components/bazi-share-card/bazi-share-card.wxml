@@ -1,10 +1,11 @@
-<canvas type="2d" id="baziShareCardCanvas" class="card-canvas" style="width: 600px; height: 960px;"></canvas>
+<canvas type="2d" id="baziShareCardCanvas" class="card-canvas" style="width: 600px; height: {{canvasHeight}}px;"></canvas>
 
 <view wx:if="{{previewVisible}}" class="card-overlay" catchtouchmove="preventTouchMove" bindtap="closePreview">
   <view class="card-dialog" catchtap="preventTouchMove">
     <view class="card-dialog__header">
-      <text class="card-dialog__title">结果卡片</text>
-      <text class="card-dialog__hint">卡片不包含出生信息、完整报告或小程序码</text>
+      <text class="card-dialog__title">分享长图</text>
+      <text class="card-dialog__hint">长图不包含出生日期、时辰、session_key 或小程序码</text>
+      <text wx:if="{{truncatedHint}}" class="card-dialog__warning">{{truncatedHint}}</text>
     </view>
     <scroll-view class="card-preview" scroll-y="true">
       <image class="card-image" src="{{imagePath}}" mode="widthFix"></image>
