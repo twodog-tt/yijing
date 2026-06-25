@@ -52,13 +52,26 @@ func (s *Service) List(
 	moduleType *int,
 	page, pageSize int,
 ) (*model.PaginatedAnalysisList, error) {
-	if sessionID <= 0 {
-		return nil, ErrInvalidParams
-	}
 	if moduleType != nil {
 		if err := model.ValidateModuleType(*moduleType); err != nil {
 			return nil, ErrInvalidParams
 		}
+	}
+
+	if sessionID <= 0 {
+		normalizedPage, normalizedPageSize, err := repository.ValidateAnalysisPagination(page, pageSize)
+		if err != nil {
+			if errors.Is(err, repository.ErrInvalidAnalysisParams) {
+				return nil, ErrInvalidParams
+			}
+			return nil, err
+		}
+		return &model.PaginatedAnalysisList{
+			Items:    []model.AnalysisListItem{},
+			Page:     normalizedPage,
+			PageSize: normalizedPageSize,
+			Total:    0,
+		}, nil
 	}
 
 	items, total, normalizedPage, normalizedPageSize, err := s.repo.ListBySession(ctx, sessionID, moduleType, page, pageSize)

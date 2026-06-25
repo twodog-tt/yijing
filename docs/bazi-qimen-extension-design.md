@@ -129,7 +129,7 @@
 | `POST` | `/api/v1/analysis/bazi` | 创建八字分析记录并返回免费解读 | **Phase E** |
 | `POST` | `/api/v1/analysis/qimen` | 创建奇门分析记录并返回免费解读 | **Phase G** |
 | `GET` | `/api/v1/analysis/{id}` | 获取单条分析详情（含结构化 result） | **Phase E** 起（公开 handler） |
-| `GET` | `/api/v1/analysis` | 按 session 分页列表，支持 `module_type` 筛选 | **Phase E** 起 |
+| `GET` | `/api/v1/analysis` | 按 session 分页列表，支持 `module=bazi` 筛选 | **Phase E1** ✅ |
 | `GET` | `/api/v1/analysis/{id}/interpretation/free` | 免费解读 | **Phase E**（八字）· **G**（奇门） |
 | `GET` | `/api/v1/analysis/{id}/interpretation/full` | 完整解读（未解锁返回 40301） | **Phase E** · **G** |
 | `POST` | `/api/v1/analysis/{id}/unlock` | 解锁完整解读 | **Phase E** 起 |
@@ -161,11 +161,20 @@ POST /api/v1/daily-fortune/today
 
 ### 2.4 `POST /api/v1/analysis/bazi` 请求草案（Phase E）
 
+**请求头：**
+
+```text
+X-Session-Key: …        # 匿名 session，不放 GET query、不放 URL
+```
+
+**请求体：**
+
 ```json
 {
-  "session_key": "uuid",
+  "session_key": "...",
   "birth_date": "1990-05-20",
   "birth_hour_branch": "wu",
+  "birth_hour_unknown": false,
   "confirm_disclaimer": true
 }
 ```
@@ -173,8 +182,9 @@ POST /api/v1/daily-fortune/today
 | 字段 | 说明 |
 |------|------|
 | `birth_date` | 公历 `YYYY-MM-DD` |
-| `birth_hour_branch` | 十二地支时辰：`zi`…`hai`，或 `unknown` |
-| `confirm_disclaimer` | 必须为 `true` |
+| `birth_hour_branch` | 十二地支时辰：`zi`…`hai`；`birth_hour_unknown=true` 时可省略 |
+| `birth_hour_unknown` | 为 `true` 时不生成时柱 |
+| `confirm_disclaimer` | **必填**，必须为 `true`；不写入 `input_payload` |
 
 **响应（示意）：**
 
@@ -184,9 +194,20 @@ POST /api/v1/daily-fortune/today
   "data": {
     "id": 1001,
     "module_type": 1,
-    "result_payload": { "four_pillars": {}, "day_master": "甲", "five_elements_count": {} },
+    "algorithm_version": "bazi-simple-v1",
+    "input_payload": { "birth_date": "1990-05-20", "birth_hour_branch": "wu", "calendar": "gregorian", "timezone": "Asia/Shanghai" },
+    "result_payload": {
+      "algorithm_version": "bazi-simple-v1",
+      "method_note": "本功能采用简化干支文化规则，不等同于专业八字排盘。",
+      "pillars": { "year": "庚午", "month": "辛巳", "day": "甲子", "hour": "甲子" },
+      "day_master": "甲",
+      "five_elements": { "wood": 2, "fire": 2, "earth": 1, "metal": 2, "water": 1 },
+      "reflection_focus": "…",
+      "action_suggestions": ["…"]
+    },
     "free_content": "…",
-    "unlock_status": 0
+    "unlock_status": 0,
+    "generation_status": 1
   }
 }
 ```
@@ -208,7 +229,7 @@ POST /api/v1/daily-fortune/today
 
 ```text
 X-Session-Key: …        # 请求头，不放 query
-module_type=1|2         # 可选，1=八字 2=奇门
+module=bazi             # 可选；Phase E1 仅支持 bazi（Phase G 再扩展 qimen）
 page=1
 page_size=20
 ```
@@ -283,47 +304,73 @@ AnalysisGenerationStatusFullFailed  = 5
 
 ### 3.4 出生信息隐私边界
 
+> **Phase E0 已确认**完整策略见 [§10.2 Phase E0：出生信息隐私与删除策略](#102-phase-e0出生信息隐私与删除策略)。
+
 | 项 | 说明 |
 |----|------|
 | 保存目的 | 仅为生成该次八字简析结果与匿名 session 历史 |
-| 保存期限 | **Phase E 开始前必须确定**保存期限与删除历史/清除出生信息方案 |
-| 日志 | **禁止**在日志中打印出生日期、出生时辰或完整 `input_payload` |
+| 采集范围 | 出生日期、出生时辰；**不**采集手机号、微信登录、真实姓名、身份证、精确地址、性别 |
+| 绑定方式 | 数据绑定匿名 `session_key` 对应的 `session_id` |
+| 保存期限 | **默认保存至用户主动删除**；Phase E 不做自动过期清理 |
+| 日志 | **禁止**在日志中打印出生日期、出生时辰、`input_payload`、`result_payload` |
 | 列表 API | **不返回**完整出生信息、完整 `input_payload`、`full_content` |
-| 删除能力 | 后续需提供用户删除历史记录能力（Phase E+） |
+| 详情 API | 仅允许当前 session 查看自己的记录 |
+| 鉴权传递 | `session_key` 经请求头传递，**不放 GET query** |
+| 删除能力 | Phase E 提供用户删除；**硬删除**整条 `analysis_records` 记录 |
 
 ### 3.5 `input_payload` / `result_payload` 示例
 
-**八字 `input_payload`：**
+**八字 `input_payload`（出生信息仅存于此，详情接口在 session 校验后返回）：**
 
 ```json
 {
   "birth_date": "1990-05-20",
   "birth_hour_branch": "wu",
+  "birth_hour_unknown": false,
   "calendar": "gregorian",
   "timezone": "Asia/Shanghai"
 }
 ```
 
-**八字 `result_payload`（计算输出，非 AI；`bazi-simple-v1` ≠ 专业排盘）：**
+当 `birth_hour_unknown=true` 时，`input_payload` 不含 `birth_hour_branch`。
+
+**八字 `result_payload`（Phase E1 实际结构；`bazi-simple-v1` ≠ 专业排盘）：**
 
 ```json
 {
-  "four_pillars": {
-    "year": { "stem": "庚", "branch": "午" },
-    "month": { "stem": "辛", "branch": "巳" },
-    "day": { "stem": "甲", "branch": "子" }
+  "algorithm_version": "bazi-simple-v1",
+  "method_note": "本功能采用简化干支文化规则，不等同于专业八字排盘。",
+  "calculation_meta": {
+    "limits": [
+      "年柱按公历年份简化推算，未按立春换年",
+      "月柱按公历月份固定映射月支，非节气月柱",
+      "日柱按公历日期推算，未做真太阳时校正"
+    ]
+  },
+  "pillars": {
+    "year": "庚午",
+    "month": "辛巳",
+    "day": "甲子",
+    "hour": "甲子"
   },
   "day_master": "甲",
-  "five_elements_count": { "wood": 2, "fire": 2, "earth": 1, "metal": 2, "water": 1 },
-  "calculation_meta": {
-    "version": "bazi-simple-v1",
-    "hour_unknown": true,
-    "limits": ["gregorian_only", "no_true_solar_time", "no_major_luck", "simplified_stem_branch_demo"]
-  }
+  "five_elements": {
+    "wood": 2,
+    "fire": 2,
+    "earth": 1,
+    "metal": 2,
+    "water": 1
+  },
+  "reflection_focus": "基于简化干支文化规则的学习参考：…",
+  "action_suggestions": ["记录近期一件让你有感受的小事…"]
 }
 ```
 
-当 `birth_hour_branch=unknown` 时：**不得生成或伪造时柱**；`four_pillars.hour` 应省略。
+**E1 契约说明：**
+
+- `result_payload` **不包含** `birth` 对象；出生日期/时辰仅在 `input_payload`。
+- `birth_hour_unknown=true` 时，`pillars` **完全省略** `hour` key（不输出空字符串）。
+- 列表接口 **不返回** `input_payload` / `result_payload` / `free_content`。
 
 **奇门 `input_payload`（Phase G）：**
 
@@ -428,7 +475,7 @@ Phase F 将细化：起局简化规则、Prompt 红线、与八字 schema 的 UI
 ### 6.3 历史记录扩展（Phase E 后期 / 与 Phase D 协调）
 
 - 六爻：`GET /divinations`
-- 八字/奇门：`GET /analysis?module_type=1|2`
+- 八字/奇门：`GET /analysis?module=bazi`（Phase E1 已实现 `module=bazi`）
 - 前端 history 页合并列表，展示模块标签 + 日期 + 摘要
 
 ### 6.4 奇门页面（Phase C 仅预留）
@@ -445,9 +492,9 @@ backend/internal/
   model/analysis.go              # Phase D ✅
   repository/analysis.go         # Phase D ✅ Create / FindOwnedByID / ListBySession
   service/analysis/              # Phase D ✅ Get / List only
-  service/bazi/                  # Phase E
+  service/bazi/                  # Phase E1 ✅ 计算 + Create + free_content
   service/qimen/                 # Phase G
-  handler/                       # Phase E 起注册公开路由
+  handler/analysis.go            # Phase E1 ✅ bazi create / get / list
 ```
 
 **Phase D 明确未做：** 公开 handler、Unlock、AI、八字/奇门算法。
@@ -495,7 +542,16 @@ Phase D：analysis_records 通用报告底座（最小版）✅
          · 不注册公开 API、不 Unlock、不 AI、不算法
          · 不影响现有六爻接口
     ↓  【建议 Codex review Phase D diff】
-Phase E：八字简析 MVP
+Phase E0：出生信息隐私与删除策略确认 ✅
+         · 仅更新本文档，不写业务代码
+         · 明确保存期限、删除方案、Phase E 开发约束
+    ↓
+Phase E1：八字简析 MVP 后端基础 API ✅
+         · POST/GET /analysis/bazi 基础 API
+         · bazi-simple-v1 计算 + 模板 free_content
+         · 不接 AI / unlock / 小程序 / 奇门
+    ↓
+Phase E：八字简析 MVP（完整）
          · service/bazi 排盘（bazi-simple-v1）
          · POST /analysis/bazi
          · interpretation free/full
@@ -529,25 +585,156 @@ Phase G：奇门 MVP
 - 小程序页面 / 历史聚合
 - 修改 divination / interpretation / unlock 现有服务
 
-### 10.2 Phase E 前置原则
+### 10.2 Phase E0：出生信息隐私与删除策略
 
-**Phase E 开始前必须确定：**
+**状态：** ✅ 已确认（文档-only，Phase E 开发前置条件已满足）
 
-- 出生信息保存期限
-- 删除历史 / 清除出生信息方案
+八字模块会采集出生日期、出生时辰等较敏感个人信息。Phase E 开始前，必须先明确保存期限与删除方案。本节为 **Phase E0 正式结论**，Phase E 实现须遵守。
 
-**Phase E handler / service 约束：**
+#### 10.2.1 出生信息保存策略
 
-- Phase E handler **不得**把客户端任意 JSON 原样传给 repository。
-- bazi / qimen service 必须从 **typed request** 构造 `input_payload` / `result_payload`，经校验后再调用 `AnalysisRepository.Create`。
+当前 MVP 采用：
 
-### 10.3 Phase E 交付清单（摘要）
+| 原则 | 说明 |
+|------|------|
+| 使用目的 | 出生日期、出生时辰 **仅用于** 生成八字简析报告 |
+| 身份绑定 | 数据绑定匿名 `session_key` 对应的 `session_id` |
+| 不采集手机号 | ✓ |
+| 不接微信登录 | ✓ |
+| 不采集真实姓名 | ✓ |
+| 不采集身份证 | ✓ |
+| 不采集精确地址 | ✓ |
+| 不采集性别 | ✓ 八字 MVP 已移除 `gender` |
+| 日志最小化 | **不在** 应用日志 / console 中打印出生日期、出生时辰、`input_payload`、`result_payload` |
+| 列表接口 | **不返回** 完整出生信息 |
+| 详情接口 | **仅允许** 当前 session 查看自己的记录 |
+| 鉴权传递 | `session_key` **不放 GET query**；后续 analysis API 统一经 **请求头** 传递（如 `X-Session-Key`） |
 
-- [ ] `POST /analysis/bazi` + 免费/完整解读 + unlock
+#### 10.2.2 保存期限
+
+MVP 采用：
+
+```text
+默认保存到用户主动删除，便于用户查看历史记录。
+```
+
+补充说明：
+
+- 当前为 **匿名 session 历史**；同一设备/小程序内可回看本 session 生成的记录。
+- 用户 **清理小程序缓存** 或丢失本地 `session_key` 后，**可能无法再访问** 旧匿名记录（服务端记录仍在，但客户端无法证明归属）。
+- 后续可增加「自动清理超过 N 天记录」的配置项或定时任务；**Phase E 不做** 自动过期清理。
+
+#### 10.2.3 删除方案
+
+Phase E 目标删除策略：
+
+```text
+用户删除八字记录时，直接硬删除该 analysis_records 记录。
+```
+
+原因：
+
+- 八字记录包含出生日期、出生时辰等敏感输入（存于 `input_payload`）。
+- 仅软删除（`status=0`）仍会 **保留** `input_payload` 与解读正文，不符合隐私最小化。
+- MVP 阶段 **硬删除** 实现更简单、删除效果更彻底。
+
+**若后续因审计需要改为软删除**，必须在标记删除的同时 **清空或置 NULL** 以下字段，不得保留可还原的出生信息：
+
+- `input_payload`
+- `result_payload`
+- `free_content`
+- `full_content`
+- `unlock_type`
+- `ai_provider`
+
+Phase E 须实现用户可触达的删除入口（如结果页 / 历史列表删除），后端执行物理删除。
+
+#### 10.2.4 Phase E 开发约束
+
+除 Phase D 已有 repository 收口外，Phase E **必须** 遵守：
+
+| 约束 | 说明 |
+|------|------|
+| Handler 不得透传任意 JSON | handler **不得** 把客户端任意 JSON 原样传给 repository |
+| 构造 `input_payload` | bazi service 必须从 **typed request** 构造 `input_payload` |
+| 构造 `result_payload` | bazi service 必须从 **计算结果** 构造 `result_payload` |
+| Repository 只收服务端数据 | repository 只接收服务端已校验、已构造的数据 |
+| 日志 | **不允许** 在 console / log 中输出完整出生信息 |
+| 错误信息 | **不允许** 在 API 错误响应中返回完整出生信息 |
+| URL | **不允许** 把出生信息放到 URL query |
+| 分享海报 | **不允许** 在分享海报中展示完整出生日期 / 时辰 |
+
+qimen 模块（Phase G）沿用同一 handler → typed service → repository 模式。
+
+#### 10.2.5 文案边界
+
+八字简析对外表述须保持 **学习 / 倾向 / 反思** 定位，**非** 命运预测或改运服务：
+
+| 允许 | 禁止 |
+|------|------|
+| 「基于传统干支文化的性格与五行倾向学习」 | 「精准算命」「一生命运」「婚姻财运预测」等 |
+| `bazi-simple-v1` 简化示意排盘 | 宣称等于专业八字排盘 |
+| 保守的性格倾向与行动提醒 | 大运、流年、合婚、疾病、寿命、精准财运、改运化解 |
+| 时辰为 `unknown` 时省略时柱 | 伪造或猜测时柱 |
+
+与 §1.1、§8、§11 一致：表单页与结果页须展示免责声明；AI 输出 schema 含 `disclaimer` 字段。
+
+### 10.3 Phase E1 交付清单（已完成）
+
+**已实现：**
+
+- [x] `POST /api/v1/analysis/bazi` — 创建八字记录，返回 `result_payload` + `free_content`
+- [x] `GET /api/v1/analysis/{id}` — 当前 session 可读详情（`X-Session-Key` 请求头）
+- [x] `GET /api/v1/analysis?module=bazi` — 列表摘要（不含完整出生信息 / payload 大字段）
+- [x] `service/bazi` — `bazi-simple-v1` 简化计算 + 模板免费解读
+- [x] `AnalysisRepository.CreateWithFreeContent` — **一次 INSERT 原子写入** `input_payload` / `result_payload` / `free_content`，`generation_status=1`
+- [x] `internal/pkg/sessionkey` — analysis GET 经 header 传 session，拒绝 query `session_key`
+- [x] 单元测试：bazi service / repository / handler / golden fixtures
+
+**Phase E1 Codex review 修复（v1.1）：**
+
+- 创建流程改为：先计算 → 先生成 `free_content` → **一次 INSERT**；不再 Create 后 UpdateFreeContent
+- `result_payload` **不重复**保存 `birth` 对象；出生输入仅在 `input_payload`
+- `birth_hour_unknown=true` 时 `result_payload.pillars` **完全省略** `hour` key（不输出空字符串）
+- 出生日期 trim 后标准化为 `YYYY-MM-DD`；拒绝晚于 Asia/Shanghai 当天；保留 1900–2100 范围
+- POST 若 header/body 同时传不同 `session_key` → 参数错误；`session_key` 最长 64
+- POST JSON 启用 `DisallowUnknownFields()`，拒绝 `gender` / `name` / `phone` 等未知字段
+- POST 正式接收 `confirm_disclaimer`，必须为 `true`（不写入 `input_payload`）
+- 未知 session 列表仍走统一分页校验（page/page_size 上限与默认值）
+- 免费文案使用「简化干支示意」「自我反思与行动建议」；unknown 时辰说明「不生成时柱」
+
+**Phase E1 明确未做：**
+
+- [ ] `GET /analysis/{id}/interpretation/full` — 完整 AI 解读
+- [ ] `POST /analysis/{id}/unlock` — 激励视频解锁
+- [ ] `DELETE /api/v1/analysis/{id}` — 用户硬删除（留待 E2/E3；**Phase E2 前不要部署给真实测试用户**）
+- [ ] 小程序 `pages/bazi/bazi`、`pages/analysis-result/analysis-result`
+- [ ] 首页「八字简析」入口
+- [ ] 奇门 `POST /analysis/qimen`
+- [ ] DeepSeek / 完整解读 AI
+
+**请求体（POST /analysis/bazi）：**
+
+```json
+{
+  "session_key": "...",
+  "birth_date": "1995-01-01",
+  "birth_hour_branch": "zi",
+  "birth_hour_unknown": false,
+  "confirm_disclaimer": true
+}
+```
+
+`session_key` 也可经 `X-Session-Key` 请求头传递；**header 与 body 同时存在时必须一致**，否则拒绝。GET 类接口 **仅** header。`confirm_disclaimer` 必填且必须为 `true`。未知 JSON 字段（如 `gender`）直接参数错误。
+
+### 10.4 Phase E 交付清单（摘要）
+
+- [ ] `POST /analysis/bazi` + 免费/完整解读 + unlock + **用户删除（硬删除）**
 - [ ] 小程序 `pages/bazi/bazi`、`pages/analysis-result/analysis-result`
 - [ ] 首页「八字简析」入口
 - [ ] `go test ./...`
 - [ ] 规则边界写入用户可见 disclaimer
+- [ ] 遵守 §10.2 Phase E0 隐私与删除约束
 
 ---
 
@@ -572,8 +759,8 @@ Phase G：奇门 MVP
 | AI 日志表 | 是否扩展 `ai_generation_log` | **Phase E** |
 | 独立 `analysis_unlock_record` | 是否对齐六爻审计 | **Phase E** |
 | 历史页合并 | 前端一次拉两个 API vs 后端聚合 | Phase E UI 阶段 |
-| 出生信息保存期限 | 隐私政策文案 | **Phase E 开始前必须确定** |
-| 删除历史/清除出生信息 | 用户数据删除方案 | **Phase E 开始前必须确定** |
+| 出生信息保存期限 | 隐私政策文案 | **Phase E0 已确定**：保存至用户主动删除 |
+| 删除历史/清除出生信息 | 用户数据删除方案 | **Phase E0 已确定**：硬删除 `analysis_records` |
 
 ---
 
@@ -583,7 +770,11 @@ Phase G：奇门 MVP
 |------|------|
 | Phase C v1 | 初始设计稿 |
 | Phase D v1 | 底座-only 实现；Codex review 项回写 |
+| Phase E0 v1 | 出生信息隐私与删除策略确认（文档-only） |
+| Phase E1 v1 | 八字基础 API + bazi-simple-v1 + 模板 free_content |
+| Phase E1 v1.1 | Codex review 修复：原子 INSERT、隐私收缩、session/分页/日期校验 |
+| Phase E1 v1.2 | 契约对齐：`confirm_disclaimer`、`module=bazi`、`result_payload` 文档 |
 
 ---
 
-*Phase D 已完成底座最小版。建议将 Phase D diff 交给 Codex review 后再进入 Phase E。*
+*Phase E1 后端基础 API 已完成 Codex review 修复。建议再次 Codex review 后进入 E2（删除/解锁/小程序）。Phase E2 前不要部署给真实测试用户。*

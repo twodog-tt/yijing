@@ -112,3 +112,27 @@ func TestListCapsPageSizeAt100(t *testing.T) {
 		t.Fatalf("expected page_size capped to 100, got %d", result.PageSize)
 	}
 }
+
+func TestListUnknownSessionUsesSharedPaginationRules(t *testing.T) {
+	svc := analysis.NewServiceWithRepo(&mockAnalysisRepo{})
+	result, err := svc.List(context.Background(), 0, nil, 0, 0)
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if result.Page != 1 || result.PageSize != 20 || len(result.Items) != 0 || result.Total != 0 {
+		t.Fatalf("unexpected empty list result: %#v", result)
+	}
+
+	_, err = svc.List(context.Background(), 0, nil, model.MaxAnalysisPage+1, 20)
+	if !errors.Is(err, analysis.ErrInvalidParams) {
+		t.Fatalf("expected invalid params for oversized page, got %v", err)
+	}
+
+	result, err = svc.List(context.Background(), 0, nil, 1, 999999)
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if result.PageSize != 100 {
+		t.Fatalf("expected page_size capped to 100, got %d", result.PageSize)
+	}
+}

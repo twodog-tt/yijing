@@ -32,6 +32,11 @@ type CreateAnalysisParams struct {
 	ResultPayload    json.RawMessage
 }
 
+type CreateAnalysisWithFreeContentParams struct {
+	CreateAnalysisParams
+	FreeContent string
+}
+
 func (r *AnalysisRepository) Create(ctx context.Context, p CreateAnalysisParams) (int64, error) {
 	algorithmVersion, err := validateCreateAnalysisParams(p)
 	if err != nil {
@@ -59,6 +64,39 @@ func (r *AnalysisRepository) Create(ctx context.Context, p CreateAnalysisParams)
 	return res.LastInsertId()
 }
 
+func (r *AnalysisRepository) CreateWithFreeContent(ctx context.Context, p CreateAnalysisWithFreeContentParams) (int64, error) {
+	algorithmVersion, err := validateCreateAnalysisParams(p.CreateAnalysisParams)
+	if err != nil {
+		return 0, err
+	}
+	freeContent := strings.TrimSpace(p.FreeContent)
+	if freeContent == "" {
+		return 0, fmt.Errorf("%w: free_content required", ErrInvalidAnalysisParams)
+	}
+
+	res, err := r.db.ExecContext(ctx, `
+		INSERT INTO analysis_records (
+			session_id, module_type, algorithm_version, category_id, question,
+			input_payload, result_payload,
+			free_content, full_content, unlock_status, unlock_type, ai_provider, generation_status, status
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, 0, NULL, NULL, ?, 1)
+	`,
+		p.SessionID,
+		p.ModuleType,
+		algorithmVersion,
+		nullInt64Ptr(p.CategoryID),
+		nullStringPtr(p.Question),
+		p.InputPayload,
+		nullJSON(p.ResultPayload),
+		freeContent,
+		model.AnalysisGenerationStatusFreeDone,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return res.LastInsertId()
+}
+
 func (r *AnalysisRepository) FindOwnedByID(ctx context.Context, id, sessionID int64) (*model.AnalysisRecord, error) {
 	if id <= 0 || sessionID <= 0 {
 		return nil, nil
@@ -75,6 +113,33 @@ func (r *AnalysisRepository) FindOwnedByID(ctx context.Context, id, sessionID in
 	`, id, sessionID, model.AnalysisStatusActive)
 
 	return scanAnalysisRecord(row)
+}
+
+func (r *AnalysisRepository) UpdateFreeContent(ctx context.Context, id, sessionID int64, freeContent string) error {
+	if id <= 0 || sessionID <= 0 {
+		return ErrInvalidAnalysisParams
+	}
+	freeContent = strings.TrimSpace(freeContent)
+	if freeContent == "" {
+		return fmt.Errorf("%w: free_content required", ErrInvalidAnalysisParams)
+	}
+
+	res, err := r.db.ExecContext(ctx, `
+		UPDATE analysis_records
+		SET free_content = ?, generation_status = ?, updated_at = NOW()
+		WHERE id = ? AND session_id = ? AND status = ?
+	`, freeContent, model.AnalysisGenerationStatusFreeDone, id, sessionID, model.AnalysisStatusActive)
+	if err != nil {
+		return err
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return ErrInvalidAnalysisParams
+	}
+	return nil
 }
 
 func (r *AnalysisRepository) ListBySession(
@@ -208,6 +273,12 @@ func computeAnalysisPagination(page, pageSize int) (normalizedPage, normalizedPa
 		return 0, 0, 0, fmt.Errorf("%w: pagination overflow", ErrInvalidAnalysisParams)
 	}
 	return page, pageSize, page64 * size64, nil
+}
+
+// ValidateAnalysisPagination normalizes page/page_size using the shared analysis list rules.
+func ValidateAnalysisPagination(page, pageSize int) (normalizedPage, normalizedPageSize int, err error) {
+	normalizedPage, normalizedPageSize, _, err = computeAnalysisPagination(page, pageSize)
+	return normalizedPage, normalizedPageSize, err
 }
 
 func scanAnalysisRecord(row *sql.Row) (*model.AnalysisRecord, error) {

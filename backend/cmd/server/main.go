@@ -16,6 +16,8 @@ import (
 	"github.com/wangxintong/yijing/backend/internal/middleware/ratelimit"
 	"github.com/wangxintong/yijing/backend/internal/repository"
 	"github.com/wangxintong/yijing/backend/internal/service/ai"
+	"github.com/wangxintong/yijing/backend/internal/service/analysis"
+	"github.com/wangxintong/yijing/backend/internal/service/bazi"
 	"github.com/wangxintong/yijing/backend/internal/service/category"
 	"github.com/wangxintong/yijing/backend/internal/service/dailyfortune"
 	"github.com/wangxintong/yijing/backend/internal/service/divination"
@@ -52,6 +54,7 @@ func main() {
 	unlockRepo := repository.NewUnlockRepository(mysqlDB)
 	aiLogRepo := repository.NewAILogRepository(mysqlDB)
 	dailyFortuneRepo := repository.NewDailyFortuneRepository(mysqlDB)
+	analysisRepo := repository.NewAnalysisRepository(mysqlDB)
 
 	aiRouter := ai.NewRouter(cfg, aiLogRepo)
 	sessionSvc := session.NewService(sessionRepo)
@@ -61,6 +64,8 @@ func main() {
 	unlockSvc := unlock.NewService(divinationRepo, sessionRepo, unlockRepo, interpretationSvc, hexagramRepo, categoryRepo)
 	divinationSvc := divination.NewService(divinationRepo, hexagramRepo, categoryRepo, sessionRepo, sensitiveSvc, interpretationSvc)
 	dailyFortuneSvc := dailyfortune.NewService(dailyFortuneRepo, sessionSvc, divinationSvc, interpretationSvc)
+	analysisSvc := analysis.NewService(analysisRepo)
+	baziSvc := bazi.NewService(sessionRepo, analysisRepo)
 
 	healthHandler := &handler.HealthHandler{DB: mysqlDB}
 	sessionHandler := handler.NewSessionHandler(sessionSvc)
@@ -70,6 +75,7 @@ func main() {
 	unlockHandler := handler.NewUnlockHandler(unlockSvc)
 	dailyFortuneHandler := handler.NewDailyFortuneHandler(dailyFortuneSvc)
 	debugHandler := handler.NewDebugHandler(aiLogRepo, aiRouter)
+	analysisHandler := handler.NewAnalysisHandler(baziSvc, analysisSvc, sessionSvc)
 
 	limiter := ratelimit.NewLimiter(cfg.RateLimitPerMinute)
 	rateLimit := ratelimit.Middleware(limiter, cfg.EnableRateLimit)
@@ -86,6 +92,9 @@ func main() {
 	mux.HandleFunc("POST /api/v1/divinations/{id}/unlock", rateLimit(unlockHandler.Unlock))
 	mux.HandleFunc("GET /api/v1/divinations/{id}", divinationHandler.Get)
 	mux.HandleFunc("GET /api/v1/divinations", divinationHandler.List)
+	mux.HandleFunc("POST /api/v1/analysis/bazi", rateLimit(analysisHandler.CreateBazi))
+	mux.HandleFunc("GET /api/v1/analysis/{id}", analysisHandler.Get)
+	mux.HandleFunc("GET /api/v1/analysis", analysisHandler.List)
 
 	if cfg.EnableDebugRoutes {
 		log.Println("registering debug routes under /api/v1/debug/*")
