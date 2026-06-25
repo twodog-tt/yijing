@@ -1,0 +1,87 @@
+<view class="page">
+  <navigator class="back-link" open-type="navigateBack" delta="1">← 返回</navigator>
+
+  <loading-state wx:if="{{loading}}" text="正在加载八字简析…"></loading-state>
+
+  <view wx:if="{{!loading && error}}" class="page-error">
+    <error-state visible="{{true}}" message="{{error}}" bindretry="loadResult"></error-state>
+    <navigator class="nav-link error-link" url="/pages/bazi/bazi">返回八字简析 →</navigator>
+  </view>
+
+  <block wx:if="{{!loading && view}}">
+    <view class="page-header">
+      <text class="eyebrow">八字简析</text>
+      <text class="page-title">{{moduleLabel}}</text>
+      <view class="result-meta">
+        <text>{{view.algorithmVersion}}</text>
+        <text>{{createdAtDisplay}}</text>
+      </view>
+    </view>
+
+    <view class="card">
+      <text class="card-title">方法说明</text>
+      <text class="card-text">{{view.methodNote}}</text>
+      <text class="muted-text privacy-note">{{privacyNote}}</text>
+    </view>
+
+    <view class="card">
+      <text class="section-title">简化干支示意</text>
+      <view class="pillar-grid">
+        <view class="pillar-item">
+          <text class="pillar-label">年柱</text>
+          <text class="pillar-value">{{view.pillars.year}}</text>
+        </view>
+        <view class="pillar-item">
+          <text class="pillar-label">月柱</text>
+          <text class="pillar-value">{{view.pillars.month}}</text>
+        </view>
+        <view class="pillar-item">
+          <text class="pillar-label">日柱</text>
+          <text class="pillar-value">{{view.pillars.day}}</text>
+        </view>
+        <view class="pillar-item">
+          <text class="pillar-label">时柱</text>
+          <text wx:if="{{!view.hourUnknown}}" class="pillar-value">{{view.pillars.hour}}</text>
+          <text wx:else class="pillar-unknown">时辰未知，本次不生成时柱</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="card">
+      <text class="section-title">日主</text>
+      <text class="highlight-text">{{view.dayMaster}}</text>
+    </view>
+
+    <view class="card">
+      <text class="section-title">五行倾向</text>
+      <view class="element-list">
+        <view class="element-row" wx:for="{{elementRows}}" wx:key="key">
+          <text class="element-label">{{item.label}}</text>
+          <text class="element-value">{{item.value}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{view.reflectionFocus}}" class="card">
+      <text class="section-title">反思焦点</text>
+      <text class="card-text pre-wrap">{{view.reflectionFocus}}</text>
+    </view>
+
+    <view wx:if="{{view.actionSuggestions.length}}" class="card">
+      <text class="section-title">行动建议</text>
+      <view class="suggestion-list">
+        <text class="suggestion-item" wx:for="{{view.actionSuggestions}}" wx:key="*this">· {{item}}</text>
+      </view>
+    </view>
+
+    <view class="card free-card">
+      <text class="section-title">免费解读</text>
+      <text class="free-content pre-wrap">{{view.freeContent}}</text>
+    </view>
+
+    <error-state wx:if="{{deleteError}}" visible="{{true}}" message="{{deleteError}}" show-retry="{{false}}"></error-state>
+    <button class="secondary-button delete-button" loading="{{deleting}}" disabled="{{deleting}}" bindtap="handleDelete">删除这条记录</button>
+
+    <text class="disclaimer">内容仅用于传统文化学习、自我反思和行动整理，不构成现实决策建议。</text>
+  </block>
+</view>

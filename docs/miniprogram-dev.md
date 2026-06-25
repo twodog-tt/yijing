@@ -40,7 +40,7 @@ cp miniprogram/project.config.json.example miniprogram/project.config.json
 5. 项目名称可填写“易经问事开发版”。
 6. 完成导入后点击“编译”。
 
-首页应能打开，并可进入：今日一卦、问事起卦、历史记录、关于与免责声明。
+首页应能打开，并可进入：今日一卦、问事起卦、八字简析、历史记录、关于与免责声明。
 
 ## 4. 关闭合法域名校验进行开发调试
 
@@ -548,7 +548,109 @@ dev 环境结果页提供：
 - 启用 `rewarded_video` 与服务端校验策略
 - 开通流量主并通过微信审核
 
-## 14. 当前明确不做
+## 14. Phase E3：八字简析小程序页面
+
+Phase E3 已在小程序接入 Phase E1/E2 后端 API，形成「八字简析」基础体验闭环。
+
+### 14.1 新增页面
+
+| 页面 | 路径 | 说明 |
+|---|---|---|
+| 八字简析表单 | `pages/bazi/bazi` | 采集出生日期、时辰（或时辰未知）、免责声明；提交后创建记录 |
+| 八字简析结果 | `pages/analysis-result/analysis-result?id={id}` | 展示免费简析、删除记录；不展示完整解读 / 广告解锁 / DeepSeek |
+
+首页新增「八字简析」入口卡片，文案为传统文化学习定位，不使用「精准算命」「命运测算」等表述。
+
+### 14.2 API 封装（`miniprogram/utils/api.js`）
+
+| 方法 | 后端 | Session 传递 |
+|---|---|---|
+| `createBaziAnalysis(params)` | `POST /analysis/bazi` | body `session_key` + `X-Session-Key` header |
+| `getAnalysis(id)` | `GET /analysis/{id}` | **仅** `X-Session-Key` header |
+| `getAnalysisList({ page, page_size })` | `GET /analysis?module=bazi` | **仅** `X-Session-Key` header |
+| `deleteAnalysis(id)` | `DELETE /analysis/{id}` | **仅** `X-Session-Key` header |
+
+**隐私约束：**
+
+- GET / DELETE **不得**把 `session_key` 放入 query
+- 小程序日志与错误提示 **不得**打印完整 `session_key`、出生日期、出生时辰、`input_payload`、`result_payload`
+
+### 14.3 历史记录（方案 A）
+
+八字页底部展示「最近记录」列表，调用 `GET /analysis?module=bazi`：
+
+- 展示：创建时间、模块名称（八字简析）、算法版本摘要
+- **不展示**出生日期 / 时辰
+- 点击跳转结果页
+
+八字记录 **不混入** 六爻 `pages/history/history`，避免分页与排序混乱。
+
+### 14.4 结果页展示范围
+
+本阶段 **仅展示免费八字简析**：
+
+- 方法说明（`bazi-simple-v1`）
+- 简化干支示意（年 / 月 / 日 / 时柱；时辰未知时不显示时柱）
+- 日主、五行倾向、反思焦点、行动建议
+- `free_content`
+- 免责声明
+
+**明确未接入：**
+
+- 完整解读
+- 广告解锁
+- DeepSeek / AI
+- 奇门
+- 分享海报
+
+### 14.5 删除能力
+
+结果页提供「删除这条记录」按钮：
+
+1. 弹窗确认：「删除后不可恢复，是否确认删除？」
+2. 调用 `DELETE /analysis/{id}`（`X-Session-Key` header）
+3. 成功后返回上一页或跳转八字页
+4. 删除后再次打开该 ID 应提示记录不存在
+
+### 14.6 微信开发者工具验收清单
+
+开始前确认 Health 正常，并已关闭合法域名校验。
+
+**API 层：**
+
+- [ ] `createBaziAnalysis` 可创建记录并返回 `id`
+- [ ] `getAnalysis` / `getAnalysisList` / `deleteAnalysis` 使用 `X-Session-Key` header
+- [ ] GET / DELETE 请求 URL **不含** `session_key` query
+
+**八字表单页：**
+
+- [ ] 首页「八字简析」入口可进入
+- [ ] 未选日期不能提交
+- [ ] 未选时辰且未勾选「时辰未知」不能提交
+- [ ] 勾选「时辰未知」后可提交（时辰选择隐藏）
+- [ ] 未勾选免责声明不能提交
+- [ ] 合法输入提交成功并跳转结果页
+- [ ] 最近记录列表不展示出生日期 / 时辰
+- [ ] 网络错误有友好提示
+
+**结果页：**
+
+- [ ] 展示免费解读与干支示意
+- [ ] 时辰未知记录不显示时柱（显示提示文案）
+- [ ] 详情页不展示具体出生日期（仅「出生信息已用于本次简析」）
+- [ ] 删除记录成功；列表与详情均不再出现
+- [ ] 删除后再次打开该 ID 提示不存在
+
+**语法检查（本地）：**
+
+```bash
+node --check miniprogram/utils/api.js
+node --check miniprogram/utils/bazi.js
+node --check miniprogram/pages/bazi/bazi.js
+node --check miniprogram/pages/analysis-result/analysis-result.js
+```
+
+## 15. 当前明确不做
 
 - 不提交微信审核或正式发布
 - 不配置正式 request 合法域名

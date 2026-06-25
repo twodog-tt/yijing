@@ -15,6 +15,13 @@
   <navigator class="nav-link nav-link--primary" url="/pages/ask/ask">
     <text>问事起卦</text><text>→</text>
   </navigator>
+  <navigator class="nav-link bazi-link" url="/pages/bazi/bazi">
+    <view class="nav-link-content">
+      <text>八字简析</text>
+      <text class="nav-subtitle">基于传统干支文化的性格与五行倾向学习</text>
+    </view>
+    <text>→</text>
+  </navigator>
   <navigator class="nav-link today-link" url="/pages/today/today">
     <text>今日一卦</text><text>→</text>
   </navigator>

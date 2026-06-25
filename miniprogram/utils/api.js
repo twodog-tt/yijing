@@ -14,7 +14,17 @@ const API_PATHS = Object.freeze({
   categories: "/categories",
   divinations: "/divinations",
   dailyFortuneToday: "/daily-fortune/today",
+  analysisBazi: "/analysis/bazi",
+  analysis: "/analysis",
 });
+
+const SESSION_HEADER = "X-Session-Key";
+
+function sessionHeader(sessionKey) {
+  return {
+    [SESSION_HEADER]: sessionKey,
+  };
+}
 
 function requireId(id) {
   const normalized = Number(id);
@@ -170,10 +180,69 @@ async function getTodayFortune({ local_date } = {}) {
   });
 }
 
+async function createBaziAnalysis(params = {}) {
+  const session = await ensureSession();
+  const birthHourUnknown = Boolean(params.birth_hour_unknown);
+  const data = {
+    session_key: session.session_key,
+    birth_date: String(params.birth_date || "").trim(),
+    birth_hour_unknown: birthHourUnknown,
+    confirm_disclaimer: true,
+  };
+  if (!birthHourUnknown) {
+    data.birth_hour_branch = String(params.birth_hour_branch || "").trim();
+  }
+
+  return request({
+    path: API_PATHS.analysisBazi,
+    method: "POST",
+    data,
+    header: sessionHeader(session.session_key),
+  });
+}
+
+async function getAnalysis(id) {
+  const session = await ensureSession();
+  return request({
+    path: `${API_PATHS.analysis}/${requireId(id)}`,
+    method: "GET",
+    header: sessionHeader(session.session_key),
+  });
+}
+
+async function getAnalysisList({ page = 1, page_size = 20 } = {}) {
+  const session = await ensureSession();
+  const query = [
+    "module=bazi",
+    `page=${positiveInteger(page, 1)}`,
+    `page_size=${positiveInteger(page_size, 20)}`,
+  ].join("&");
+
+  return request({
+    path: `${API_PATHS.analysis}?${query}`,
+    method: "GET",
+    header: sessionHeader(session.session_key),
+  });
+}
+
+async function deleteAnalysis(id) {
+  const session = await ensureSession();
+  return request({
+    path: `${API_PATHS.analysis}/${requireId(id)}`,
+    method: "DELETE",
+    header: sessionHeader(session.session_key),
+  });
+}
+
 module.exports = {
   API_PATHS,
+  SESSION_HEADER,
+  createBaziAnalysis,
   createDivination,
   createSession,
+  deleteAnalysis,
+  getAnalysis,
+  getAnalysisList,
   getCategories,
   getDivination,
   getDivinationHistory,

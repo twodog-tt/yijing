@@ -5,6 +5,8 @@
     "pages/ask/ask",
     "pages/result/result",
     "pages/history/history",
+    "pages/bazi/bazi",
+    "pages/analysis-result/analysis-result",
     "pages/about/about",
     "pages/debug/debug"
   ],
