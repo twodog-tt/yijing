@@ -315,8 +315,9 @@ Tab: 今日 | 问事 | 扩展(八字/奇门) | 我的(历史/设置)
 | **Phase C** | 八字简析 MVP **方案设计** | PRD、API 草案、report schema、合规文案 | ChatGPT 规划 + Codex 审查 |
 | **Phase D** | 通用报告表设计 | `analysis_records` ER、migration 草案、历史列表扩展 | ChatGPT + Codex **必审** |
 | **Phase E** | 八字开发 | 后端排盘（或规则引擎）、API、小程序页 | Cursor + Codex review |
-| **Phase F** | 奇门 MVP **方案设计** | 输入输出边界、Prompt、审核风险清单 | ChatGPT + Codex |
-| **Phase G** | 奇门开发 | 起局逻辑、API、高级入口 UI | Cursor + Codex review |
+| **Phase F1** | 奇门问事 **后端基础 API** | `POST /analysis/qimen`、`module=qimen` 列表、模板免费解读 | Cursor ✅ |
+| **Phase F2** | 奇门问事 **小程序页面** | 表单、结果页、分享（规划） | Cursor |
+| **Phase G** | 奇门增强（unlock / AI / 高级 UI） | 完整解读、九宫盘等（规划，未启动） | Cursor + Codex review |
 | **Phase H（P4）** | 统一报告中心 & 商业化 | 会员/次数包调研、支付资质、**暂不实施** | 产品决策后单独立项 |
 
 ### 8.1 Phase A 验收要点（当前）
@@ -334,7 +335,8 @@ Phase A (验收)
     → Phase B (广告 mock)
     → Phase C (八字方案)
     → Phase D (通用表) ──→ Phase E (八字开发)
-    → Phase F (奇门方案) ──→ Phase G (奇门开发)
+    → Phase F1 (奇门后端 API) ──→ Phase F2 (奇门小程序)
+    → Phase G (奇门 unlock / AI / 高级 UI，规划)
 ```
 
 **建议：** Phase D 在 Phase E/G **之前** 完成，避免八字、奇门各建一套重复表结构。

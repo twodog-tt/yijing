@@ -17,6 +17,7 @@ import (
 	"github.com/wangxintong/yijing/backend/internal/repository"
 	"github.com/wangxintong/yijing/backend/internal/service/analysis"
 	"github.com/wangxintong/yijing/backend/internal/service/bazi"
+	"github.com/wangxintong/yijing/backend/internal/service/qimen"
 	"github.com/wangxintong/yijing/backend/internal/service/session"
 )
 
@@ -89,6 +90,7 @@ func (s *stubAnalysisRepo) ListBySession(_ context.Context, sessionID int64, mod
 			ID:               record.ID,
 			ModuleType:       record.ModuleType,
 			AlgorithmVersion: record.AlgorithmVersion,
+			Question:         record.Question,
 			UnlockStatus:     record.UnlockStatus,
 			GenerationStatus: record.GenerationStatus,
 			CreatedAt:        record.CreatedAt,
@@ -125,8 +127,9 @@ func newTestAnalysisHandler(t *testing.T) (*handler.AnalysisHandler, *stubSessio
 	analysisRepo := &stubAnalysisRepo{records: map[int64]*model.AnalysisRecord{}}
 	sessionSvc := session.NewServiceWithRepo(sessions)
 	baziSvc := bazi.NewServiceWithRepos(sessions, analysisRepo)
+	qimenSvc := qimen.NewServiceWithRepos(sessions, analysisRepo, nil)
 	analysisSvc := analysis.NewServiceWithRepo(analysisRepo)
-	return handler.NewAnalysisHandler(baziSvc, analysisSvc, sessionSvc), sessions
+	return handler.NewAnalysisHandler(baziSvc, qimenSvc, analysisSvc, sessionSvc), sessions
 }
 
 const validBaziCreateBody = `{"session_key":"sess-a","birth_date":"1995-01-01","birth_hour_branch":"zi","birth_hour_unknown":false,"confirm_disclaimer":true}`
@@ -771,8 +774,9 @@ func TestUnlockAnalysisUnsupportedModuleForbidden(t *testing.T) {
 
 	sessionSvc := session.NewServiceWithRepo(sessions)
 	baziSvc := bazi.NewServiceWithRepos(sessions, analysisRepo)
+	qimenSvc := qimen.NewServiceWithRepos(sessions, analysisRepo, nil)
 	analysisSvc := analysis.NewServiceWithRepo(analysisRepo)
-	customHandler := handler.NewAnalysisHandler(baziSvc, analysisSvc, sessionSvc)
+	customHandler := handler.NewAnalysisHandler(baziSvc, qimenSvc, analysisSvc, sessionSvc)
 
 	body := bytes.NewBufferString(`{"unlock_type":"rewarded_video_mock"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/analysis/99/unlock", body)
@@ -781,5 +785,150 @@ func TestUnlockAnalysisUnsupportedModuleForbidden(t *testing.T) {
 	customHandler.Unlock(rec, req)
 	if rec.Code != http.StatusForbidden {
 		t.Fatalf("expected 403 for qimen unlock, got %d body=%s", rec.Code, rec.Body.String())
+	}
+}
+
+const validQimenCreateBody = `{"session_key":"sess-a","question":"我最近适合推进这个计划吗？","category":"career","confirm_disclaimer":true}`
+
+func TestCreateQimenSuccess(t *testing.T) {
+	h, _ := newTestAnalysisHandler(t)
+
+	body := bytes.NewBufferString(validQimenCreateBody)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/analysis/qimen", body)
+	rec := httptest.NewRecorder()
+	h.CreateQimen(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", rec.Code, rec.Body.String())
+	}
+
+	var resp map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	data, ok := resp["data"].(map[string]any)
+	if !ok {
+		t.Fatalf("expected data object")
+	}
+	if int(data["module_type"].(float64)) != model.ModuleTypeQimen {
+		t.Fatalf("expected qimen module_type")
+	}
+	if data["algorithm_version"] != model.AlgorithmVersionQimenSimpleV1 {
+		t.Fatalf("expected qimen algorithm version")
+	}
+}
+
+func TestCreateQimenRejectsMissingDisclaimer(t *testing.T) {
+	h, _ := newTestAnalysisHandler(t)
+	body := bytes.NewBufferString(`{"session_key":"sess-a","question":"我最近适合推进这个计划吗？","category":"career"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/analysis/qimen", body)
+	rec := httptest.NewRecorder()
+	h.CreateQimen(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestCreateQimenRejectsUnknownFields(t *testing.T) {
+	h, _ := newTestAnalysisHandler(t)
+	body := bytes.NewBufferString(`{"session_key":"sess-a","question":"我最近适合推进这个计划吗？","category":"career","confirm_disclaimer":true,"phone":"13800000000"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/analysis/qimen", body)
+	rec := httptest.NewRecorder()
+	h.CreateQimen(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for unknown field, got %d", rec.Code)
+	}
+}
+
+func TestCreateQimenRejectsHighRiskQuestion(t *testing.T) {
+	h, _ := newTestAnalysisHandler(t)
+	body := bytes.NewBufferString(`{"session_key":"sess-a","question":"这只股票明天会涨吗？","category":"decision","confirm_disclaimer":true}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/analysis/qimen", body)
+	rec := httptest.NewRecorder()
+	h.CreateQimen(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for sensitive question, got %d body=%s", rec.Code, rec.Body.String())
+	}
+	if strings.Contains(rec.Body.String(), "这只股票明天会涨吗") {
+		t.Fatalf("error response must not echo full question")
+	}
+}
+
+func TestCreateQimenRejectsSessionKeyInQuery(t *testing.T) {
+	h, _ := newTestAnalysisHandler(t)
+	body := bytes.NewBufferString(validQimenCreateBody)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/analysis/qimen?session_key=sess-a", body)
+	rec := httptest.NewRecorder()
+	h.CreateQimen(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for query session_key, got %d body=%s", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "session_key must be sent via X-Session-Key header") {
+		t.Fatalf("expected query session_key rejection message")
+	}
+}
+
+func TestCreateQimenRejectsSessionKeyConflict(t *testing.T) {
+	h, _ := newTestAnalysisHandler(t)
+	body := bytes.NewBufferString(`{"session_key":"sess-b","question":"我最近适合推进这个计划吗？","category":"career","confirm_disclaimer":true}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/analysis/qimen", body)
+	req.Header.Set(sessionkey.HeaderName, "sess-a")
+	rec := httptest.NewRecorder()
+	h.CreateQimen(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for session conflict, got %d body=%s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestCreateQimenRejectsTooLongSessionKey(t *testing.T) {
+	h, _ := newTestAnalysisHandler(t)
+	body := bytes.NewBufferString(`{"session_key":"` + strings.Repeat("a", 65) + `","question":"我最近适合推进这个计划吗？","category":"career","confirm_disclaimer":true}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/analysis/qimen", body)
+	rec := httptest.NewRecorder()
+	h.CreateQimen(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for long session key, got %d body=%s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestListAnalysisQimenReturnsSummaryOnly(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	sessions.sessions["sess-a"] = &model.Session{ID: 10, SessionKey: "sess-a"}
+
+	createBody := bytes.NewBufferString(validQimenCreateBody)
+	createReq := httptest.NewRequest(http.MethodPost, "/api/v1/analysis/qimen", createBody)
+	createRec := httptest.NewRecorder()
+	h.CreateQimen(createRec, createReq)
+	if createRec.Code != http.StatusOK {
+		t.Fatalf("create qimen failed: %d %s", createRec.Code, createRec.Body.String())
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/analysis?module=qimen", nil)
+	req.Header.Set(sessionkey.HeaderName, "sess-a")
+	rec := httptest.NewRecorder()
+	h.List(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", rec.Code, rec.Body.String())
+	}
+
+	body := rec.Body.String()
+	if strings.Contains(body, "我最近适合推进这个计划吗？") {
+		t.Fatalf("list response must not contain full question")
+	}
+	if !strings.Contains(body, qimen.QuestionSummary) {
+		t.Fatalf("expected question summary in list response")
+	}
+	if strings.Contains(body, "input_payload") || strings.Contains(body, "result_payload") || strings.Contains(body, "free_content") {
+		t.Fatalf("list response must not contain payloads or free_content")
+	}
+}
+
+func TestListAnalysisRejectsInvalidModuleQimenTypo(t *testing.T) {
+	h, _ := newTestAnalysisHandler(t)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/analysis?module=qiemen", nil)
+	req.Header.Set(sessionkey.HeaderName, "sess-a")
+	rec := httptest.NewRecorder()
+	h.List(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid module, got %d", rec.Code)
 	}
 }

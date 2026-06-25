@@ -10,6 +10,7 @@ import (
 	"github.com/wangxintong/yijing/backend/internal/model"
 	"github.com/wangxintong/yijing/backend/internal/repository"
 	"github.com/wangxintong/yijing/backend/internal/service/bazi"
+	"github.com/wangxintong/yijing/backend/internal/service/qimen"
 )
 
 var (
@@ -191,6 +192,9 @@ func (s *Service) List(
 	}
 	if items == nil {
 		items = []model.AnalysisListItem{}
+	}
+	for i := range items {
+		qimen.SanitizeListItem(&items[i])
 	}
 
 	return &model.PaginatedAnalysisList{

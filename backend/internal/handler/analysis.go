@@ -13,11 +13,13 @@ import (
 	"github.com/wangxintong/yijing/backend/internal/pkg/sessionkey"
 	"github.com/wangxintong/yijing/backend/internal/service/analysis"
 	"github.com/wangxintong/yijing/backend/internal/service/bazi"
+	"github.com/wangxintong/yijing/backend/internal/service/qimen"
 	"github.com/wangxintong/yijing/backend/internal/service/session"
 )
 
 type AnalysisHandler struct {
 	baziSvc     *bazi.Service
+	qimenSvc    *qimen.Service
 	analysisSvc *analysis.Service
 	sessionSvc  sessionResolver
 }
@@ -26,9 +28,15 @@ type sessionResolver interface {
 	SessionIDByKey(ctx context.Context, sessionKey string) (int64, error)
 }
 
-func NewAnalysisHandler(baziSvc *bazi.Service, analysisSvc *analysis.Service, sessionSvc sessionResolver) *AnalysisHandler {
+func NewAnalysisHandler(
+	baziSvc *bazi.Service,
+	qimenSvc *qimen.Service,
+	analysisSvc *analysis.Service,
+	sessionSvc sessionResolver,
+) *AnalysisHandler {
 	return &AnalysisHandler{
 		baziSvc:     baziSvc,
+		qimenSvc:    qimenSvc,
 		analysisSvc: analysisSvc,
 		sessionSvc:  sessionSvc,
 	}
@@ -85,6 +93,73 @@ func (h *AnalysisHandler) CreateBazi(w http.ResponseWriter, r *http.Request) {
 			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "invalid params: check birth_date and birth_hour_branch")
 		default:
 			response.Error(w, http.StatusInternalServerError, response.CodeInternalError, "create bazi analysis failed")
+		}
+		return
+	}
+
+	response.OK(w, toAnalysisResponse(record))
+}
+
+type createQimenRequest struct {
+	SessionKey        string `json:"session_key"`
+	Question          string `json:"question"`
+	Category          string `json:"category"`
+	ConfirmDisclaimer bool   `json:"confirm_disclaimer"`
+}
+
+func (h *AnalysisHandler) CreateQimen(w http.ResponseWriter, r *http.Request) {
+	if sessionkey.FromQuery(r) != "" {
+		response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "session_key must be sent via X-Session-Key header")
+		return
+	}
+
+	var req createQimenRequest
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&req); err != nil {
+		response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "invalid json body")
+		return
+	}
+
+	sessionKey, err := sessionkey.ResolveForCreate(sessionkey.FromHeader(r), req.SessionKey)
+	if err != nil {
+		switch {
+		case errors.Is(err, sessionkey.ErrConflict):
+			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "session_key conflict between header and body")
+		case errors.Is(err, sessionkey.ErrTooLong):
+			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "session_key exceeds max length")
+		default:
+			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "invalid session_key")
+		}
+		return
+	}
+	if !req.ConfirmDisclaimer {
+		response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "confirm_disclaimer must be true")
+		return
+	}
+
+	record, err := h.qimenSvc.Create(r.Context(), qimen.CreateParams{
+		SessionKey:        sessionKey,
+		Question:          req.Question,
+		Category:          req.Category,
+		ConfirmDisclaimer: req.ConfirmDisclaimer,
+		ClientInfo:        r.UserAgent(),
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, qimen.ErrSessionKeyEmpty):
+			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "session_key is required")
+		case errors.Is(err, qimen.ErrSessionKeyTooLong):
+			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "session_key exceeds max length")
+		case errors.Is(err, qimen.ErrSensitiveBlocked):
+			response.Error(w, http.StatusBadRequest, response.CodeSensitiveBlock,
+				"这个问题不适合用奇门简化解读。你可以换成更偏向自我反思、局势整理或行动节奏的问题。")
+		case errors.Is(err, qimen.ErrDisclaimerRequired):
+			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "confirm_disclaimer must be true")
+		case errors.Is(err, qimen.ErrInvalidParams):
+			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "invalid params: check question length (4-120) and category")
+		default:
+			response.Error(w, http.StatusInternalServerError, response.CodeInternalError, "create qimen analysis failed")
 		}
 		return
 	}
@@ -343,9 +418,13 @@ func parseAnalysisModuleFilter(module string) (*int, error) {
 	if module == "" {
 		return nil, nil
 	}
-	if module != "bazi" {
-		return nil, errors.New("unsupported module")
+	if module == "bazi" {
+		moduleType := model.ModuleTypeBazi
+		return &moduleType, nil
 	}
-	moduleType := model.ModuleTypeBazi
-	return &moduleType, nil
+	if module == "qimen" {
+		moduleType := model.ModuleTypeQimen
+		return &moduleType, nil
+	}
+	return nil, errors.New("unsupported module")
 }

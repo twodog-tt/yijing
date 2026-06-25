@@ -22,6 +22,7 @@ import (
 	"github.com/wangxintong/yijing/backend/internal/service/dailyfortune"
 	"github.com/wangxintong/yijing/backend/internal/service/divination"
 	"github.com/wangxintong/yijing/backend/internal/service/interpretation"
+	"github.com/wangxintong/yijing/backend/internal/service/qimen"
 	"github.com/wangxintong/yijing/backend/internal/service/sensitive"
 	"github.com/wangxintong/yijing/backend/internal/service/session"
 	"github.com/wangxintong/yijing/backend/internal/service/unlock"
@@ -66,6 +67,7 @@ func main() {
 	dailyFortuneSvc := dailyfortune.NewService(dailyFortuneRepo, sessionSvc, divinationSvc, interpretationSvc)
 	analysisSvc := analysis.NewService(analysisRepo, bazi.NewFullReportGenerator(cfg))
 	baziSvc := bazi.NewService(sessionRepo, analysisRepo)
+	qimenSvc := qimen.NewService(sessionRepo, analysisRepo, sensitiveSvc)
 
 	healthHandler := &handler.HealthHandler{DB: mysqlDB}
 	sessionHandler := handler.NewSessionHandler(sessionSvc)
@@ -75,7 +77,7 @@ func main() {
 	unlockHandler := handler.NewUnlockHandler(unlockSvc)
 	dailyFortuneHandler := handler.NewDailyFortuneHandler(dailyFortuneSvc)
 	debugHandler := handler.NewDebugHandler(aiLogRepo, aiRouter)
-	analysisHandler := handler.NewAnalysisHandler(baziSvc, analysisSvc, sessionSvc)
+	analysisHandler := handler.NewAnalysisHandler(baziSvc, qimenSvc, analysisSvc, sessionSvc)
 
 	limiter := ratelimit.NewLimiter(cfg.RateLimitPerMinute)
 	rateLimit := ratelimit.Middleware(limiter, cfg.EnableRateLimit)
@@ -93,6 +95,7 @@ func main() {
 	mux.HandleFunc("GET /api/v1/divinations/{id}", divinationHandler.Get)
 	mux.HandleFunc("GET /api/v1/divinations", divinationHandler.List)
 	mux.HandleFunc("POST /api/v1/analysis/bazi", rateLimit(analysisHandler.CreateBazi))
+	mux.HandleFunc("POST /api/v1/analysis/qimen", rateLimit(analysisHandler.CreateQimen))
 	mux.HandleFunc("GET /api/v1/analysis/{id}", analysisHandler.Get)
 	mux.HandleFunc("GET /api/v1/analysis", analysisHandler.List)
 	mux.HandleFunc("DELETE /api/v1/analysis/{id}", analysisHandler.Delete)

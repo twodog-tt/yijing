@@ -80,7 +80,7 @@
 
 ---
 
-### 1.2 奇门问事（简化学习版）（Phase F 方案 · Phase G 实现）
+### 1.2 奇门问事（简化学习版）（Phase F1 后端 ✅ · Phase F2 小程序规划）
 
 **定位：**
 
@@ -127,9 +127,9 @@
 | 方法 | 路径 | 说明 | 计划阶段 |
 |------|------|------|----------|
 | `POST` | `/api/v1/analysis/bazi` | 创建八字分析记录并返回免费解读 | **Phase E** |
-| `POST` | `/api/v1/analysis/qimen` | 创建奇门分析记录并返回免费解读 | **Phase G** |
+| `POST` | `/api/v1/analysis/qimen` | 创建奇门分析记录并返回免费解读 | **Phase F1** ✅ |
 | `GET` | `/api/v1/analysis/{id}` | 获取单条分析详情（含结构化 result） | **Phase E** 起（公开 handler） |
-| `GET` | `/api/v1/analysis` | 按 session 分页列表，支持 `module=bazi` 筛选 | **Phase E1** ✅ |
+| `GET` | `/api/v1/analysis` | 按 session 分页列表，支持 `module=bazi|qimen` 筛选 | **Phase E1 / F1** ✅ |
 | `DELETE` | `/api/v1/analysis/{id}` | 硬删除当前 session 拥有的分析记录 | **Phase E2** ✅ |
 | `POST` | `/api/v1/analysis/{id}/unlock` | 解锁八字完整报告（模板 `full_content`；仅 `rewarded_video_mock`） | **Phase E5** ✅ |
 | `GET` | `/api/v1/analysis/{id}/interpretation/free` | 免费解读（独立接口；当前免费内容已在 create/get 返回） | **未实现** |
@@ -213,24 +213,47 @@ X-Session-Key: …        # 匿名 session，不放 GET query、不放 URL
 }
 ```
 
-### 2.5 `POST /api/v1/analysis/qimen` 请求草案（Phase G）
+### 2.5 `POST /api/v1/analysis/qimen`（Phase F1 ✅）
+
+**请求体：**
 
 ```json
 {
-  "session_key": "uuid",
-  "question": "近期工作节奏如何整理？",
-  "category_id": 1,
+  "session_key": "...",
+  "question": "我最近适合推进这个计划吗？",
+  "category": "career",
   "confirm_disclaimer": true
 }
 ```
 
-可选：`occurred_at`（ISO8601，默认服务端当前时间）。第一版 **不** 暴露复杂盘式参数。
+| 字段 | 说明 |
+|------|------|
+| `question` | 必填，4–120 字（Unicode 字符数） |
+| `category` | 可选：`career` / `relationship` / `study` / `decision` / `general`；默认 `general` |
+| `confirm_disclaimer` | **必填**，必须为 `true` |
+| `session_key` | body 或 `X-Session-Key` header；二者同时存在且不一致 → 400 |
+
+**Phase F1 明确未做：**
+
+- 不接 DeepSeek / AI
+- 不接 unlock / `full_content`
+- 不生成完整九宫盘
+- 不采集姓名、手机号、身份证、地址、性别、精确地理位置
+- 不做军事、赌博、投资、医疗、法律具体建议
+
+**`result_payload`（`qimen-simple-v1`）：** 含 `algorithm_version`、`method_note`、`question_summary`（非原问题全文）、`category`、`time_context`、`situation_overview`、`risk_observations`、`action_pacing`、`reflection_questions`、`action_suggestions`、`calculation_meta.limits`。
+
+**列表隐私：** `GET /analysis?module=qimen` 不返回 payload / free_content；`question` 字段替换为安全摘要「用户问题已用于本次局势梳理」。
+
+**unlock：** 奇门记录调用 `POST /analysis/{id}/unlock` → **403**（`analysis unlock not supported for this module`）。
+
+起局时间默认服务端当前时间（Asia/Shanghai），不暴露复杂盘式参数。
 
 ### 2.6 `GET /api/v1/analysis` 查询参数（Phase E 起）
 
 ```text
 X-Session-Key: …        # 请求头，不放 query
-module=bazi             # 可选；Phase E1 仅支持 bazi（Phase G 再扩展 qimen）
+module=bazi|qimen       # 可选；Phase E1 支持 bazi；Phase F1 起支持 qimen
 page=1
 page_size=20
 ```
@@ -494,7 +517,7 @@ backend/internal/
   repository/analysis.go         # Phase D ✅ Create / FindOwnedByID / ListBySession
   service/analysis/              # Phase D ✅ Get / List only
   service/bazi/                  # Phase E1 ✅ 计算 + Create + free_content
-  service/qimen/                 # Phase G
+  service/qimen/                 # Phase F1 ✅
   handler/analysis.go            # Phase E1 ✅ bazi create / get / list
 ```
 
@@ -985,4 +1008,29 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 
 ---
 
-*Phase E1–E9 小程序分享与长图能力已交付。八字 mock 视频解锁仍保留；卦象改为直接查看完整解析。后续可接入真实激励视频（仅八字或统一策略待定）。*
+| Phase F1 v1 | 奇门问事后端基础 API（`qimen-simple-v1` 模板免费解读；无 unlock / AI / 小程序） |
+
+---
+
+### 10.13 Phase F1 交付清单（奇门问事后端基础 API，已完成）
+
+**已实现：**
+
+- [x] `POST /api/v1/analysis/qimen` 创建奇门记录 + 模板 `free_content`
+- [x] `GET /api/v1/analysis/{id}` 复用现有详情
+- [x] `GET /api/v1/analysis?module=qimen` 分页列表（摘要不暴露完整原问题）
+- [x] `DELETE /api/v1/analysis/{id}` 复用硬删除
+- [x] `qimen-simple-v1` 简化学习版：局势梳理 / 风险观察 / 行动节奏 / 自我反思 / 行动建议
+- [x] 风险拦截：静态关键词 + 复用 `sensitive.Service`（DB 敏感词）
+- [x] 奇门 unlock forbidden（403）
+
+**明确未做：**
+
+- [ ] 小程序奇门页面（Phase F2）
+- [ ] 奇门 unlock / DeepSeek 完整报告
+- [ ] 完整九宫盘 UI / 专业排盘
+- [ ] 军事、赌博、投资、医疗、法律具体建议
+
+---
+
+*Phase F1 后端基础 API 已交付。Phase F2 计划接入小程序奇门页面。*
