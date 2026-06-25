@@ -13,8 +13,9 @@ import (
 )
 
 type mockAnalysisRepo struct {
-	findFn func(ctx context.Context, id, sessionID int64) (*model.AnalysisRecord, error)
-	listFn func(ctx context.Context, sessionID int64, moduleType *int, page, pageSize int) ([]model.AnalysisListItem, int64, int, int, error)
+	findFn   func(ctx context.Context, id, sessionID int64) (*model.AnalysisRecord, error)
+	listFn   func(ctx context.Context, sessionID int64, moduleType *int, page, pageSize int) ([]model.AnalysisListItem, int64, int, int, error)
+	deleteFn func(ctx context.Context, id, sessionID int64) error
 }
 
 func (m *mockAnalysisRepo) FindOwnedByID(ctx context.Context, id, sessionID int64) (*model.AnalysisRecord, error) {
@@ -23,6 +24,13 @@ func (m *mockAnalysisRepo) FindOwnedByID(ctx context.Context, id, sessionID int6
 
 func (m *mockAnalysisRepo) ListBySession(ctx context.Context, sessionID int64, moduleType *int, page, pageSize int) ([]model.AnalysisListItem, int64, int, int, error) {
 	return m.listFn(ctx, sessionID, moduleType, page, pageSize)
+}
+
+func (m *mockAnalysisRepo) DeleteOwnedByID(ctx context.Context, id, sessionID int64) error {
+	if m.deleteFn != nil {
+		return m.deleteFn(ctx, id, sessionID)
+	}
+	return nil
 }
 
 func TestGetInvalidParams(t *testing.T) {
@@ -134,5 +142,39 @@ func TestListUnknownSessionUsesSharedPaginationRules(t *testing.T) {
 	}
 	if result.PageSize != 100 {
 		t.Fatalf("expected page_size capped to 100, got %d", result.PageSize)
+	}
+}
+
+func TestDeleteSuccess(t *testing.T) {
+	svc := analysis.NewServiceWithRepo(&mockAnalysisRepo{
+		deleteFn: func(_ context.Context, id, sessionID int64) error {
+			if id != 5 || sessionID != 10 {
+				t.Fatalf("unexpected delete args id=%d sessionID=%d", id, sessionID)
+			}
+			return nil
+		},
+	})
+	if err := svc.Delete(context.Background(), 10, 5); err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+}
+
+func TestDeleteNotFound(t *testing.T) {
+	svc := analysis.NewServiceWithRepo(&mockAnalysisRepo{
+		deleteFn: func(_ context.Context, _, _ int64) error {
+			return repository.ErrAnalysisNotFound
+		},
+	})
+	err := svc.Delete(context.Background(), 10, 5)
+	if !errors.Is(err, analysis.ErrNotFound) {
+		t.Fatalf("expected not found, got %v", err)
+	}
+}
+
+func TestDeleteInvalidParams(t *testing.T) {
+	svc := analysis.NewServiceWithRepo(&mockAnalysisRepo{})
+	err := svc.Delete(context.Background(), 0, 5)
+	if !errors.Is(err, analysis.ErrInvalidParams) {
+		t.Fatalf("expected invalid params, got %v", err)
 	}
 }

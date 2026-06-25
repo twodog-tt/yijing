@@ -97,6 +97,15 @@ func (s *stubAnalysisRepo) ListBySession(_ context.Context, sessionID int64, mod
 	return items, int64(len(items)), 1, 20, nil
 }
 
+func (s *stubAnalysisRepo) DeleteOwnedByID(_ context.Context, id, sessionID int64) error {
+	record, ok := s.records[id]
+	if !ok || record.SessionID != sessionID || record.Status != model.AnalysisStatusActive {
+		return repository.ErrAnalysisNotFound
+	}
+	delete(s.records, id)
+	return nil
+}
+
 func newTestAnalysisHandler(t *testing.T) (*handler.AnalysisHandler, *stubSessionRepo) {
 	t.Helper()
 	sessions := &stubSessionRepo{sessions: map[string]*model.Session{}}
@@ -353,5 +362,130 @@ func TestCreateBaziRejectsTooLongSessionKey(t *testing.T) {
 	h.CreateBazi(rec, req)
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400 for long session key, got %d", rec.Code)
+	}
+}
+
+func createBaziRecord(t *testing.T, h *handler.AnalysisHandler, sessions *stubSessionRepo, sessionKey string) int64 {
+	t.Helper()
+	sessions.sessions[sessionKey] = &model.Session{ID: 10, SessionKey: sessionKey}
+	body := bytes.NewBufferString(`{"session_key":"` + sessionKey + `","birth_date":"1995-01-01","birth_hour_branch":"zi","confirm_disclaimer":true}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/analysis/bazi", body)
+	rec := httptest.NewRecorder()
+	h.CreateBazi(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("create failed: %s", rec.Body.String())
+	}
+	var createResp struct {
+		Data struct {
+			ID int64 `json:"id"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &createResp); err != nil {
+		t.Fatalf("decode create response: %v", err)
+	}
+	return createResp.Data.ID
+}
+
+func TestDeleteAnalysisSuccess(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	id := createBaziRecord(t, h, sessions, "sess-a")
+
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/analysis/"+strconv.FormatInt(id, 10), nil)
+	req.Header.Set(sessionkey.HeaderName, "sess-a")
+	rec := httptest.NewRecorder()
+	h.Delete(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", rec.Code, rec.Body.String())
+	}
+	if strings.Contains(rec.Body.String(), "birth_date") || strings.Contains(rec.Body.String(), "input_payload") {
+		t.Fatalf("delete response must not contain birth info: %s", rec.Body.String())
+	}
+
+	getReq := httptest.NewRequest(http.MethodGet, "/api/v1/analysis/"+strconv.FormatInt(id, 10), nil)
+	getReq.Header.Set(sessionkey.HeaderName, "sess-a")
+	getRec := httptest.NewRecorder()
+	h.Get(getRec, getReq)
+	if getRec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 after delete, got %d", getRec.Code)
+	}
+
+	listReq := httptest.NewRequest(http.MethodGet, "/api/v1/analysis?module=bazi", nil)
+	listReq.Header.Set(sessionkey.HeaderName, "sess-a")
+	listRec := httptest.NewRecorder()
+	h.List(listRec, listReq)
+	var listResp struct {
+		Data struct {
+			Items []map[string]any `json:"items"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(listRec.Body.Bytes(), &listResp); err != nil {
+		t.Fatalf("decode list: %v", err)
+	}
+	if len(listResp.Data.Items) != 0 {
+		t.Fatalf("expected empty list after delete")
+	}
+}
+
+func TestDeleteAnalysisRejectsQuerySessionKey(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	id := createBaziRecord(t, h, sessions, "sess-a")
+
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/analysis/"+strconv.FormatInt(id, 10)+"?session_key=sess-a", nil)
+	rec := httptest.NewRecorder()
+	h.Delete(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestDeleteAnalysisRequiresHeaderSessionKey(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	id := createBaziRecord(t, h, sessions, "sess-a")
+
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/analysis/"+strconv.FormatInt(id, 10), nil)
+	rec := httptest.NewRecorder()
+	h.Delete(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestDeleteAnalysisRejectsTooLongSessionKey(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	id := createBaziRecord(t, h, sessions, "sess-a")
+
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/analysis/"+strconv.FormatInt(id, 10), nil)
+	req.Header.Set(sessionkey.HeaderName, strings.Repeat("a", 65))
+	rec := httptest.NewRecorder()
+	h.Delete(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestDeleteAnalysisOtherSessionNotFound(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	sessions.sessions["sess-b"] = &model.Session{ID: 11, SessionKey: "sess-b"}
+	id := createBaziRecord(t, h, sessions, "sess-a")
+
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/analysis/"+strconv.FormatInt(id, 10), nil)
+	req.Header.Set(sessionkey.HeaderName, "sess-b")
+	rec := httptest.NewRecorder()
+	h.Delete(rec, req)
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 for other session delete, got %d", rec.Code)
+	}
+}
+
+func TestDeleteAnalysisInvalidID(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	sessions.sessions["sess-a"] = &model.Session{ID: 10, SessionKey: "sess-a"}
+
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/analysis/not-a-id", nil)
+	req.Header.Set(sessionkey.HeaderName, "sess-a")
+	rec := httptest.NewRecorder()
+	h.Delete(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid id, got %d", rec.Code)
 	}
 }

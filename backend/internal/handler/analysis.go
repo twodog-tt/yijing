@@ -175,6 +175,62 @@ func (h *AnalysisHandler) List(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, result)
 }
 
+func (h *AnalysisHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	if sessionkey.FromQuery(r) != "" {
+		response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "session_key must be sent via X-Session-Key header")
+		return
+	}
+
+	sessionKey := sessionkey.FromHeader(r)
+	if strings.TrimSpace(sessionKey) == "" {
+		response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "session_key is required")
+		return
+	}
+	if err := sessionkey.ValidateLength(sessionKey); err != nil {
+		if errors.Is(err, sessionkey.ErrTooLong) {
+			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "session_key exceeds max length")
+			return
+		}
+		response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "invalid session_key")
+		return
+	}
+
+	sessionID, err := h.sessionSvc.SessionIDByKey(r.Context(), sessionKey)
+	if err != nil {
+		if errors.Is(err, session.ErrSessionKeyEmpty) {
+			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "session_key is required")
+			return
+		}
+		response.Error(w, http.StatusInternalServerError, response.CodeInternalError, "resolve session failed")
+		return
+	}
+	if sessionID == 0 {
+		response.Error(w, http.StatusNotFound, response.CodeNotFound, "analysis not found")
+		return
+	}
+
+	id, err := parseAnalysisIDFromPath(r.URL.Path)
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "invalid analysis id")
+		return
+	}
+
+	if err := h.analysisSvc.Delete(r.Context(), sessionID, id); err != nil {
+		if errors.Is(err, analysis.ErrInvalidParams) {
+			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "invalid params")
+			return
+		}
+		if errors.Is(err, analysis.ErrNotFound) {
+			response.Error(w, http.StatusNotFound, response.CodeNotFound, "analysis not found")
+			return
+		}
+		response.Error(w, http.StatusInternalServerError, response.CodeInternalError, "delete analysis failed")
+		return
+	}
+
+	response.OK(w, nil)
+}
+
 func toAnalysisResponse(record *model.AnalysisRecord) map[string]any {
 	resp := map[string]any{
 		"id":                record.ID,

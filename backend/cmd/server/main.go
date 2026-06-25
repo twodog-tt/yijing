@@ -95,6 +95,7 @@ func main() {
 	mux.HandleFunc("POST /api/v1/analysis/bazi", rateLimit(analysisHandler.CreateBazi))
 	mux.HandleFunc("GET /api/v1/analysis/{id}", analysisHandler.Get)
 	mux.HandleFunc("GET /api/v1/analysis", analysisHandler.List)
+	mux.HandleFunc("DELETE /api/v1/analysis/{id}", analysisHandler.Delete)
 
 	if cfg.EnableDebugRoutes {
 		log.Println("registering debug routes under /api/v1/debug/*")

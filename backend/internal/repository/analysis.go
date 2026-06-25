@@ -14,6 +14,8 @@ import (
 
 var ErrInvalidAnalysisParams = errors.New("invalid analysis params")
 
+var ErrAnalysisNotFound = errors.New("analysis not found")
+
 type AnalysisRepository struct {
 	db *sql.DB
 }
@@ -113,6 +115,28 @@ func (r *AnalysisRepository) FindOwnedByID(ctx context.Context, id, sessionID in
 	`, id, sessionID, model.AnalysisStatusActive)
 
 	return scanAnalysisRecord(row)
+}
+
+func (r *AnalysisRepository) DeleteOwnedByID(ctx context.Context, id, sessionID int64) error {
+	if id <= 0 || sessionID <= 0 {
+		return ErrInvalidAnalysisParams
+	}
+
+	res, err := r.db.ExecContext(ctx, `
+		DELETE FROM analysis_records
+		WHERE id = ? AND session_id = ? AND status = ?
+	`, id, sessionID, model.AnalysisStatusActive)
+	if err != nil {
+		return err
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return ErrAnalysisNotFound
+	}
+	return nil
 }
 
 func (r *AnalysisRepository) UpdateFreeContent(ctx context.Context, id, sessionID int64, freeContent string) error {

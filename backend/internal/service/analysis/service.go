@@ -17,6 +17,7 @@ var (
 type recordRepository interface {
 	FindOwnedByID(ctx context.Context, id, sessionID int64) (*model.AnalysisRecord, error)
 	ListBySession(ctx context.Context, sessionID int64, moduleType *int, page, pageSize int) ([]model.AnalysisListItem, int64, int, int, error)
+	DeleteOwnedByID(ctx context.Context, id, sessionID int64) error
 }
 
 type Service struct {
@@ -44,6 +45,24 @@ func (s *Service) Get(ctx context.Context, sessionID, id int64) (*model.Analysis
 		return nil, ErrNotFound
 	}
 	return record, nil
+}
+
+func (s *Service) Delete(ctx context.Context, sessionID, id int64) error {
+	if sessionID <= 0 || id <= 0 {
+		return ErrInvalidParams
+	}
+
+	err := s.repo.DeleteOwnedByID(ctx, id, sessionID)
+	if err != nil {
+		if errors.Is(err, repository.ErrAnalysisNotFound) {
+			return ErrNotFound
+		}
+		if errors.Is(err, repository.ErrInvalidAnalysisParams) {
+			return ErrInvalidParams
+		}
+		return err
+	}
+	return nil
 }
 
 func (s *Service) List(
