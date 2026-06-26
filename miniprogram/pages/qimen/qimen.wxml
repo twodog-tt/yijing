@@ -2,10 +2,16 @@
   <navigator class="back-link" open-type="navigateBack" delta="1">← 返回</navigator>
 
   <view class="page-header page-header--qimen">
-    <qimen-scan-grid variant="header"></qimen-scan-grid>
-    <text class="eyebrow">奇门问事</text>
-    <text class="page-title">基于传统奇门文化的局势梳理与行动节奏参考</text>
-    <text class="page-description">{{methodNote}}</text>
+    <view class="qimen-hero">
+      <view class="qimen-hero__grid">
+        <qimen-scan-grid></qimen-scan-grid>
+      </view>
+      <view class="qimen-hero__copy">
+        <text class="eyebrow">奇门问事</text>
+        <text class="page-title">基于传统奇门文化的局势梳理与行动节奏参考</text>
+        <text class="page-description">{{methodNote}}</text>
+      </view>
+    </view>
   </view>
 
   <view class="card form-card">

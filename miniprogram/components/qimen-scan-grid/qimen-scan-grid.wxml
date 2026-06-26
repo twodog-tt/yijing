@@ -1,8 +1,14 @@
-<view class="qimen-scan-grid {{compact ? 'qimen-scan-grid--compact' : ''}}" aria-hidden="true">
-  <view class="qimen-scan-grid__scan-h"></view>
-  <view class="qimen-scan-grid__scan-v"></view>
+<view class="qimen-scan-grid {{compact ? 'qimen-scan-grid--compact' : 'qimen-scan-grid--hero'}}" aria-hidden="true">
+  <view class="qimen-scan-grid__glow"></view>
+  <view class="qimen-scan-grid__scan-line"></view>
+  <view class="qimen-scan-grid__scan-diagonal"></view>
   <view class="qimen-scan-grid__dot"></view>
   <view class="qimen-scan-grid__cells">
-    <view class="qimen-scan-grid__cell" wx:for="{{9}}" wx:key="*this"></view>
+    <view
+      class="qimen-scan-grid__cell"
+      wx:for="{{cells}}"
+      wx:key="*this"
+      style="--cell-i: {{index}}"
+    ></view>
   </view>
 </view>

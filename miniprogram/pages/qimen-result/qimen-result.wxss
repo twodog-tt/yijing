@@ -2,13 +2,34 @@
   display: flex;
   flex-wrap: wrap;
   gap: 16rpx;
-  margin-top: 16rpx;
   color: #78716c;
   font-size: 24rpx;
 }
 
 .page-header--result {
   position: relative;
+}
+
+.qimen-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.qimen-hero__grid {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 16rpx;
+}
+
+.qimen-hero__copy {
+  width: 100%;
+  text-align: left;
+}
+
+.qimen-hero--result .result-meta {
+  margin-top: 12rpx;
 }
 
 .disclaimer--static {

@@ -207,18 +207,36 @@ export default function AnalysisResultPage() {
       <SectionReveal active={resultReady} delay={0}>
         <header className="relative overflow-hidden">
           {isBazi && <div className="header-aura header-aura--subtle" aria-hidden />}
-          {isQimen && <QimenScanGrid />}
-          <p className="text-sm tracking-[0.15em] text-amber-800">{moduleLabel}</p>
-          <h1 className="mt-2 text-2xl font-bold text-stone-900">{pageTitle}</h1>
-          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-stone-500">
-            <span>{record.algorithm_version}</span>
-            {qimenView?.categoryLabel && <span>{qimenView.categoryLabel}</span>}
-            {qimenView?.timeBucketLabel && (
-              <span>{qimenView.timeBucketLabel}</span>
-            )}
-            <span>{formatDateTime(record.created_at)}</span>
-          </div>
-          {isBazi && <ElementOrbit />}
+          {isQimen && (
+            <div className="qimen-hero">
+              <div className="qimen-hero__grid">
+                <QimenScanGrid />
+              </div>
+              <div className="qimen-hero__copy">
+                <p className="text-sm tracking-[0.15em] text-amber-800">{moduleLabel}</p>
+                <h1 className="mt-2 text-2xl font-bold text-stone-900">{pageTitle}</h1>
+                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-stone-500">
+                  <span>{record.algorithm_version}</span>
+                  {qimenView?.categoryLabel && <span>{qimenView.categoryLabel}</span>}
+                  {qimenView?.timeBucketLabel && (
+                    <span>{qimenView.timeBucketLabel}</span>
+                  )}
+                  <span>{formatDateTime(record.created_at)}</span>
+                </div>
+              </div>
+            </div>
+          )}
+          {isBazi && (
+            <>
+              <p className="text-sm tracking-[0.15em] text-amber-800">{moduleLabel}</p>
+              <h1 className="mt-2 text-2xl font-bold text-stone-900">{pageTitle}</h1>
+              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-stone-500">
+                <span>{record.algorithm_version}</span>
+                <span>{formatDateTime(record.created_at)}</span>
+              </div>
+              <ElementOrbit />
+            </>
+          )}
         </header>
       </SectionReveal>
 

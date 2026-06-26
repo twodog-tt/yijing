@@ -1236,3 +1236,24 @@ Web 端与小程序 UX1 对齐，使用 `frontend/app/globals.css` 中的 CSS an
 ### 28.3 验收
 
 浏览器移动端宽度检查文案、顺序、样式；`npm run build` 通过。
+
+## 29. Phase UX2.1：奇门九宫动效强化
+
+**范围：** `qimen-scan-grid` 组件 + 奇门表单/结果页顶栏布局 + Web 同步；**不改** backend / unlock / API。
+
+### 29.1 优化项
+
+| 项 | 说明 |
+|----|------|
+| 尺寸 | hero 模式 `168rpx` / `5.25rem`，compact 首页入口 `112rpx` |
+| 布局 | 九宫居中于标题上方，与 eyebrow / title 形成整体 |
+| 扫描线 | 横向光带自上而下 + 斜向光带（5.2s 周期） |
+| 光点 | `translate(-50%,-50%)` 沿九宫路径移动（≥9 点位） |
+| 宫位高亮 | 9 格依次轻微金色高亮（`--cell-i` 错开 delay） |
+| 背景 | 淡金渐变 + 径向光晕 |
+
+### 29.2 不变项
+
+- 表单 / 解锁 / 删除 / 长图 / 分享逻辑
+- 无 setData / 无 JS 帧动画 / 无新依赖
+- `prefers-reduced-motion` 降级

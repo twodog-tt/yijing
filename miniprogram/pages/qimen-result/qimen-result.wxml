@@ -11,14 +11,20 @@
   <block wx:if="{{!loading && view}}">
     <section-reveal active="{{resultReady}}" delay="0">
       <view class="page-header page-header--result">
-        <qimen-scan-grid variant="header"></qimen-scan-grid>
-        <text class="eyebrow">奇门问事</text>
-        <text class="page-title">{{moduleLabel}}</text>
-        <view class="result-meta">
-          <text>{{view.algorithmVersion}}</text>
-          <text>{{view.categoryLabel}}</text>
-          <text wx:if="{{view.timeBucketLabel}}">{{view.timeBucketLabel}}</text>
-          <text>{{createdAtDisplay}}</text>
+        <view class="qimen-hero qimen-hero--result">
+          <view class="qimen-hero__grid">
+            <qimen-scan-grid></qimen-scan-grid>
+          </view>
+          <view class="qimen-hero__copy">
+            <text class="eyebrow">奇门问事</text>
+            <text class="page-title">{{moduleLabel}}</text>
+            <view class="result-meta">
+              <text>{{view.algorithmVersion}}</text>
+              <text>{{view.categoryLabel}}</text>
+              <text wx:if="{{view.timeBucketLabel}}">{{view.timeBucketLabel}}</text>
+              <text>{{createdAtDisplay}}</text>
+            </view>
+          </view>
         </view>
       </view>
     </section-reveal>

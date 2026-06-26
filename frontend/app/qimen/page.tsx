@@ -166,16 +166,20 @@ export default function QimenPage() {
         >
           ← 返回首页
         </Link>
-        <QimenScanGrid />
-        <p className="mt-4 text-sm tracking-[0.15em] text-amber-800">
-          奇门问事
-        </p>
-        <h1 className="mt-2 text-2xl font-bold text-stone-900">
-          基于传统奇门文化的局势梳理与行动节奏参考
-        </h1>
-        <p className="mt-2 text-sm leading-relaxed text-stone-600">
-          {METHOD_NOTE}
-        </p>
+        <div className="qimen-hero mt-4">
+          <div className="qimen-hero__grid">
+            <QimenScanGrid />
+          </div>
+          <div className="qimen-hero__copy">
+            <p className="text-sm tracking-[0.15em] text-amber-800">奇门问事</p>
+            <h1 className="mt-2 text-2xl font-bold text-stone-900">
+              基于传统奇门文化的局势梳理与行动节奏参考
+            </h1>
+            <p className="mt-2 text-sm leading-relaxed text-stone-600">
+              {METHOD_NOTE}
+            </p>
+          </div>
+        </div>
       </div>
 
       {apiError && (

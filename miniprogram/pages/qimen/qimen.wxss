@@ -2,6 +2,33 @@
 
 .page-header--qimen {
   position: relative;
+  margin-bottom: 8rpx;
+}
+
+.qimen-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.qimen-hero__grid {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 20rpx;
+}
+
+.qimen-hero__copy {
+  width: 100%;
+  text-align: left;
+}
+
+.qimen-hero--result .qimen-hero__grid {
+  margin-bottom: 16rpx;
+}
+
+.qimen-hero--result .result-meta {
+  margin-top: 12rpx;
 }
 
 .picker-field--category {

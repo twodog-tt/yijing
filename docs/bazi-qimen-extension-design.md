@@ -1297,3 +1297,20 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 **样式：** `frontend/app/globals.css` 新增 `.home-*` 类；页面背景 `#faf8f3`；桌面端居中窄卡片。
 
 **未改：** API、unlock、DeepSeek、广告、支付、微信登录。
+
+---
+
+### 10.24 Phase UX2.1 交付清单（奇门九宫动效强化，进行中）
+
+**范围：** `miniprogram/components/qimen-scan-grid`、奇门表单/结果页顶栏、Web `QimenScanGrid` + `/qimen` + `/analysis/[id]`；**不改** backend / sql / deploy。
+
+**强化内容：**
+
+- [x] hero 九宫 `168rpx`，居中于标题区
+- [x] 横向扫描线 + 斜向光带（5.2s）
+- [x] 光点沿九宫路径移动（中心定位 `translate(-50%,-50%)`）
+- [x] 9 宫依次轻微高亮
+- [x] 淡金渐变背景 + 径向光晕
+- [x] Web 同步 + `prefers-reduced-motion` 降级
+
+**未改：** unlock / 删除 / 长图 / API / 隐私边界
