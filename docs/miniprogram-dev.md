@@ -1510,6 +1510,53 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 
 **下一步：** BAZI1.3；RELEASE-QA；QIMEN-V2-VIEW 本地 DevTools UI 待确认。
 
+## 25.21 Phase QIMEN-V2-VIEW-DEVTOOLS-QA：微信开发者工具本地 UI 验收
+
+**说明：** 对 QIMEN-V2-VIEW 小程序 UI 做 DevTools 验收；**不改** backend / Web / SQL；发现 UI 小问题可小修 miniprogram 允许范围。
+
+**Git 起点：** `main` @ `ec971e9`；`git status` 仅 `?? .deploy-patches/`。
+
+**静态检查：**
+
+- [x] 全部 miniprogram JS `node --check` 通过
+- [x] 无生产广告文案
+- [x] 禁用词仅出现在 `long-poster-canvas.js` 过滤器列表
+
+**测试记录（ECS，2026-06-27）：**
+
+| 类型 | id | 临时 session | 打开路径 |
+|------|-----|--------------|----------|
+| qimen-v2-professional | 102 | `qimen-devtools-prof` | `/pages/qimen-result/qimen-result?id=102` |
+| qimen-simple-v1 | 103 | `qimen-devtools-v1` | `/pages/qimen-result/qimen-result?id=103` |
+| qimen-v2-poc | 104 | `qimen-devtools-poc` | `/pages/qimen-result/qimen-result?id=104` |
+
+**DevTools 打开 professional/poc 预置记录：** 在 Storage 写入 `yijing_session_key` 为对应临时 session，再编译跳转上述路径。普通 v1 仍建议从 `/pages/qimen/qimen` 入口创建（不传 `algorithm_version`）。
+
+**视图层程序化预检（`buildQimenView`）：**
+
+- [x] v1（103）：`isProfessionalQimen=false`，无九宫区块数据
+- [x] poc（104）：虽有 9 宫，`isProfessionalQimen=false`
+- [x] professional（102）：`isProfessionalQimen=true`，`palaceGrid=9`，洛书序 `4,9,2,3,5,7,8,1,6`
+- [x] 中五宫 `door=—`，`layoutRoleLabel=中宫`
+- [x] 值符宫标签 `值符宫`（坤二宫）
+- [x] professional 长图含 `professionalPosterNote`，不含完整九宫
+- [x] v1 长图无 professional 摘要
+- [x] 历史页 `detailUrl` → `/pages/qimen-result/qimen-result?id=<id>`
+
+**微信开发者工具（需本地重新编译 / 预览确认）：**
+
+- [ ] 普通 v1 入口创建 → 无 professional 区块；解锁 / 分享 / 长图 / 历史跳转
+- [ ] poc（104）→ 不显示 professional 区块、不白屏
+- [ ] professional（102）→ 九宫格 / layout / 节令 / 遁局 / 值符值使 / 中五宫 `—` 样式
+- [ ] 分享卡片与长图导出（professional 一句摘要，无完整原问题）
+- [ ] 历史页三类记录点击与删除
+
+**本阶段结论：** 代码层预检通过；无 miniprogram 小修；DevTools 渲染与相册保存需本地确认。
+
+**部署：** 无需 backend / frontend / SQL；需微信开发者工具重新编译 / 预览。
+
+**下一步：** RELEASE-QA；BAZI1.3。
+
 ## 26. Phase UX1：八字 / 奇门轻量动效
 
 Phase UX1 在小程序与 Web 八字、奇门页面增加贴合传统文化场景的轻量 UI 动效，提升氛围与完成感。**仅改 UI 动效，不改后端、数据库、部署。**

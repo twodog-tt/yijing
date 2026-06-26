@@ -1982,3 +1982,24 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 **下一步：** BAZI1.3；RELEASE-QA。
 
 ---
+
+### 10.48 Phase QIMEN-V2-VIEW-DEVTOOLS-QA 交付清单（微信开发者工具 UI 验收）
+
+**目标：** 验收小程序 professional 九宫 UI、分享/长图、历史跳转；**不改** backend / Web / SQL。
+
+**代码层预检通过：**
+
+- [x] v1 / poc / professional 视图条件正确
+- [x] 九宫洛书序、中五宫 `door=—` fallback、值符宫标签
+- [x] 分享/长图摘要不含完整原问题；professional 长图不含完整九宫
+- [x] 历史页路由正确
+
+**DevTools 待本地确认：**
+
+- [ ] 真实渲染、解锁、分享卡片、长图相册、历史跳转
+
+**测试记录：** professional id=102；v1 id=103；poc id=104（见 `miniprogram-dev.md` §25.21）。
+
+**下一步：** RELEASE-QA；BAZI1.3。
+
+---
