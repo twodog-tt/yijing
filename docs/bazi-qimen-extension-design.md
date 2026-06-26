@@ -2041,3 +2041,31 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 **下一步：** BAZI1.3-QA；RELEASE-QA。
 
 ---
+
+### 10.51 Phase BAZI1.3-QA 验收清单（小程序八字 v2 展示回归）
+
+**Git 基线：** `879784d`（BAZI1.3）；**不改** backend / Web / SQL。
+
+**API 复验（ECS）：**
+
+- [x] id=105 `bazi-v2-poc`：`calendar_basis` / `pillars_v2` / `five_elements` 齐全；时柱 `癸卯`
+- [x] id=106 `bazi-simple-v1`：无 v2 字段；默认路径不受影响
+- [x] id=107 `bazi-v2-poc` 未知时辰：`pillars_v2` 无 `hour`；响应无 session_key / prompt
+- [x] id=107 需 session `bazi-v2-unknown-test`（非 `bazi-v2-view-test`）
+
+**视图层 / 隐私 / 合规：**
+
+- [x] `buildAnalysisView`：105/107 `isBaziV2=true`；106 `false`
+- [x] 107 `pillarsV2View.hourUnknown=true`；面板文案「未知时辰，未生成时柱」
+- [x] 分享卡片 / 长图不含完整 birth_date / 时辰原始输入 / payload JSON
+- [x] 长图 v2 仅一句轻量摘要（`BAZI_V2_POSTER_NOTE`）
+- [x] 无 algorithm_version 选择 UI；普通创建仍默认 v1
+- [x] 禁用词仅出现在长图过滤器；页面无强预测 / 改运化灾文案
+
+**DevTools UI：** 待本地重新编译后勾选（§25.24）。
+
+**本阶段结论：** 自动化预检通过；无代码小修。
+
+**下一步：** RELEASE-QA；HOME1；BAZI1.4 报告质量增强。
+
+---

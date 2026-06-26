@@ -1625,6 +1625,68 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 
 **下一步：** BAZI1.3-QA；RELEASE-QA。
 
+## 25.24 Phase BAZI1.3-QA：小程序八字 v2 展示回归验收
+
+**说明：** 对 BAZI1.3（`879784d`）做 API / 视图层 / 合规回归；**不改** backend / Web / SQL。
+
+**Git 起点：** `main` @ `879784d`；工作区仅 `?? .deploy-patches/`。
+
+**静态检查（2026-06-23）：**
+
+- [x] miniprogram JS `node --check` 全通过
+- [x] 无广告文案（观看视频 / 广告解锁 / 模拟广告 / rewarded_video_mock）
+- [x] 禁用词仅出现在 `long-poster-canvas.js` 过滤器列表
+- [x] `git diff --check` 无问题
+
+**API 记录复验（ECS `GET /analysis/{id}`）：**
+
+| 记录 | id | session | algorithm_version | 结论 |
+|------|-----|---------|-------------------|------|
+| v2 正常时辰 | 105 | `bazi-v2-view-test` | `bazi-v2-poc` | ✅ 含 `calendar_basis` / `pillars_v2` / `five_elements`；四柱含时柱 |
+| v1 默认路径 | 106 | `bazi-v1-view-test` | `bazi-simple-v1` | ✅ 无 `pillars_v2`；不触发 v2 区块 |
+| v2 未知时辰 | 107 | `bazi-v2-unknown-test` | `bazi-v2-poc` | ✅ `pillars_v2` 无 `hour` 字段；不强行生成时柱 |
+
+**注意：** id=107 归属 session 为 `bazi-v2-unknown-test`；使用 `bazi-v2-view-test` 请求返回 `40401 analysis not found`。DevTools 验收 id=107 时请写入 `yijing_session_key=bazi-v2-unknown-test`。
+
+**API 隐私：** 三条响应均不含 `session_key` / `prompt` 字段。
+
+**视图层程序化验收（`buildAnalysisView` / `buildBaziCardData` / `buildBaziLongPosterData`）：**
+
+| 项 | 105 | 106 | 107 |
+|----|-----|-----|-----|
+| `isBaziV2` | true | false | true |
+| `baziV2` 面板 | 存在 | null | 存在 |
+| 时柱 | 癸卯 | v1 路径 | `hourUnknown=true` |
+| 视图含 birth_date | 否 | 否 | 否 |
+| 分享/长图含 birth | 否 | 否 | 否 |
+| v2 长图摘要 | 一句 | 无 | 一句 |
+
+**代码审查（分享 / 长图 / 结果页）：**
+
+- [x] 结果页不绑定 `input_payload` / `result_payload` 原始 JSON
+- [x] 分享长图仅展示四柱干支与解读摘要，不含出生日期 / 时辰原始输入
+- [x] v2 未知时辰：v2 面板显示「未知时辰，未生成时柱」；长图跳过时柱行
+- [x] 普通用户创建路径仍默认 `bazi-simple-v1`；无 algorithm_version 选择 UI
+
+**微信开发者工具（需本地重新编译 / 预览确认）：**
+
+Storage 写入 `yijing_session_key` 后打开对应结果页：
+
+| 项 | v1 id=106 | v2 id=105 | v2 未知 id=107 |
+|----|-----------|-----------|----------------|
+| session | `bazi-v1-view-test` | `bazi-v2-view-test` | `bazi-v2-unknown-test` |
+| v2 区块 | ☐ 应无 | ☐ 应有 | ☐ 应有 |
+| 四柱 / 节气 / 五行 | ☐ | ☐ | ☐ 时柱 fallback |
+| 分享卡片 | ☐ | ☐ | ☐ |
+| 长图导出 / 相册 | ☐ | ☐ | ☐ |
+| 历史页跳转 / 删除 | ☐ | ☐ | ☐ |
+
+**本阶段结论：** API 与视图层预检全部通过；无 miniprogram 小修；DevTools 渲染与相册保存需本地确认。
+
+**部署：** 无需 backend / frontend / SQL；需微信开发者工具重新编译 / 预览。
+
+**下一步：** 本地 DevTools 勾选 → RELEASE-QA 或 HOME1 或 BAZI1.4。
+
 ## 26. Phase UX1：八字 / 奇门轻量动效
 
 Phase UX1 在小程序与 Web 八字、奇门页面增加贴合传统文化场景的轻量 UI 动效，提升氛围与完成感。**仅改 UI 动效，不改后端、数据库、部署。**
