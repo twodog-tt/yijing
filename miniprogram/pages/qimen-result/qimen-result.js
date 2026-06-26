@@ -37,7 +37,7 @@ function mapDeleteError(error) {
 }
 
 function mapUnlockError(error) {
-  if (!error) return "解锁失败，请稍后重试。";
+  if (!error) return "完整报告获取失败，请稍后重试。";
   if (error.type === ERROR_TYPES.NETWORK) {
     return "网络异常，请检查网络后重试。";
   }
@@ -45,12 +45,12 @@ function mapUnlockError(error) {
     return "会话已失效，请重新进入页面。";
   }
   if (isBusinessError(error, 40301)) {
-    return "当前记录暂不支持解锁完整报告。";
+    return "当前记录暂不支持生成完整报告。";
   }
   if (isBusinessError(error, 40401)) {
     return "记录不存在或已被删除。";
   }
-  return error.message || "解锁失败，请稍后重试。";
+  return error.message || "完整报告获取失败，请稍后重试。";
 }
 
 Page({

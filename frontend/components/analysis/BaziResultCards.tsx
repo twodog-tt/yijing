@@ -60,6 +60,35 @@ export default function BaziResultCards({
         </section>
       </SectionReveal>
 
+      {(view.baziProfile.elementBalanceType ||
+        view.baziProfile.actionStyle ||
+        view.baziProfile.reflectionTheme) && (
+        <SectionReveal active={revealed} delay={120}>
+          <section className="rounded-2xl border border-amber-100 bg-amber-50/60 p-5 shadow-sm">
+            <h2 className="text-sm font-semibold text-stone-900">解读视角</h2>
+            <ul className="mt-3 space-y-2 text-sm leading-relaxed text-stone-700">
+              {view.baziProfile.elementBalanceType && (
+                <li>· 五行倾向：{view.baziProfile.elementBalanceType}</li>
+              )}
+              {view.baziProfile.actionStyle && (
+                <li>· 行动风格：{view.baziProfile.actionStyle}</li>
+              )}
+              {view.baziProfile.reflectionTheme && (
+                <li>· 反思主题：{view.baziProfile.reflectionTheme}</li>
+              )}
+              {view.interpretationLens.pacingHint && (
+                <li>· 节奏建议：{view.interpretationLens.pacingHint}</li>
+              )}
+              {view.baziProfile.dayMasterObservation && (
+                <li className="text-stone-600">
+                  · {view.baziProfile.dayMasterObservation}
+                </li>
+              )}
+            </ul>
+          </section>
+        </SectionReveal>
+      )}
+
       <SectionReveal active={revealed} delay={560}>
         <section className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
           <h2 className="text-sm font-semibold text-stone-900">日主</h2>

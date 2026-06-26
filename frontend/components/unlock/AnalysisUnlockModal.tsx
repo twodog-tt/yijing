@@ -48,7 +48,7 @@ export default function AnalysisUnlockModal({
       onSuccess(content);
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "生成失败，请重试");
+      setError(e instanceof Error ? e.message : "完整报告获取失败，请稍后重试。");
     } finally {
       setLoading(false);
       onLoadingChange?.(false);

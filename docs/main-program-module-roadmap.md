@@ -316,7 +316,9 @@ Tab: 今日 | 问事 | 扩展(八字/奇门) | 我的(历史/设置)
 | **Phase D** | 通用报告表设计 | `analysis_records` ER、migration 草案、历史列表扩展 | ChatGPT + Codex **必审** |
 | **Phase E** | 八字开发 | 后端排盘（或规则引擎）、API、小程序页 | Cursor + Codex review |
 | **Phase F1** | 奇门问事 **后端基础 API** | `POST /analysis/qimen`、`module=qimen` 列表、模板免费解读 | Cursor ✅ |
-| **Phase F2** | 奇门问事 **小程序页面** | 表单、结果页、分享（规划） | Cursor |
+| **Phase E10** | 八字差异化解读 | bazi_profile / interpretation_lens、prompt 与 UI 展示 | Cursor ✅ |
+| **Phase F6** | 奇门长图分享 | 解锁后 Canvas 长图 | Cursor ✅ |
+| **Phase F7** | 奇门差异化解读 | question_profile / qimen_lens、prompt 与 UI 展示 | Cursor ✅ |
 | **Phase G** | 奇门增强（unlock / AI / 高级 UI） | 完整解读、九宫盘等（规划，未启动） | Cursor + Codex review |
 | **Phase H（P4）** | 统一报告中心 & 商业化 | 会员/次数包调研、支付资质、**暂不实施** | 产品决策后单独立项 |
 

@@ -42,6 +42,8 @@ function buildAnalysisView(record) {
   const suggestions = Array.isArray(result.action_suggestions)
     ? result.action_suggestions
     : [];
+  const profile = result.bazi_profile || {};
+  const lens = result.interpretation_lens || {};
 
   return {
     algorithmVersion: result.algorithm_version || record?.algorithm_version || "bazi-simple-v1",
@@ -62,6 +64,19 @@ function buildAnalysisView(record) {
       earth: Number(elements.earth) || 0,
       metal: Number(elements.metal) || 0,
       water: Number(elements.water) || 0,
+    },
+    baziProfile: {
+      dayMasterObservation: profile.day_master_observation || "",
+      seasonTendency: profile.season_tendency || "",
+      elementBalanceType: profile.element_balance_type || "",
+      actionStyle: profile.action_style || "",
+      reflectionTheme: profile.reflection_theme || "",
+    },
+    interpretationLens: {
+      strengthHint: lens.strength_hint || "",
+      cautionHint: lens.caution_hint || "",
+      pacingHint: lens.pacing_hint || "",
+      relationshipWithElements: lens.relationship_with_elements || "",
     },
     reflectionFocus: result.reflection_focus || "",
     actionSuggestions: suggestions,

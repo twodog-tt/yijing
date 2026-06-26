@@ -32,6 +32,13 @@ const TIME_BUCKET_LABELS: Record<string, string> = {
   night: "夜间",
 };
 
+export interface QimenLensView {
+  focusTheme: string;
+  supportTheme: string;
+  cautionTheme: string;
+  pacingTheme: string;
+}
+
 export interface QimenAnalysisView {
   algorithmVersion: string;
   methodNote: string;
@@ -40,6 +47,7 @@ export interface QimenAnalysisView {
   questionSummary: string;
   timeBucket: string;
   timeBucketLabel: string;
+  qimenLens: QimenLensView;
   situationOverview: string;
   riskObservations: string[];
   actionPacing: string;
@@ -76,6 +84,7 @@ export function buildQimenView(record: AnalysisRecord): QimenAnalysisView {
   const limits = calcMeta.limits;
   const timeContext = (result.time_context as Record<string, string>) || {};
   const timeBucket = timeContext.time_bucket || "";
+  const lensRaw = (result.qimen_lens as Record<string, string>) || {};
 
   return {
     algorithmVersion:
@@ -88,6 +97,12 @@ export function buildQimenView(record: AnalysisRecord): QimenAnalysisView {
     questionSummary: QUESTION_SUMMARY,
     timeBucket,
     timeBucketLabel: TIME_BUCKET_LABELS[timeBucket] || "",
+    qimenLens: {
+      focusTheme: String(lensRaw.focus_theme || ""),
+      supportTheme: String(lensRaw.support_theme || ""),
+      cautionTheme: String(lensRaw.caution_theme || ""),
+      pacingTheme: String(lensRaw.pacing_theme || ""),
+    },
     situationOverview: (result.situation_overview as string) || "",
     riskObservations: risks,
     actionPacing: (result.action_pacing as string) || "",

@@ -26,16 +26,19 @@ type CreateInput struct {
 }
 
 type CalculationResult struct {
-	BirthDate         string
-	BirthHourBranch   string
-	BirthHourUnknown  bool
-	Pillars           Pillars
-	DayMaster         string
-	FiveElements      FiveElements
-	ReflectionFocus   string
-	ActionSuggestions []string
-	MethodNote        string
-	Limits            []string
+	BirthDate           string
+	BirthHourBranch     string
+	BirthHourUnknown    bool
+	Pillars             Pillars
+	DayMaster           string
+	FiveElements        FiveElements
+	BaziProfile         BaziProfile
+	InterpretationLens  InterpretationLens
+	DifferentiationSeed DifferentiationSeed
+	ReflectionFocus     string
+	ActionSuggestions   []string
+	MethodNote          string
+	Limits              []string
 }
 
 type Pillars struct {
@@ -77,13 +80,16 @@ func (c CalculationResult) ResultPayload() (json.RawMessage, error) {
 	}
 
 	payload := map[string]any{
-		"algorithm_version":  model.AlgorithmVersionBaziSimpleV1,
-		"method_note":        c.MethodNote,
-		"pillars":            pillars,
-		"day_master":         c.DayMaster,
-		"five_elements":      c.FiveElements,
-		"reflection_focus":   c.ReflectionFocus,
-		"action_suggestions": c.ActionSuggestions,
+		"algorithm_version":    model.AlgorithmVersionBaziSimpleV1,
+		"method_note":          c.MethodNote,
+		"pillars":              pillars,
+		"day_master":           c.DayMaster,
+		"five_elements":        c.FiveElements,
+		"bazi_profile":         c.BaziProfile,
+		"interpretation_lens":  c.InterpretationLens,
+		"differentiation_seed": c.DifferentiationSeed,
+		"reflection_focus":     c.ReflectionFocus,
+		"action_suggestions":   c.ActionSuggestions,
 	}
 	if len(c.Limits) > 0 {
 		payload["calculation_meta"] = map[string]any{"limits": c.Limits}

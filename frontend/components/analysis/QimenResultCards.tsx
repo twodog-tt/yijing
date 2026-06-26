@@ -24,6 +24,30 @@ export default function QimenResultCards({
         </section>
       </SectionReveal>
 
+      {(view.qimenLens.focusTheme ||
+        view.qimenLens.pacingTheme ||
+        view.qimenLens.cautionTheme) && (
+        <SectionReveal active={revealed} delay={40}>
+          <section className="rounded-2xl border border-amber-100 bg-amber-50/60 p-5 shadow-sm">
+            <h2 className="text-sm font-semibold text-stone-900">关注主题</h2>
+            <ul className="mt-3 space-y-2 text-sm leading-relaxed text-stone-700">
+              {view.qimenLens.focusTheme && (
+                <li>· 关注主题：{view.qimenLens.focusTheme}</li>
+              )}
+              {view.qimenLens.pacingTheme && (
+                <li>· 行动节奏：{view.qimenLens.pacingTheme}</li>
+              )}
+              {view.qimenLens.cautionTheme && (
+                <li>· 风险观察：{view.qimenLens.cautionTheme}</li>
+              )}
+              {view.qimenLens.supportTheme && (
+                <li>· 可借助：{view.qimenLens.supportTheme}</li>
+              )}
+            </ul>
+          </section>
+        </SectionReveal>
+      )}
+
       <SectionReveal active={revealed} delay={80}>
         <section className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
           <h2 className="text-sm font-semibold text-stone-900">局势梳理</h2>

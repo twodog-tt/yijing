@@ -67,6 +67,7 @@ function buildQimenView(record) {
     : [];
   const limits = result.calculation_meta?.limits;
   const timeBucket = result.time_context?.time_bucket || "";
+  const lens = result.qimen_lens || {};
 
   return {
     algorithmVersion:
@@ -77,6 +78,12 @@ function buildQimenView(record) {
     questionSummary: QUESTION_SUMMARY,
     timeBucket,
     timeBucketLabel: getTimeBucketLabel(timeBucket),
+    qimenLens: {
+      focusTheme: lens.focus_theme || "",
+      supportTheme: lens.support_theme || "",
+      cautionTheme: lens.caution_theme || "",
+      pacingTheme: lens.pacing_theme || "",
+    },
     situationOverview: result.situation_overview || "",
     riskObservations: risks,
     actionPacing: result.action_pacing || "",

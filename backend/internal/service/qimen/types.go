@@ -46,6 +46,10 @@ type CalculationResult struct {
 	Question            string
 	Category            string
 	TimeContext         TimeContext
+	QuestionProfile     QuestionProfile
+	QimenLens           QimenLens
+	DifferentiationSeed DifferentiationSeed
+	SafeQuestionSummary string
 	SituationOverview   string
 	RiskObservations    []string
 	ActionPacing        string
@@ -71,6 +75,10 @@ func (c CalculationResult) ResultPayload() (json.RawMessage, error) {
 		"question_summary":     QuestionSummary,
 		"category":             c.Category,
 		"time_context":         c.TimeContext,
+		"question_profile":     c.QuestionProfile,
+		"qimen_lens":           c.QimenLens,
+		"differentiation_seed": c.DifferentiationSeed,
+		"safe_question_summary": c.SafeQuestionSummary,
 		"situation_overview":   c.SituationOverview,
 		"risk_observations":    c.RiskObservations,
 		"action_pacing":        c.ActionPacing,

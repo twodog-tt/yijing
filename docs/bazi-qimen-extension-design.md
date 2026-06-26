@@ -1331,3 +1331,38 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 **仍拒绝：** `rewarded_video` / `paid` / `admin` / analysis 路径的 `mock_button`
 
 **未来：** Phase AD1 接入真实微信激励视频（需流量主 + adUnitId）
+
+---
+
+### 10.26 Phase F7 交付清单（奇门差异化解读优化）
+
+**问题：** 不同问事在 free_content / 完整报告中相似度过高。
+
+**根因：** qimen-simple-v1 主要按 category + 少量 hash 扰动生成；问题文本特征未进入结构化输出与 DeepSeek prompt。
+
+**改动：**
+
+- [x] 新增 `question_profile`（intent_type / time_horizon / decision_pressure / relation_scope / risk_tone）
+- [x] 新增 `qimen_lens`（focus / support / caution / pacing theme）
+- [x] 新增 `differentiation_seed` + `safe_question_summary`（不含原问题全文）
+- [x] `Calculate` / `free_content` / 模板 full_content / DeepSeek prompt 均引用上述字段
+- [x] 小程序 / Web 结果页新增「关注主题」卡片展示 lens 差异
+- [x] 测试覆盖：同类不同问、不同 category、prompt 隐私、八字 / unlock 不受影响
+
+**仍禁止：** 精准预测、强吉凶、改运、投资/医疗/法律/赌博/军事建议；列表/分享/长图不展示完整原问题。
+
+---
+
+### 10.27 Phase E10 交付清单（八字差异化与报告质量）
+
+**问题：** 不同出生信息的 free_content / 完整报告相似度过高。
+
+**根因：** 反思与行动建议模板固定；DeepSeek prompt 缺少 `bazi_profile` / `interpretation_lens`。
+
+**改动：**
+
+- [x] 新增 `bazi_profile`（日主观察、季节倾向、五行平衡类型、行动风格、反思主题）
+- [x] 新增 `interpretation_lens`（可借助/需留意/节奏/五行关系）
+- [x] `free_content` / 模板 full_content / DeepSeek prompt 引用上述字段
+- [x] 小程序 / Web 结果页新增「解读视角」卡片
+- [x] 未知时辰仍不生成时柱；result_payload 不含 birth_date

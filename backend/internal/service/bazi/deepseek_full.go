@@ -28,6 +28,7 @@ const (
 7. 禁止生成：精准算命、婚姻财运预测、保证发财、保证复合、疾病寿命、改运化解、投资建议、医疗建议、法律建议、赌博建议。
 8. 不要恐吓用户，不要诱导付费改运。
 9. 语气温和、克制、不玄乎。
+10. 必须根据 bazi_profile 与 interpretation_lens 写出差异化报告，不要套用固定模板；围绕五行倾向、行动风格、反思主题展开。
 
 你必须只输出纯文本报告正文，不要输出 Markdown 代码块，不要输出 JSON，不要输出额外解释。`
 
@@ -51,10 +52,18 @@ const (
 {{hour_pillar_line}}
 日主：{{day_master}}
 五行倾向（简化计数）：木 {{wood}}、火 {{fire}}、土 {{earth}}、金 {{metal}}、水 {{water}}
+bazi_profile：{{bazi_profile}}
+interpretation_lens：{{interpretation_lens}}
 反思焦点：{{reflection_focus}}
 行动建议参考：{{action_suggestions}}
 规则限制：{{limits}}
 免费解读摘要：{{free_content}}
+
+写作要求：
+- 必须围绕 bazi_profile 的 element_balance_type、action_style、reflection_theme 与 interpretation_lens 展开，避免不同八字写出相同段落。
+- 不要套用固定模板句，各章节内容需体现本次简析的差异。
+- 保持传统文化学习与自我观察语气，不做精准预测与强断言。
+- 不要输出完整出生日期、出生时辰或用户身份信息。
 
 若时辰未知，必须在相关部分明确写出：时辰未知，本次不生成时柱，相关内容仅基于已知信息进行简化分析。
 免责声明必须再次强调：基于简化干支文化规则，仅供传统文化学习与自我反思，不构成现实决策依据。`
@@ -142,6 +151,8 @@ func buildBaziUserPrompt(input *fullReportPromptInput) string {
 		"{{earth}}", fmt.Sprintf("%d", input.FiveElements.Earth),
 		"{{metal}}", fmt.Sprintf("%d", input.FiveElements.Metal),
 		"{{water}}", fmt.Sprintf("%d", input.FiveElements.Water),
+		"{{bazi_profile}}", formatBaziProfileForPrompt(input.BaziProfile),
+		"{{interpretation_lens}}", formatInterpretationLensForPrompt(input.InterpretationLens),
 		"{{reflection_focus}}", nonEmpty(input.ReflectionFocus, "（无）"),
 		"{{action_suggestions}}", suggestions,
 		"{{limits}}", limits,

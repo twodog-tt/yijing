@@ -37,6 +37,18 @@
       </view>
     </section-reveal>
 
+    <section-reveal wx:if="{{view.qimenLens.focusTheme || view.qimenLens.pacingTheme || view.qimenLens.cautionTheme}}" active="{{resultReady}}" delay="120">
+      <view class="card card--lens">
+        <text class="section-title">关注主题</text>
+        <view class="bullet-list">
+          <text wx:if="{{view.qimenLens.focusTheme}}" class="bullet-item">· 关注主题：{{view.qimenLens.focusTheme}}</text>
+          <text wx:if="{{view.qimenLens.pacingTheme}}" class="bullet-item">· 行动节奏：{{view.qimenLens.pacingTheme}}</text>
+          <text wx:if="{{view.qimenLens.cautionTheme}}" class="bullet-item">· 风险观察：{{view.qimenLens.cautionTheme}}</text>
+          <text wx:if="{{view.qimenLens.supportTheme}}" class="bullet-item">· 可借助：{{view.qimenLens.supportTheme}}</text>
+        </view>
+      </view>
+    </section-reveal>
+
     <section-reveal active="{{resultReady}}" delay="160">
       <view class="card">
         <text class="section-title">局势梳理</text>

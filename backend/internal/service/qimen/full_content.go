@@ -11,8 +11,11 @@ const fullReportDisclaimer = "本报告基于 qimen-simple-v1 简化奇门文化
 type parsedResultPayload struct {
 	MethodNote          string                  `json:"method_note"`
 	QuestionSummary     string                  `json:"question_summary"`
+	SafeQuestionSummary string                  `json:"safe_question_summary"`
 	Category            string                  `json:"category"`
 	TimeContext         *timeContextPayload     `json:"time_context"`
+	QuestionProfile     *profilePayload         `json:"question_profile"`
+	QimenLens           *lensPayload            `json:"qimen_lens"`
 	SituationOverview   string                  `json:"situation_overview"`
 	RiskObservations    []string                `json:"risk_observations"`
 	ActionPacing        string                  `json:"action_pacing"`
@@ -81,12 +84,22 @@ func BuildFullContent(resultPayload json.RawMessage, freeContent string) (string
 		limits = parsed.CalculationMeta.Limits
 	}
 
+	profile := profileFromPayload(parsed.QuestionProfile, category)
+	lens := lensFromPayload(parsed.QimenLens, profile, category)
+	safeSummary := strings.TrimSpace(parsed.SafeQuestionSummary)
+	if safeSummary == "" {
+		safeSummary = BuildSafeQuestionSummary(profile)
+	}
+
 	methodSection := fmt.Sprintf(
-		"方法说明：%s\n问事分类：%s\n%s问事摘要：%s\n规则限制：%s",
+		"方法说明：%s\n问事分类：%s\n%s问事摘要：%s\n问事特征：%s\n关注主题：%s\n行动节奏倾向：%s\n规则限制：%s",
 		methodNote,
 		categoryText,
 		timeNote,
 		summary,
+		safeSummary,
+		lens.FocusTheme,
+		lens.PacingTheme,
 		strings.Join(limits, "；"),
 	)
 

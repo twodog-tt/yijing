@@ -82,6 +82,19 @@
       </view>
     </section-reveal>
 
+    <section-reveal wx:if="{{view.baziProfile.elementBalanceType || view.baziProfile.actionStyle || view.baziProfile.reflectionTheme}}" active="{{resultReady}}" delay="660">
+      <view class="card card--lens">
+        <text class="section-title">解读视角</text>
+        <view class="bullet-list">
+          <text wx:if="{{view.baziProfile.elementBalanceType}}" class="bullet-item">· 五行倾向：{{view.baziProfile.elementBalanceType}}</text>
+          <text wx:if="{{view.baziProfile.actionStyle}}" class="bullet-item">· 行动风格：{{view.baziProfile.actionStyle}}</text>
+          <text wx:if="{{view.baziProfile.reflectionTheme}}" class="bullet-item">· 反思主题：{{view.baziProfile.reflectionTheme}}</text>
+          <text wx:if="{{view.interpretationLens.pacingHint}}" class="bullet-item">· 节奏建议：{{view.interpretationLens.pacingHint}}</text>
+          <text wx:if="{{view.baziProfile.dayMasterObservation}}" class="bullet-item muted-text">· {{view.baziProfile.dayMasterObservation}}</text>
+        </view>
+      </view>
+    </section-reveal>
+
     <section-reveal wx:if="{{view.reflectionFocus}}" active="{{resultReady}}" delay="700">
       <view class="card">
         <text class="section-title">反思焦点</text>
@@ -113,7 +126,7 @@
           disabled="{{unlockFlowRunning || unlocking || deleting || cardGenerating}}"
           bindtap="handleUnlock"
         >查看完整报告</button>
-        <text class="action-hint">当前为内测体验，完整报告仅供传统文化学习与自我反思参考。解锁后可生成分享长图。</text>
+        <text class="action-hint">当前为内测体验，完整报告仅供传统文化学习与自我反思参考。生成完整报告后可生成分享长图。</text>
       </view>
     </section-reveal>
 

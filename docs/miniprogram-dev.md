@@ -1078,6 +1078,28 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 - 路径：`/pages/qimen-result/qimen-result?id={id}`
 - 加载失败回退奇门页入口
 
+## 25.1 Phase F7：奇门差异化解读（结果页）
+
+**背景：** 不同问事 free_content 相似度过高。
+
+**后端：** `result_payload` 新增 `question_profile`、`qimen_lens`、`safe_question_summary`；免费/完整解读按问事特征组合生成。
+
+**小程序结果页：** 新增「关注主题」卡片（focus / pacing / caution / support），仍不展示完整原问题。
+
+**验收：**
+
+- [ ] 同类不同问（如两个 career 问法）局势/节奏/建议有差异
+- [ ] 沟通类 vs 推进类 intent_type 不同
+- [ ] 长图/分享/列表仍不含完整原问题
+
+- [ ] 长图/分享/列表仍不含出生日期、时辰
+
+## 25.2 Phase E10：八字差异化解读（结果页）
+
+**后端：** `result_payload` 新增 `bazi_profile`、`interpretation_lens`；免费/完整解读按五行与日主特征组合生成。
+
+**小程序结果页：** 新增「解读视角」卡片（五行倾向 / 行动风格 / 反思主题 / 节奏建议）。
+
 ## 26. Phase UX1：八字 / 奇门轻量动效
 
 Phase UX1 在小程序与 Web 八字、奇门页面增加贴合传统文化场景的轻量 UI 动效，提升氛围与完成感。**仅改 UI 动效，不改后端、数据库、部署。**

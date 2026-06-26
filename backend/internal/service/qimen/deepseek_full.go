@@ -28,6 +28,7 @@ const (
 7. 禁止生成：精准预测、必成必败、大凶大吉、必发财、必复合、改运、化灾、投资建议、医疗建议、法律建议、赌博建议、军事行动建议。
 8. 不要恐吓用户，不要诱导付费改运。
 9. 语气温和、克制、不玄乎。
+10. 必须根据 question_profile 与 qimen_lens 写出差异化报告，不要套用固定模板；每个问题都要围绕 intent_type、risk_tone、pacing_theme 展开。
 
 你必须只输出纯文本报告正文，不要输出 Markdown 代码块，不要输出 JSON，不要输出额外解释。`
 
@@ -47,6 +48,9 @@ const (
 问事分类：{{category_label}}
 时段参考：{{time_bucket_label}}
 问事摘要：{{question_summary}}
+安全问事特征：{{safe_question_summary}}
+question_profile：{{question_profile}}
+qimen_lens：{{qimen_lens}}
 局势梳理：{{situation_overview}}
 风险观察：{{risk_observations}}
 行动节奏：{{action_pacing}}
@@ -54,6 +58,11 @@ const (
 行动建议参考：{{action_suggestions}}
 规则限制：{{limits}}
 免费解读摘要：{{free_content}}
+
+写作要求：
+- 必须围绕 question_profile 的 intent_type、risk_tone 与 qimen_lens 的 focus_theme、pacing_theme 展开，避免不同问题写出相同段落。
+- 不要套用固定模板句，各章节内容需体现本次问事的差异。
+- 保持传统文化学习与自我反思语气，不做精准预测与强吉凶判断。
 
 必须再次强调：这是 qimen-simple-v1 简化学习版，不生成完整九宫盘，仅供传统文化学习与自我反思，不构成现实决策依据。`
 )
@@ -134,6 +143,9 @@ func buildQimenUserPrompt(input *fullReportPromptInput) string {
 		"{{category_label}}", input.CategoryLabel,
 		"{{time_bucket_label}}", timeBucketLabel,
 		"{{question_summary}}", input.QuestionSummary,
+		"{{safe_question_summary}}", nonEmpty(input.SafeQuestionSummary, "（无）"),
+		"{{question_profile}}", formatQuestionProfileForPrompt(input.QuestionProfile),
+		"{{qimen_lens}}", formatQimenLensForPrompt(input.QimenLens),
 		"{{situation_overview}}", input.SituationOverview,
 		"{{risk_observations}}", risks,
 		"{{action_pacing}}", nonEmpty(input.ActionPacing, "（无）"),

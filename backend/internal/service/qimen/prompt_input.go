@@ -14,13 +14,31 @@ type calculationMetaPayload struct {
 	Limits []string `json:"limits"`
 }
 
+type profilePayload struct {
+	IntentType       string `json:"intent_type"`
+	TimeHorizon      string `json:"time_horizon"`
+	DecisionPressure string `json:"decision_pressure"`
+	RelationScope    string `json:"relation_scope"`
+	RiskTone         string `json:"risk_tone"`
+}
+
+type lensPayload struct {
+	FocusTheme   string `json:"focus_theme"`
+	SupportTheme string `json:"support_theme"`
+	CautionTheme string `json:"caution_theme"`
+	PacingTheme  string `json:"pacing_theme"`
+}
+
 type fullReportPromptInput struct {
 	MethodNote          string
 	QuestionSummary     string
+	SafeQuestionSummary string
 	Category            string
 	CategoryLabel       string
 	TimeBucket          string
 	TimeBucketLabel     string
+	QuestionProfile     QuestionProfile
+	QimenLens           QimenLens
 	SituationOverview   string
 	RiskObservations    []string
 	ActionPacing        string
@@ -34,8 +52,11 @@ func buildFullReportPromptInput(resultPayload json.RawMessage, freeContent strin
 	var parsed struct {
 		MethodNote          string                  `json:"method_note"`
 		QuestionSummary     string                  `json:"question_summary"`
+		SafeQuestionSummary string                  `json:"safe_question_summary"`
 		Category            string                  `json:"category"`
 		TimeContext         *timeContextPayload     `json:"time_context"`
+		QuestionProfile     *profilePayload         `json:"question_profile"`
+		QimenLens           *lensPayload            `json:"qimen_lens"`
 		SituationOverview   string                  `json:"situation_overview"`
 		RiskObservations    []string                `json:"risk_observations"`
 		ActionPacing        string                  `json:"action_pacing"`
@@ -56,20 +77,25 @@ func buildFullReportPromptInput(resultPayload json.RawMessage, freeContent strin
 		bucket = strings.TrimSpace(parsed.TimeContext.TimeBucket)
 	}
 
-	summary := strings.TrimSpace(parsed.QuestionSummary)
-	if summary == "" {
-		summary = QuestionSummary
+	profile := profileFromPayload(parsed.QuestionProfile, category)
+	lens := lensFromPayload(parsed.QimenLens, profile, category)
+
+	summary := QuestionSummary
+	safeSummary := strings.TrimSpace(parsed.SafeQuestionSummary)
+	if safeSummary == "" {
+		safeSummary = BuildSafeQuestionSummary(profile)
 	}
-	// Always use the safe constant; never trust stored question_summary for AI prompts.
-	summary = QuestionSummary
 
 	input := &fullReportPromptInput{
 		MethodNote:          strings.TrimSpace(parsed.MethodNote),
 		QuestionSummary:     summary,
+		SafeQuestionSummary: safeSummary,
 		Category:            category,
 		CategoryLabel:       categoryLabel(category),
 		TimeBucket:          bucket,
 		TimeBucketLabel:     timeBucketLabel(bucket),
+		QuestionProfile:     profile,
+		QimenLens:           lens,
 		SituationOverview:   strings.TrimSpace(parsed.SituationOverview),
 		RiskObservations:    append([]string{}, parsed.RiskObservations...),
 		ActionPacing:        strings.TrimSpace(parsed.ActionPacing),
@@ -87,6 +113,85 @@ func buildFullReportPromptInput(resultPayload json.RawMessage, freeContent strin
 		input.Limits = append([]string{}, calculationLimits...)
 	}
 	return input, nil
+}
+
+func profileFromPayload(p *profilePayload, category string) QuestionProfile {
+	if p == nil {
+		return QuestionProfile{
+			IntentType:       defaultIntentForCategory(category),
+			TimeHorizon:      "未明确",
+			DecisionPressure: "中",
+			RelationScope:    defaultRelationScope(category),
+			RiskTone:         "平衡",
+		}
+	}
+	profile := QuestionProfile{
+		IntentType:       strings.TrimSpace(p.IntentType),
+		TimeHorizon:      strings.TrimSpace(p.TimeHorizon),
+		DecisionPressure: strings.TrimSpace(p.DecisionPressure),
+		RelationScope:    strings.TrimSpace(p.RelationScope),
+		RiskTone:         strings.TrimSpace(p.RiskTone),
+	}
+	if profile.IntentType == "" {
+		profile.IntentType = defaultIntentForCategory(category)
+	}
+	if profile.TimeHorizon == "" {
+		profile.TimeHorizon = "未明确"
+	}
+	if profile.DecisionPressure == "" {
+		profile.DecisionPressure = "中"
+	}
+	if profile.RelationScope == "" {
+		profile.RelationScope = defaultRelationScope(category)
+	}
+	if profile.RiskTone == "" {
+		profile.RiskTone = "平衡"
+	}
+	return profile
+}
+
+func lensFromPayload(p *lensPayload, profile QuestionProfile, category string) QimenLens {
+	if p == nil {
+		return BuildQimenLens(profile, category)
+	}
+	lens := QimenLens{
+		FocusTheme:   strings.TrimSpace(p.FocusTheme),
+		SupportTheme: strings.TrimSpace(p.SupportTheme),
+		CautionTheme: strings.TrimSpace(p.CautionTheme),
+		PacingTheme:  strings.TrimSpace(p.PacingTheme),
+	}
+	if lens.FocusTheme == "" {
+		return BuildQimenLens(profile, category)
+	}
+	if lens.SupportTheme == "" {
+		lens.SupportTheme = supportThemeFor(profile, category)
+	}
+	if lens.CautionTheme == "" {
+		lens.CautionTheme = cautionThemeFor(profile, category)
+	}
+	if lens.PacingTheme == "" {
+		lens.PacingTheme = pacingThemeFor(profile, category)
+	}
+	return lens
+}
+
+func formatQuestionProfileForPrompt(profile QuestionProfile) string {
+	return strings.Join([]string{
+		"intent_type=" + profile.IntentType,
+		"time_horizon=" + profile.TimeHorizon,
+		"decision_pressure=" + profile.DecisionPressure,
+		"relation_scope=" + profile.RelationScope,
+		"risk_tone=" + profile.RiskTone,
+	}, "；")
+}
+
+func formatQimenLensForPrompt(lens QimenLens) string {
+	return strings.Join([]string{
+		"focus_theme=" + lens.FocusTheme,
+		"support_theme=" + lens.SupportTheme,
+		"caution_theme=" + lens.CautionTheme,
+		"pacing_theme=" + lens.PacingTheme,
+	}, "；")
 }
 
 func categoryLabel(category string) string {

@@ -131,6 +131,12 @@ func TestCreateSuccess(t *testing.T) {
 	if result["question_summary"] != qimen.QuestionSummary {
 		t.Fatalf("expected question_summary")
 	}
+	if _, ok := result["question_profile"]; !ok {
+		t.Fatalf("expected question_profile in result_payload")
+	}
+	if _, ok := result["qimen_lens"]; !ok {
+		t.Fatalf("expected qimen_lens in result_payload")
+	}
 	meta, ok := result["calculation_meta"].(map[string]any)
 	if !ok {
 		t.Fatalf("expected calculation_meta")

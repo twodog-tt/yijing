@@ -26,6 +26,24 @@ const API_BASE =
 const SESSION_HEADER = "X-Session-Key";
 const ANALYSIS_UNLOCK_TIMEOUT_MS = 90_000;
 
+const BUSINESS_ERROR_MESSAGES: Partial<Record<number, string>> = {
+  40001: "会话已失效，请重新进入页面。",
+  40002:
+    "这个问题不适合使用卦象方式解读，请换成自我反思或行动选择类问题。",
+  40301: "完整解读尚未解锁。",
+  40401: "记录不存在或已被删除。",
+  42901: "请求过于频繁，请稍后再试。",
+};
+
+function mapBusinessMessage(code: number, serverMessage?: string): string {
+  const message = String(serverMessage || "").trim();
+  if (code === 40002 && message) return message;
+  const mapped = BUSINESS_ERROR_MESSAGES[code];
+  if (mapped) return mapped;
+  if (message && /[\u4e00-\u9fff]/.test(message)) return message;
+  return "请求失败，请稍后重试。";
+}
+
 function sessionHeaders(sessionKey: string): HeadersInit {
   return { [SESSION_HEADER]: sessionKey };
 }
@@ -93,7 +111,7 @@ async function requestDebug<T>(path: string, options?: RequestInit): Promise<T> 
   }
 
   if (body.code !== 0) {
-    throw new ApiError(body.code, body.message || "请求失败");
+    throw new ApiError(body.code, mapBusinessMessage(body.code, body.message));
   }
 
   return body.data as T;
@@ -125,7 +143,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   }
 
   if (body.code !== 0) {
-    throw new ApiError(body.code, body.message || "请求失败");
+    throw new ApiError(body.code, mapBusinessMessage(body.code, body.message));
   }
 
   return body.data as T;
@@ -348,7 +366,7 @@ export function unlockAnalysis(
   )
     .catch((err) => {
       if (err instanceof DOMException && err.name === "AbortError") {
-        throw new ApiError(50000, "解锁请求超时，请稍后重试。");
+        throw new ApiError(50000, "完整报告请求超时，请稍后重试。");
       }
       throw err;
     })

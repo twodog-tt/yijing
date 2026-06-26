@@ -57,19 +57,27 @@ func Calculate(birthDate string, birthHourBranch string, birthHourUnknown bool) 
 
 	elements := countFiveElements(pillars)
 	dayMaster := string([]rune(dayPillar)[:1])
-	reflection, actions := buildReflection(dayMaster, elements)
+	birthMonth := int(t.Month())
+
+	profile := BuildBaziProfile(birthMonth, dayMaster, elements, birthHourUnknown, pillars)
+	lens := BuildInterpretationLens(profile, elements, dayMaster, birthHourUnknown)
+	reflection := BuildReflectionFocus(profile, dayMaster)
+	actions := BuildActionSuggestions(profile, lens, dayMaster, elements, birthHourUnknown)
 
 	return CalculationResult{
-		BirthDate:         t.Format("2006-01-02"),
-		BirthHourBranch:   hourBranch,
-		BirthHourUnknown:  birthHourUnknown,
-		Pillars:           pillars,
-		DayMaster:         dayMaster,
-		FiveElements:      elements,
-		ReflectionFocus:   reflection,
-		ActionSuggestions: actions,
-		MethodNote:        MethodNote,
-		Limits:            limits,
+		BirthDate:           t.Format("2006-01-02"),
+		BirthHourBranch:     hourBranch,
+		BirthHourUnknown:    birthHourUnknown,
+		Pillars:             pillars,
+		DayMaster:           dayMaster,
+		FiveElements:        elements,
+		BaziProfile:         profile,
+		InterpretationLens:  lens,
+		DifferentiationSeed: BuildDifferentiationSeed(!birthHourUnknown && pillars.Hour != ""),
+		ReflectionFocus:     reflection,
+		ActionSuggestions:   actions,
+		MethodNote:          MethodNote,
+		Limits:              limits,
 	}, nil
 }
 
@@ -194,21 +202,6 @@ func addBranchElements(counts *FiveElements, pillar string) {
 	case 0, 11:
 		counts.Water++
 	}
-}
-
-func buildReflection(dayMaster string, elements FiveElements) (string, []string) {
-	elementName := stemElementName(dayMaster)
-	reflection := fmt.Sprintf("基于简化干支文化规则的学习参考：日主为「%s」，可先从%s相关的自我观察入手，作为行动整理的一个角度。", dayMaster, elementName)
-
-	actions := []string{
-		"记录近期一件让你有感受的小事，尝试从性格倾向角度做自我观察。",
-		"选择一项可执行的小行动，先完成再复盘，而非追求结论。",
-	}
-	if dominant, weak := dominantElements(elements); dominant != "" {
-		actions = append(actions, fmt.Sprintf("五行分布中%s元素相对较多、%s相对较少，可作为学习参考，不构成现实决策依据。", dominant, weak))
-	}
-	actions = append(actions, "以上内容基于简化干支文化规则，仅供自我观察与行动整理参考。")
-	return reflection, actions
 }
 
 func stemElementName(dayMaster string) string {

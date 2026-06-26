@@ -25,6 +25,21 @@ export const ELEMENT_LABELS: Record<string, string> = {
 
 export const MODULE_BAZI_LABEL = "八字简析";
 
+export interface BaziProfileView {
+  dayMasterObservation: string;
+  seasonTendency: string;
+  elementBalanceType: string;
+  actionStyle: string;
+  reflectionTheme: string;
+}
+
+export interface InterpretationLensView {
+  strengthHint: string;
+  cautionHint: string;
+  pacingHint: string;
+  relationshipWithElements: string;
+}
+
 export interface BaziAnalysisView {
   algorithmVersion: string;
   methodNote: string;
@@ -43,6 +58,8 @@ export interface BaziAnalysisView {
     metal: number;
     water: number;
   };
+  baziProfile: BaziProfileView;
+  interpretationLens: InterpretationLensView;
   reflectionFocus: string;
   actionSuggestions: string[];
   freeContent: string;
@@ -67,6 +84,8 @@ export function buildAnalysisView(record: AnalysisRecord): BaziAnalysisView {
   const suggestions = Array.isArray(result.action_suggestions)
     ? (result.action_suggestions as string[])
     : [];
+  const profileRaw = (result.bazi_profile as Record<string, string>) || {};
+  const lensRaw = (result.interpretation_lens as Record<string, string>) || {};
 
   return {
     algorithmVersion:
@@ -90,6 +109,19 @@ export function buildAnalysisView(record: AnalysisRecord): BaziAnalysisView {
       earth: Number(elements.earth) || 0,
       metal: Number(elements.metal) || 0,
       water: Number(elements.water) || 0,
+    },
+    baziProfile: {
+      dayMasterObservation: profileRaw.day_master_observation || "",
+      seasonTendency: profileRaw.season_tendency || "",
+      elementBalanceType: profileRaw.element_balance_type || "",
+      actionStyle: profileRaw.action_style || "",
+      reflectionTheme: profileRaw.reflection_theme || "",
+    },
+    interpretationLens: {
+      strengthHint: lensRaw.strength_hint || "",
+      cautionHint: lensRaw.caution_hint || "",
+      pacingHint: lensRaw.pacing_hint || "",
+      relationshipWithElements: lensRaw.relationship_with_elements || "",
     },
     reflectionFocus: (result.reflection_focus as string) || "",
     actionSuggestions: suggestions,

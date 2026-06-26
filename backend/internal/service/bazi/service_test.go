@@ -97,6 +97,12 @@ func TestCreateSuccessSingleInsertWithFreeContent(t *testing.T) {
 	if result["method_note"] == "" {
 		t.Fatalf("expected method_note")
 	}
+	if _, ok := result["bazi_profile"]; !ok {
+		t.Fatalf("expected bazi_profile in result_payload")
+	}
+	if _, ok := result["interpretation_lens"]; !ok {
+		t.Fatalf("expected interpretation_lens in result_payload")
+	}
 	if _, ok := result["birth"]; ok {
 		t.Fatalf("result_payload must not contain birth")
 	}
@@ -205,7 +211,7 @@ func TestCalculateGeneratesFreeContent(t *testing.T) {
 		t.Fatalf("Calculate: %v", err)
 	}
 	content := bazi.BuildFreeContent(calc)
-	for _, section := range []string{"【一句话总结】", "【五行倾向学习】", "【性格/行动倾向】", "【自我反思与行动建议】", "【免责声明】"} {
+	for _, section := range []string{"【解读视角】", "【简化干支观察】", "【五行倾向】", "【自我反思重点】", "【免责声明】"} {
 		if !strings.Contains(content, section) {
 			t.Fatalf("missing section %s in free content", section)
 		}

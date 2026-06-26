@@ -16,12 +16,18 @@ func sampleResultPayload(category string) json.RawMessage {
 	if category == "" {
 		category = "career"
 	}
+	profile := ExtractQuestionProfile("示例问事问题用于测试", category)
+	lens := BuildQimenLens(profile, category)
 	payload := map[string]any{
 		"algorithm_version":  model.AlgorithmVersionQimenSimpleV1,
 		"method_note":        MethodNote,
 		"question_summary":   QuestionSummary,
+		"safe_question_summary": BuildSafeQuestionSummary(profile),
 		"category":           category,
 		"time_context":       map[string]string{"time_bucket": "day"},
+		"question_profile":   profile,
+		"qimen_lens":         lens,
+		"differentiation_seed": BuildDifferentiationSeed(category, "day"),
 		"situation_overview": "当前局势更像是在整理方向与节奏，适合先观察再推进。",
 		"risk_observations":  []string{"过度依赖单一结论，可能忽略现实细节。"},
 		"action_pacing":      "建议分三步：先整理现状，再安排小动作，最后复盘。",
@@ -69,13 +75,20 @@ func TestBuildFullReportPromptInputRejectsMalformedPayload(t *testing.T) {
 }
 
 func TestBuildQimenUserPromptPrivacy(t *testing.T) {
-	input, err := buildFullReportPromptInput(sampleResultPayload("career"), "免费解读")
+	raw := sampleResultPayload("career")
+	input, err := buildFullReportPromptInput(raw, "免费解读")
 	if err != nil {
 		t.Fatalf("build prompt input: %v", err)
 	}
 	prompt := buildQimenUserPrompt(input)
 	if !strings.Contains(prompt, QuestionSummary) {
 		t.Fatalf("expected sanitized question summary in prompt")
+	}
+	if !strings.Contains(prompt, "question_profile") {
+		t.Fatalf("expected question_profile in prompt")
+	}
+	if !strings.Contains(prompt, "qimen_lens") {
+		t.Fatalf("expected qimen_lens in prompt")
 	}
 	for _, forbidden := range []string{
 		"session_key",

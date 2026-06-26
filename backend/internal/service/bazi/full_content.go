@@ -9,12 +9,15 @@ import (
 const fullReportDisclaimer = "本报告基于 bazi-simple-v1 简化干支文化规则生成，仅用于传统文化学习与自我反思，不等同于专业八字排盘，不构成现实决策依据。"
 
 type parsedResultPayload struct {
-	MethodNote        string       `json:"method_note"`
-	Pillars           Pillars      `json:"pillars"`
-	DayMaster         string       `json:"day_master"`
-	FiveElements      FiveElements `json:"five_elements"`
-	ReflectionFocus   string       `json:"reflection_focus"`
-	ActionSuggestions []string     `json:"action_suggestions"`
+	MethodNote         string              `json:"method_note"`
+	Pillars            Pillars             `json:"pillars"`
+	DayMaster          string              `json:"day_master"`
+	FiveElements       FiveElements        `json:"five_elements"`
+	BaziProfile        *profilePayload     `json:"bazi_profile"`
+	InterpretationLens *lensPayload        `json:"interpretation_lens"`
+	ReflectionFocus    string              `json:"reflection_focus"`
+	ActionSuggestions  []string            `json:"action_suggestions"`
+	CalculationMeta    *calculationMeta    `json:"calculation_meta"`
 }
 
 // BuildFullContent generates a template full report from stored analysis payloads.
@@ -28,6 +31,9 @@ func BuildFullContent(resultPayload json.RawMessage, freeContent string) (string
 	}
 
 	hourUnknown := strings.TrimSpace(parsed.Pillars.Hour) == ""
+	profile := profileFromPayload(parsed.BaziProfile, parsed.DayMaster, parsed.FiveElements, hourUnknown)
+	lens := lensFromPayload(parsed.InterpretationLens, profile, parsed.DayMaster, parsed.FiveElements, hourUnknown)
+
 	pillarParts := []string{
 		fmt.Sprintf("年柱：%s", nonEmpty(parsed.Pillars.Year, "—")),
 		fmt.Sprintf("月柱：%s", nonEmpty(parsed.Pillars.Month, "—")),
@@ -41,8 +47,10 @@ func BuildFullContent(resultPayload json.RawMessage, freeContent string) (string
 
 	e := parsed.FiveElements
 	elementSection := fmt.Sprintf(
-		"木 %d、火 %d、土 %d、金 %d、水 %d。\n该分布来自简化规则下的干支示意，可作为观察性格与行动风格的参考，不等同于专业旺衰判断。",
+		"木 %d、火 %d、土 %d、金 %d、水 %d。\n整体呈%s。%s",
 		e.Wood, e.Fire, e.Earth, e.Metal, e.Water,
+		profile.ElementBalanceType,
+		lens.RelationshipWithElements,
 	)
 
 	methodNote := strings.TrimSpace(parsed.MethodNote)
@@ -51,17 +59,17 @@ func BuildFullContent(resultPayload json.RawMessage, freeContent string) (string
 	}
 
 	dayMasterSection := fmt.Sprintf(
-		"日主「%s」可作为理解自身行动风格的切入点。结合简化五行分布，你可以观察自己在节奏、表达、执行与休息之间的偏好，并据此做温和的自我调整。",
-		parsed.DayMaster,
+		"%s\n行动风格偏向「%s」，反思主题可关注「%s」。%s",
+		profile.DayMasterObservation,
+		profile.ActionStyle,
+		profile.ReflectionTheme,
+		lens.PacingHint + "。",
 	)
 
 	reflectionQuestions := []string{
-		"最近哪些情境让我更容易进入稳定状态？",
-		"我在压力之下通常会如何反应？",
+		fmt.Sprintf("围绕「%s」，最近哪些情境让我更容易进入稳定状态？", profile.ReflectionTheme),
+		lens.CautionHint + "。",
 		"哪些行动方式对我更有帮助，哪些需要适度收敛？",
-	}
-	if strings.TrimSpace(parsed.ReflectionFocus) != "" {
-		reflectionQuestions = append([]string{parsed.ReflectionFocus}, reflectionQuestions...)
 	}
 
 	suggestions := append([]string{}, parsed.ActionSuggestions...)
@@ -73,9 +81,8 @@ func BuildFullContent(resultPayload json.RawMessage, freeContent string) (string
 	}
 
 	observationDirections := []string{
-		"记录一周内的精力高峰与低谷时段。",
+		lens.StrengthHint + "。",
 		"观察自己在沟通、学习、休息三类活动中的投入比例。",
-		"留意哪些环境或节奏更容易让你保持专注。",
 	}
 	if hourUnknown {
 		observationDirections = append([]string{
