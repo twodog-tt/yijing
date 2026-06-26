@@ -331,6 +331,34 @@ func (r *DivinationRepository) UpdateUnlockStatus(ctx context.Context, id int64,
 	return err
 }
 
+var (
+	ErrInvalidDivinationParams = errors.New("invalid divination params")
+	ErrDivinationNotFound      = errors.New("divination not found")
+)
+
+func (r *DivinationRepository) SoftDeleteOwnedByID(ctx context.Context, id, sessionID int64) error {
+	if id <= 0 || sessionID <= 0 {
+		return ErrInvalidDivinationParams
+	}
+
+	res, err := r.db.ExecContext(ctx, `
+		UPDATE divination_record
+		SET status = ?, updated_at = CURRENT_TIMESTAMP
+		WHERE id = ? AND session_id = ? AND status = ?
+	`, model.DivinationStatusDeleted, id, sessionID, model.DivinationStatusActive)
+	if err != nil {
+		return err
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return ErrDivinationNotFound
+	}
+	return nil
+}
+
 func nullString(s string) sql.NullString {
 	if s == "" {
 		return sql.NullString{}

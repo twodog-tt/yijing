@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -57,6 +58,7 @@ var (
 	ErrSensitiveBlocked  = fmt.Errorf("sensitive blocked")
 	ErrCategoryNotFound  = fmt.Errorf("category not found")
 	ErrSessionKeyEmpty   = fmt.Errorf("session key empty")
+	ErrNotFound          = fmt.Errorf("divination not found")
 )
 
 func (s *Service) Create(ctx context.Context, in CreateInput) (*model.Divination, error) {
@@ -217,6 +219,36 @@ func (s *Service) ListHistory(ctx context.Context, sessionKey string, page, page
 		PageSize: pageSize,
 		Total:    total,
 	}, nil
+}
+
+func (s *Service) Delete(ctx context.Context, sessionKey string, id int64) error {
+	sessionKey = strings.TrimSpace(sessionKey)
+	if sessionKey == "" {
+		return ErrSessionKeyEmpty
+	}
+	if id <= 0 {
+		return ErrInvalidParams
+	}
+
+	session, err := s.sessionRepo.FindByKey(ctx, sessionKey)
+	if err != nil {
+		return err
+	}
+	if session == nil {
+		return ErrNotFound
+	}
+
+	err = s.divinationRepo.SoftDeleteOwnedByID(ctx, id, session.ID)
+	if err != nil {
+		if errors.Is(err, repository.ErrDivinationNotFound) {
+			return ErrNotFound
+		}
+		if errors.Is(err, repository.ErrInvalidDivinationParams) {
+			return ErrInvalidParams
+		}
+		return err
+	}
+	return nil
 }
 
 func (s *Service) buildDetail(ctx context.Context, record *model.Divination) (*model.Divination, error) {

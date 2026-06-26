@@ -11,6 +11,7 @@ import (
 	"github.com/wangxintong/yijing/backend/internal/model"
 	"github.com/wangxintong/yijing/backend/internal/pkg/clock"
 	"github.com/wangxintong/yijing/backend/internal/pkg/response"
+	"github.com/wangxintong/yijing/backend/internal/pkg/sessionkey"
 	"github.com/wangxintong/yijing/backend/internal/service/category"
 	"github.com/wangxintong/yijing/backend/internal/service/divination"
 	"github.com/wangxintong/yijing/backend/internal/service/session"
@@ -171,6 +172,49 @@ func (h *DivinationHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.OK(w, result)
+}
+
+func (h *DivinationHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	if sessionkey.FromQuery(r) != "" {
+		response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "session_key must be sent via X-Session-Key header")
+		return
+	}
+
+	sessionKey := sessionkey.FromHeader(r)
+	if strings.TrimSpace(sessionKey) == "" {
+		response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "session_key is required")
+		return
+	}
+	if err := sessionkey.ValidateLength(sessionKey); err != nil {
+		if errors.Is(err, sessionkey.ErrTooLong) {
+			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "session_key exceeds max length")
+			return
+		}
+		response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "invalid session_key")
+		return
+	}
+
+	id, err := parseDivinationIDFromPath(r.URL.Path)
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "invalid divination id")
+		return
+	}
+
+	if err := h.svc.Delete(r.Context(), sessionKey, id); err != nil {
+		switch {
+		case errors.Is(err, divination.ErrSessionKeyEmpty):
+			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "session_key is required")
+		case errors.Is(err, divination.ErrInvalidParams):
+			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "invalid params")
+		case errors.Is(err, divination.ErrNotFound):
+			response.Error(w, http.StatusNotFound, response.CodeNotFound, "divination not found")
+		default:
+			response.Error(w, http.StatusInternalServerError, response.CodeInternalError, "delete divination failed")
+		}
+		return
+	}
+
+	response.OK(w, nil)
 }
 
 func toDivinationResponse(d *model.Divination) map[string]any {

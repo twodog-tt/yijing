@@ -1411,6 +1411,8 @@ Web 端与小程序 UX1 对齐，使用 `frontend/app/globals.css` 中的 CSS an
 
 **H1（已完成）：** 历史页升级为统一入口，支持全部 / 问事 / 八字 / 奇门筛选；八字与奇门可删除；问事记录暂无 DELETE API，历史页不提供问事删除按钮。
 
+**H1.1（已完成）：** 后端新增 `DELETE /api/v1/divinations/{id}`（软删除 `status=0`，校验 session 所有权）；历史页问事起卦支持删除。
+
 **微信开发者工具：** 需本地重新编译后人工预览动效与 Canvas 长图渲染。
 
 **部署：** 无需 backend / frontend / SQL；若仅有小程序小修则需重新编译预览。

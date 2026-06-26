@@ -5,7 +5,8 @@ import "time"
 const (
 	SessionStatusActive    = 1
 	CategoryStatusActive   = 1
-	DivinationStatusActive = 1
+	DivinationStatusDeleted = 0
+	DivinationStatusActive  = 1
 	UnlockStatusLocked     = 0
 	UnlockStatusUnlocked   = 1
 	MethodCoinThree        = "coin_three"

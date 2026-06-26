@@ -97,6 +97,7 @@ func main() {
 	mux.HandleFunc("GET /api/v1/divinations/{id}/interpretation/full", interpretationHandler.GetFull)
 	mux.HandleFunc("POST /api/v1/divinations/{id}/unlock", rateLimit(unlockHandler.Unlock))
 	mux.HandleFunc("GET /api/v1/divinations/{id}", divinationHandler.Get)
+	mux.HandleFunc("DELETE /api/v1/divinations/{id}", divinationHandler.Delete)
 	mux.HandleFunc("GET /api/v1/divinations", divinationHandler.List)
 	mux.HandleFunc("POST /api/v1/analysis/bazi", rateLimit(analysisHandler.CreateBazi))
 	mux.HandleFunc("POST /api/v1/analysis/qimen", rateLimit(analysisHandler.CreateQimen))

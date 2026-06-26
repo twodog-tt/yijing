@@ -1,5 +1,6 @@
 const {
   deleteAnalysis,
+  deleteDivination,
   getAnalysisList,
   getDivinationHistory,
   getQimenAnalysisList,
@@ -36,7 +37,7 @@ function buildDivinationHistoryItem(item) {
     created_at: item.created_at || "",
     createdAtDisplay: formatDateTime(item.created_at) || "—",
     detailUrl: `/pages/result/result?id=${item.id}`,
-    canDelete: false,
+    canDelete: true,
   };
 }
 
@@ -331,26 +332,32 @@ Page({
   },
 
   async deleteRecord(id, recordType) {
-    if (recordType !== "bazi" && recordType !== "qimen") {
+    if (recordType !== "bazi" && recordType !== "qimen" && recordType !== "divination") {
       return;
     }
 
     this.setData({ deletingId: id });
     try {
-      await deleteAnalysis(id);
+      if (recordType === "divination") {
+        await deleteDivination(id);
+      } else {
+        await deleteAnalysis(id);
+      }
       wx.showToast({ title: "已删除", icon: "success" });
 
       const numericId = Number(id);
-      this.setData(
-        {
-          baziItems: this.data.baziItems.filter((item) => item.id !== numericId),
-          qimenItems: this.data.qimenItems.filter((item) => item.id !== numericId),
-          deletingId: null,
-        },
-        () => {
-          this.updateVisibleState();
-        }
-      );
+      const nextState = { deletingId: null };
+      if (recordType === "divination") {
+        nextState.divItems = this.data.divItems.filter((item) => item.id !== numericId);
+      } else if (recordType === "bazi") {
+        nextState.baziItems = this.data.baziItems.filter((item) => item.id !== numericId);
+      } else {
+        nextState.qimenItems = this.data.qimenItems.filter((item) => item.id !== numericId);
+      }
+
+      this.setData(nextState, () => {
+        this.updateVisibleState();
+      });
     } catch (error) {
       this.setData({ deletingId: null });
       wx.showToast({ title: mapDeleteError(error), icon: "none" });

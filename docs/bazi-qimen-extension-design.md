@@ -1460,7 +1460,10 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 - [x] 点击跳转 `result` / `analysis-result` / `qimen-result`
 - [x] 八字 / 奇门支持 DELETE `/api/v1/analysis/{id}` 删除
 - [x] 问事记录暂无 DELETE API，历史页不提供删除按钮
-- [x] 分类型空状态文案
-- [x] 列表不展示出生日期 / 出生时辰 / 完整原问题 / session_key / payload
 
-**部署：** 仅小程序重新编译；无需 backend / frontend / SQL。
+**H1.1 更新：**
+
+- [x] 后端新增 `DELETE /api/v1/divinations/{id}`（软删除）
+- [x] 历史页问事起卦支持删除
+
+**部署：** 需部署 backend；小程序重新编译；无需 frontend / SQL。

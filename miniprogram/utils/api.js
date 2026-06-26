@@ -256,6 +256,15 @@ async function getAnalysisList({ page = 1, page_size = 20 } = {}) {
   });
 }
 
+async function deleteDivination(id) {
+  const session = await ensureSession();
+  return request({
+    path: `${API_PATHS.divinations}/${requireId(id)}`,
+    method: "DELETE",
+    header: sessionHeader(session.session_key),
+  });
+}
+
 async function deleteAnalysis(id) {
   const session = await ensureSession();
   return request({
@@ -293,6 +302,7 @@ module.exports = {
   createDivination,
   createSession,
   deleteAnalysis,
+  deleteDivination,
   getAnalysis,
   getAnalysisList,
   getQimenAnalysisList,
