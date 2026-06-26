@@ -1482,6 +1482,34 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 
 **下一步：** ALG2.7-QA；BAZI1.3；RELEASE-QA。
 
+## 25.20 Phase ALG2.7-QA：奇门 professional 报告质量回归验收
+
+**说明：** 对 ALG2.7（`8e47cdb`）做回归验收；**不改**排盘算法 / 小程序 / Web / SQL；不修改生产 DeepSeek 配置。
+
+**ECS 基线：** `main` @ `8e47cdb`；backend running；health `status=ok`、`db=ok`。
+
+**5 类 professional create/unlock（DeepSeek 路径，临时 session）：**
+
+| category | id | 9 段 | 九宫/宫名 | 值符/值使 | 第一版说明 | 隐私/合规 |
+|----------|-----|------|-----------|-----------|------------|-----------|
+| career | 92 | ✅ | ✅ | ✅ | ✅ | ✅ |
+| relationship | 93 | ✅ | ✅ | ✅ | ✅ | ✅ |
+| study | 94 | ✅ | ✅ | ✅ | ✅ | ✅ |
+| decision | 95 | ✅ | ✅ | ✅ | ✅ | ✅ |
+| general | 96 | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+**category 差异：** 5 类 summary/support/risk/pacing 片段均不同（`UNIQUE_SNIPPETS=5`，无完全相同 pair）；category 仅影响报告表达，不影响排盘 payload。
+
+**fallback 路径：** 通过 `go test -run 'Professional|Fallback|FullContent|Report'` 模拟（未改生产 `.env`）；`BuildFullContent` professional 9 段含 `【】` 标题、layout_version、focus 宫位、category 差异化。
+
+**API 回归：** v1 / poc / professional / bazi create+unlock 正常；`qimen-v3` → `40001`。
+
+**合规：** 正文无正向强断；禁用词仅允许出现在边界否定说明（DeepSeek 第九段）。
+
+**本阶段结论：** 无需 backend 小修；无需 redeploy。
+
+**下一步：** BAZI1.3；RELEASE-QA；QIMEN-V2-VIEW 本地 DevTools UI 待确认。
+
 ## 26. Phase UX1：八字 / 奇门轻量动效
 
 Phase UX1 在小程序与 Web 八字、奇门页面增加贴合传统文化场景的轻量 UI 动效，提升氛围与完成感。**仅改 UI 动效，不改后端、数据库、部署。**

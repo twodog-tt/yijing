@@ -335,6 +335,7 @@ Tab: 今日 | 问事 | 扩展(八字/奇门) | 我的(历史/设置)
 | **Phase QIMEN-V2-VIEW** | 小程序 professional 九宫展示 | 结果页条件展示 professional 九宫；无算法选择 UI | Cursor ✅ |
 | **Phase QIMEN-V2-VIEW-QA** | 小程序 professional 九宫回归验收 | v1/poc/pro 边界、API、视图层与合规；微信 DevTools UI 待本地确认 | Cursor ✅ |
 | **Phase ALG2.7** | 奇门 professional 完整报告质量 | focus 宫位、DeepSeek prompt、fallback 9 段增强（backend-only） | Cursor ✅ |
+| **Phase ALG2.7-QA** | 奇门 professional 报告回归验收 | 5 类 category、DeepSeek/fallback、v1/poc/bazi 回归、合规 | Cursor ✅ |
 | **Phase REPORT1** | 八字 / 奇门完整报告质量 | 7 段结构、DeepSeek + fallback 差异化、禁用词与隐私测试 | Cursor ✅ |
 | **Phase SHARE1** | 小程序长图分享优化 | 高价值摘要 + 行动要点，移除完整报告粘贴 | Cursor ✅ |
 | **Phase SHARE2** | 问事起卦长图摘要化 | 卦象长图摘要 + 行动提醒，不贴完整解析 | Cursor ✅ |

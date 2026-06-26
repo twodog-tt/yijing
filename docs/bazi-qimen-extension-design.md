@@ -1962,3 +1962,23 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 **下一步：** ALG2.7-QA；BAZI1.3；RELEASE-QA。
 
 ---
+
+### 10.47 Phase ALG2.7-QA 交付清单（奇门 professional 报告质量回归验收）
+
+**目标：** 验收 ALG2.7 professional 报告质量；5 类 category 差异、DeepSeek 9 段、fallback 测试路径、v1/poc/bazi 回归、隐私合规。
+
+**验收通过：**
+
+- [x] ECS @ `8e47cdb`；health ok
+- [x] 5 类 professional unlock：9 段、九宫/宫名、值符/值使、第一版说明
+- [x] category 差异明显（summary/support/risk/pacing 片段 5 类各不相同）
+- [x] fallback：`go test` 覆盖 9 段 template、layout_version、focus、category 差异化
+- [x] 回归：v1 / poc / pro / bazi；非法 `qimen-v3` → 400
+- [x] 隐私：无完整原问题 / session_key / payload JSON
+- [x] 合规：正文无正向强断
+
+**未做：** 排盘算法 / miniprogram / Web / SQL 变更；生产 DeepSeek 配置未改。
+
+**下一步：** BAZI1.3；RELEASE-QA。
+
+---
