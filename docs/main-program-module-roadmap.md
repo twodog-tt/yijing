@@ -326,6 +326,7 @@ Tab: 今日 | 问事 | 扩展(八字/奇门) | 我的(历史/设置)
 | **Phase ALG2.2** | 奇门 v2 API 灰度接入 | 创建 API 可选 `algorithm_version`；默认 v1；内部可测 v2 | Cursor ✅ |
 | **Phase QIMEN-REPORT2** | 奇门 v2 完整报告增强 | v2 9 段 fallback + DeepSeek 九宫摘要 prompt | Cursor ✅ |
 | **Phase ALG2.3-SPEC** | 奇门 v2 专业口径设计 | `qimen-v2-professional` 结构草案、差距审计、fixtures 元数据 | Cursor ✅ |
+| **Phase ALG2.4A** | 奇门 v2 professional 基础层 | 节气 provider、阴阳遁绑定、干支旬首、preview 计算（不接 API） | Cursor ✅ |
 | **Phase REPORT1** | 八字 / 奇门完整报告质量 | 7 段结构、DeepSeek + fallback 差异化、禁用词与隐私测试 | Cursor ✅ |
 | **Phase SHARE1** | 小程序长图分享优化 | 高价值摘要 + 行动要点，移除完整报告粘贴 | Cursor ✅ |
 | **Phase SHARE2** | 问事起卦长图摘要化 | 卦象长图摘要 + 行动提醒，不贴完整解析 | Cursor ✅ |

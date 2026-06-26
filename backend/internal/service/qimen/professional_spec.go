@@ -11,8 +11,9 @@ const (
 	JieqiBasisProfessionalPending = "professional_pending"
 	DunMethodChaiBuPending        = "chai_bu_or_zhi_run_pending"
 	DunYuanPending                = "upper_middle_lower_pending"
+	DunMethodSolarTermBoundary    = "solar_term_boundary"
 
-	MethodNoteV2Professional = "奇门 v2 专业口径（规划中），仅供传统文化学习与结构化观察，不等同于线下大师排盘，不构成现实决策依据。"
+	MethodNoteV2Professional = "奇门 v2 专业口径基础层（ALG2.4A），仅供传统文化学习与结构化观察，不等同于线下大师排盘，不构成现实决策依据。"
 )
 
 // CalculationLimitsV2Professional returns limits for the professional target payload (design only).
@@ -24,7 +25,8 @@ var calculationLimitsV2Professional = []string{
 	"当前不提供精准预测",
 	"当前不提供应期断言",
 	"当前不构成现实决策依据",
-	"专业口径仍在 ALG2.4+ 分批实现，当前仅为设计目标",
+	"拆补/置闰局数尚未实现（professional_pending）",
+	"转盘飞布、值符落宫与天禽寄宫尚未实现（professional_pending）",
 }
 
 // ProfessionalGapAudit documents qimen-v2-poc vs qimen-v2-professional target gaps.
@@ -41,12 +43,12 @@ var ProfessionalGapAudits = []ProfessionalGapAudit{
 	{
 		Dimension: "节气交节", CurrentPOC: "复用 bazi/calendar 十二节公式近似时刻",
 		TargetPro: "精确交节时刻（秒级），可与真太阳时扩展",
-		Status: "gap", Implementation: "ALG2.4",
+		Status: "partial", Implementation: "ALG2.4A",
 	},
 	{
 		Dimension: "阴阳遁", CurrentPOC: "公历 6/21、12/22 简化切换",
 		TargetPro: "与冬至/夏至节气交节时刻绑定",
-		Status: "gap", Implementation: "ALG2.4",
+		Status: "partial", Implementation: "ALG2.4A",
 	},
 	{
 		Dimension: "局数", CurrentPOC: "hash(RFC3339+category+阴阳遁) % 9 + 1",
@@ -56,7 +58,7 @@ var ProfessionalGapAudits = []ProfessionalGapAudit{
 	{
 		Dimension: "旬首/空亡", CurrentPOC: "六旬首固定表 + 日期/category hash",
 		TargetPro: "由日时干支推导符头、旬首与空亡",
-		Status: "gap", Implementation: "ALG2.4",
+		Status: "partial", Implementation: "ALG2.4A",
 	},
 	{
 		Dimension: "值符/值使", CurrentPOC: "按局数宫位取星/门占位",
@@ -91,11 +93,14 @@ type ProfessionalCalendarBasis struct {
 
 // ProfessionalDun describes yin/yang dun, ju, and pending method metadata.
 type ProfessionalDun struct {
-	Type   string `json:"type"`
-	Ju     int    `json:"ju"`
-	Method string `json:"method"`
-	Yuan   string `json:"yuan"`
-	Source string `json:"source,omitempty"`
+	Type      string `json:"type"`
+	Ju        int    `json:"ju"`
+	Method    string `json:"method"`
+	Yuan      string `json:"yuan"`
+	Source    string `json:"source,omitempty"`
+	BasisTerm string `json:"basis_term,omitempty"`
+	BasisTime string `json:"basis_time,omitempty"`
+	Note      string `json:"note,omitempty"`
 }
 
 // ProfessionalGanzhi holds four-pillar stems/branches for professional timing.
@@ -104,6 +109,8 @@ type ProfessionalGanzhi struct {
 	Month string `json:"month"`
 	Day   string `json:"day"`
 	Hour  string `json:"hour"`
+	Basis string `json:"basis,omitempty"`
+	Note  string `json:"note,omitempty"`
 }
 
 // ProfessionalChief extends chief with palace mapping.

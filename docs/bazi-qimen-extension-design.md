@@ -1710,6 +1710,38 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 
 **默认策略：** 线上仍默认 `qimen-simple-v1`；`qimen-v2-poc` 继续可用于内部灰度与 QIMEN-REPORT2；`qimen-v2-professional` 仅为后续目标版本标识。
 
-**下一步：** **ALG2.4** 实现第一批专业口径（精确节令交节、阴阳遁绑定、拆补局数、干支旬首推导）；**QIMEN-V2-VIEW** 前端九宫展示；**BAZI1.3** 八字后续口径。
+**下一步：** **ALG2.4B** 拆补/置闰局数；**ALG2.5** 转盘飞布；**QIMEN-V2-VIEW** 前端九宫展示；**BAZI1.3** 八字后续口径。
+
+---
+
+### 10.38 Phase ALG2.4A 交付清单（奇门 v2 professional 基础层）
+
+**目标：** 实现 `qimen-v2-professional` **基础层**（节气 provider、阴阳遁绑定冬至/夏至、干支/旬首/空亡、preview 计算），**不接 API、不部署、不替换 POC/v1**。
+
+**本阶段完成：**
+
+- [x] `SolarTermProvider` 接口 + `FormulaSolarTermProvider`（十二节 + 冬至/夏至；`formula_approximation`）
+- [x] `ResolveProfessionalCalendarBasis` / `ResolveProfessionalDun`（`method=solar_term_boundary`，绑定冬至/夏至交节点）
+- [x] `ResolveProfessionalGanZhi` / `ResolveXunFromGanZhi`（时柱优先旬首；不再 hash category）
+- [x] `CalculateProfessionalPreview`（`algorithm_version=qimen-v2-professional`；chief/palaces/ju 标记 pending）
+- [x] 10 组 fixtures 扩展断言（preview payload 结构 + provider 边界）
+
+**实现位置：**
+
+- `professional_calendar.go` / `professional_ganzhi.go` / `professional_calculate.go`
+- `professional_*_test.go`、`professional_calculate_test.go`
+
+**仍为公式近似（非秒级天文台）：** 节令与中气按 `[Y*D+C]-L` 本地正午；后续可替换权威交节表。
+
+**夏至/冬至边界说明：** professional 以 provider 交节时刻为准；与 POC 公历 6/21、12/22 可能在小时级边界上不同（测试与文档已注明）。
+
+**仍不做（ALG2.4A）：**
+
+- [ ] API 接入 `qimen-v2-professional`
+- [ ] 拆补 / 置闰 / 三元局数（延后 **ALG2.4B**）
+- [ ] 转盘飞布 / 值符落宫 / 天禽寄宫（延后 **ALG2.5**）
+- [ ] frontend / miniprogram / SQL / deploy
+
+**默认策略：** 线上仍 `qimen-simple-v1`；`qimen-v2-poc` 内部灰度不变；professional preview 仅供后端测试。
 
 ---

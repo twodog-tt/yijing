@@ -1277,7 +1277,33 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 - [x] `qimen-v2-poc` / `qimen-simple-v1` 现有 tests 全部通过
 - [x] 无强预测 / 应期 / 改运化灾文案
 
-**下一步：** ALG2.4 第一批专业口径实现；QIMEN-V2-VIEW 前端九宫；BAZI1.3。
+**下一步：** ALG2.4B 拆补/置闰局数；ALG2.5 转盘飞布；QIMEN-V2-VIEW 前端九宫；BAZI1.3。
+
+## 25.11 Phase ALG2.4A：奇门 v2 professional 基础层（后端，不接 API）
+
+**说明：** 实现 professional 基础层：`FormulaSolarTermProvider`、阴阳遁绑定冬至/夏至交节、干支/旬首/空亡推导、`CalculateProfessionalPreview`。**不实现**拆补/置闰/转盘；**不接** Create API；**不改**小程序 / Web；**不部署**。
+
+**新增函数：**
+
+- `ResolveProfessionalCalendarBasis` / `ResolveProfessionalDun`
+- `ResolveProfessionalGanZhi` / `ResolveXunFromGanZhi`
+- `CalculateProfessionalPreview`
+
+**preview payload 断言（10 组 fixtures）：**
+
+- `algorithm_version=qimen-v2-professional`
+- `calendar_basis` / `dun.method=solar_term_boundary` / 四柱 / 旬首空亡
+- `chief` / `palaces` / `ju` → `professional_pending` 或 0
+- `limits` 含不提供精准预测、不构成现实决策依据
+
+**边界：** 夏至/冬至以 provider 公式交节为准，可能与 POC 公历 6/21、12/22 在小时级不同。
+
+**仍不做：** API 接入 professional、拆补/置闰（ALG2.4B）、转盘（ALG2.5）、frontend / miniprogram / SQL / deploy。
+
+**验收（后端）：**
+
+- [x] `go test ./internal/service/qimen/...` 通过（含 preview + 边界 + POC 回归）
+- [x] `CalculateV2` / `qimen-simple-v1` 未破坏
 
 ## 26. Phase UX1：八字 / 奇门轻量动效
 

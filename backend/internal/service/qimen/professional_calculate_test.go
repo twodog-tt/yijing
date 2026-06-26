@@ -1,0 +1,169 @@
+package qimen_test
+
+import (
+	"encoding/json"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/wangxintong/yijing/backend/internal/pkg/clock"
+	"github.com/wangxintong/yijing/backend/internal/service/qimen"
+)
+
+func TestCalculateProfessionalPreviewStructure(t *testing.T) {
+	when := time.Date(2024, 3, 20, 9, 0, 0, 0, clock.Location())
+	result, err := qimen.CalculateProfessionalPreview(qimen.CalculateInputProfessional{
+		Category: "career",
+		Now:      when,
+	})
+	if err != nil {
+		t.Fatalf("CalculateProfessionalPreview: %v", err)
+	}
+	payload, err := result.ResultPayload()
+	if err != nil {
+		t.Fatalf("ResultPayload: %v", err)
+	}
+	var obj map[string]any
+	if err := json.Unmarshal(payload, &obj); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if obj["algorithm_version"] != qimen.AlgorithmVersionQimenV2Professional {
+		t.Fatalf("algorithm_version=%v", obj["algorithm_version"])
+	}
+	assertProfessionalPreviewPayload(t, obj, when)
+}
+
+func TestCalculateProfessionalPreviewFixtures(t *testing.T) {
+	provider := qimen.FormulaSolarTermProvider{}
+	for _, plan := range qimen.ProfessionalFixturePlans {
+		t.Run(plan.Name, func(t *testing.T) {
+			when, err := time.ParseInLocation("2006-01-02 15:04", plan.When, clock.Location())
+			if err != nil {
+				t.Fatalf("parse when: %v", err)
+			}
+			result, err := qimen.CalculateProfessionalPreview(qimen.CalculateInputProfessional{
+				Category: plan.Category,
+				Now:      when,
+				Provider: provider,
+			})
+			if err != nil {
+				t.Fatalf("CalculateProfessionalPreview: %v", err)
+			}
+			payload, err := result.ResultPayload()
+			if err != nil {
+				t.Fatalf("ResultPayload: %v", err)
+			}
+			var obj map[string]any
+			if err := json.Unmarshal(payload, &obj); err != nil {
+				t.Fatalf("unmarshal: %v", err)
+			}
+			assertProfessionalPreviewPayload(t, obj, when)
+
+			dun := obj["dun"].(map[string]any)
+			expected := qimen.ResolveProfessionalDun(when, provider)
+			if dun["type"] != expected.Type {
+				t.Fatalf("dun.type=%v want %q (provider 夏至/冬至边界)", dun["type"], expected.Type)
+			}
+		})
+	}
+}
+
+func TestCalculateProfessionalPreviewChiefAndPalacesPending(t *testing.T) {
+	result, err := qimen.CalculateProfessionalPreview(qimen.CalculateInputProfessional{
+		Category: "general",
+		Now:      time.Date(2024, 12, 22, 0, 30, 0, 0, clock.Location()),
+	})
+	if err != nil {
+		t.Fatalf("CalculateProfessionalPreview: %v", err)
+	}
+	if result.Chief.ZhiFu != "professional_pending" || result.Chief.ZhiShi != "professional_pending" {
+		t.Fatalf("chief should be pending: %+v", result.Chief)
+	}
+	if len(result.Palaces) != 0 {
+		t.Fatalf("palaces should be empty pending slice, got %d", len(result.Palaces))
+	}
+	if result.Dun.Ju != 0 {
+		t.Fatalf("ju should remain pending (0), got %d", result.Dun.Ju)
+	}
+}
+
+func TestCalculateProfessionalPreviewDoesNotAffectPOC(t *testing.T) {
+	when := time.Date(2024, 6, 21, 0, 30, 0, 0, clock.Location())
+	poc, err := qimen.CalculateV2(qimen.CalculateInputV2{Category: "study", Now: when})
+	if err != nil {
+		t.Fatalf("CalculateV2: %v", err)
+	}
+	if poc.Dun.Type != "yin" {
+		t.Fatalf("POC dun should remain yin on 2024-06-21 per gregorian rule")
+	}
+	pro, err := qimen.CalculateProfessionalPreview(qimen.CalculateInputProfessional{Category: "study", Now: when})
+	if err != nil {
+		t.Fatalf("CalculateProfessionalPreview: %v", err)
+	}
+	if pro.Dun.Method != qimen.DunMethodSolarTermBoundary {
+		t.Fatalf("professional method=%q", pro.Dun.Method)
+	}
+}
+
+func assertProfessionalPreviewPayload(t *testing.T, obj map[string]any, when time.Time) {
+	t.Helper()
+	basis := obj["calendar_basis"].(map[string]any)
+	if basis["solar_term"] == "" || basis["solar_term_time"] == "" {
+		t.Fatalf("calendar_basis incomplete: %v", basis)
+	}
+	if basis["jieqi_basis"] != "formula_approximation" {
+		t.Fatalf("jieqi_basis=%v", basis["jieqi_basis"])
+	}
+
+	dun := obj["dun"].(map[string]any)
+	if dun["type"] != "yang" && dun["type"] != "yin" {
+		t.Fatalf("dun.type=%v", dun["type"])
+	}
+	if dun["method"] != qimen.DunMethodSolarTermBoundary {
+		t.Fatalf("dun.method=%v", dun["method"])
+	}
+
+	gz := obj["ganzhi"].(map[string]any)
+	for _, key := range []string{"year", "month", "day", "hour"} {
+		if gz[key] == "" {
+			t.Fatalf("ganzhi.%s empty", key)
+		}
+	}
+
+	xun := obj["xun"].(map[string]any)
+	if xun["xun_shou"] == "" {
+		t.Fatal("xun.xun_shou empty")
+	}
+	if _, ok := xun["empty_branches"]; !ok {
+		t.Fatal("xun.empty_branches missing")
+	}
+
+	chief := obj["chief"].(map[string]any)
+	if chief["zhi_fu"] != "professional_pending" || chief["zhi_shi"] != "professional_pending" {
+		t.Fatalf("chief should be pending: %v", chief)
+	}
+
+	limits, ok := obj["limits"].([]any)
+	if !ok || len(limits) == 0 {
+		t.Fatal("limits missing")
+	}
+	limitText := strings.Join(toStringSlice(limits), " ")
+	for _, phrase := range []string{"不提供精准预测", "不构成现实决策依据"} {
+		if !strings.Contains(limitText, phrase) {
+			t.Fatalf("limits missing %q: %s", phrase, limitText)
+		}
+	}
+
+	if _, ok := obj["palaces"]; !ok {
+		t.Fatal("palaces key missing")
+	}
+	_ = when
+}
+
+func toStringSlice(items []any) []string {
+	out := make([]string, 0, len(items))
+	for _, item := range items {
+		out = append(out, item.(string))
+	}
+	return out
+}
