@@ -1108,9 +1108,18 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 
 **验收（后端）：**
 
-- [ ] `go test ./internal/service/bazi/...` 通过
-- [ ] `CalculateV2` golden tests 覆盖立春/惊蛰/清明/小寒/大雪边界
-- [ ] `bazi-simple-v1` golden 未被破坏
+- [x] `go test ./internal/service/bazi/...` 通过
+- [x] `CalculateV2` golden tests 覆盖立春/惊蛰/清明/小暑/立秋/白露/寒露/立冬/大雪/小寒边界
+- [x] 节令时刻仍为公式近似（本地正午），非天文台精确时刻
+- [x] `bazi-simple-v1` golden 未被破坏
+
+## 25.4 Phase ALG1.1：八字 v2 节气边界校准（测试）
+
+**说明：** 仅扩展 `calendar/jieqi_test.go` 与 `calculate_v2_test.go` 边界 golden fixtures；**不接 API、不改 frontend/miniprogram/SQL**。
+
+**覆盖边界：** 立春（含公式日/正午前后）、惊蛰、清明、小暑、立秋、白露、寒露、立冬、大雪、小寒。
+
+**仍明确不做：** 真太阳时、大运/流年/神煞；节令时刻不升级为天文历算。
 
 ## 26. Phase UX1：八字 / 奇门轻量动效
 
