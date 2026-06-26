@@ -377,7 +377,7 @@ func TestBuildFullReportPromptInputIncludesProfessionalFields(t *testing.T) {
 		t.Fatalf("algorithm_version=%q", input.AlgorithmVersion)
 	}
 	prompt := buildQimenUserPrompt(input)
-	for _, want := range []string{"layout_version", "ganzhi", "palaces_summary", "qimen-v2-professional"} {
+	for _, want := range []string{"layout_version", "ganzhi", "palaces_summary", "focus_palaces_summary", "qimen-v2-professional"} {
 		if !strings.Contains(prompt, want) {
 			t.Fatalf("prompt missing %q", want)
 		}

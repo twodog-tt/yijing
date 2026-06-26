@@ -148,12 +148,14 @@ focus_palaces_summary：{{focus_palaces_summary}}
 
 写作要求：
 - 必须明确 qimen-v2-professional 仍是第一版落盘，置闰法、寄宫流派校准仍未完成，不等同于最终权威排盘。
-- 必须引用 layout_version 与 palaces_summary / focus_palaces_summary 中 2–3 个宫位信息，不要把 JSON 原样贴出。
-- 必须引用 ganzhi / dun / chief 中至少 2 类字段。
-- 不同 category 必须体现不同重点（career/relationship/study/decision/general）。
-- 禁止输出完整原问题、session_key、payload 原始 JSON。
-- 不做精准预测、强吉凶、改运化解、投资/医疗/法律/赌博/军事建议。
-- 第九部分必须再次强调：仅供传统文化学习参考，不构成现实决策依据。`
+- 必须引用 layout_version 与 palaces_summary / focus_palaces_summary 中 2–3 个宫位信息（含宫名、星、门、神、天盘干、地盘干），不要把 JSON 原样贴出。
+- 必须引用 ganzhi / dun（含阴阳遁、局数、三元）/ chief（含值符、值使及其所在宫位）中至少 2 类字段。
+- 第四部分「重点宫位提示」必须围绕 focus_palaces_summary 展开结构化观察，不作强预测。
+- 不同 category 必须体现不同重点：career 侧重推进顺序与资源协调；relationship 侧重沟通边界；study 侧重复盘与阶段目标；decision 侧重信息补齐与小步试探；general 侧重问题整理与风险收敛。
+- 语气像产品内报告：使用「结构化观察」「行动节奏整理」「可优先关注」「可以先验证」「建议结合现实情况判断」等表达。
+- 禁止输出完整原问题、session_key、payload 原始 JSON、prompt 原文。
+- 不做精准预测、强吉凶、改运化解、投资/医疗/法律/赌博/军事建议；不要使用「必然、一定、注定、百分百、保证、你一定会」等绝对词。
+- 第九部分必须再次强调：仅供传统文化学习参考，当前为第一版排盘口径，不构成现实决策依据。`
 )
 
 var qimenForbiddenPhrases = fullReportForbiddenPhrases

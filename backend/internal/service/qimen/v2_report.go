@@ -39,7 +39,7 @@ func categoryFocusPalaceNames(category string) []string {
 	case "relationship":
 		return []string{"兑七宫", "巽四宫"}
 	case "study":
-		return []string{"坤二宫", "离九宫"}
+		return []string{"离九宫", "坤二宫"}
 	case "decision":
 		return []string{"艮八宫", "坎一宫"}
 	default:

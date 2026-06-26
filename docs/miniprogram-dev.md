@@ -1459,6 +1459,29 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 
 **下一步：** ALG2.7 professional 报告质量增强；BAZI1.3；RELEASE-QA。
 
+## 25.19 Phase ALG2.7：奇门 professional 完整报告质量增强（backend-only）
+
+**说明：** 优化 `qimen-v2-professional` 的 `full_content`（DeepSeek prompt + template fallback）；增强 `focus_palaces` 选择、9 段结构化表达与 category 差异化。**不改**排盘算法 / 小程序 / Web / SQL。
+
+**本阶段完成：**
+
+- [x] `pickProfessionalFocusPalaces`：值符宫 → 值使宫 → category 辅助宫；去重；2–3 宫；稳定 fallback
+- [x] `summarizeProfessionalFocusPalaces` / `buildProfessionalPalaceReportSections`：含星/门/神/天盘干/地盘干
+- [x] DeepSeek professional prompt 含 `layout_version` / `palaces_summary` / `focus_palaces_summary` / `ganzhi` / `dun` / `chief`
+- [x] fallback 9 段报告引用九宫、值符值使、layout_version、第一版边界说明
+- [x] category 差异化（career / relationship / study / decision / general）
+- [x] v1 / poc / 八字 full_content 回归不受影响
+
+**仍不做：**
+
+- [ ] 修改 professional 排盘 / palaces / chief / layout_version 生成逻辑
+- [ ] 小程序 / Web / SQL 变更
+- [ ] 普通用户 algorithm_version 选择 UI
+
+**部署：** push 后需 **backend-only** 部署；`free_unlock` curl 验证 professional / v1 / poc 回归。
+
+**下一步：** ALG2.7-QA；BAZI1.3；RELEASE-QA。
+
 ## 26. Phase UX1：八字 / 奇门轻量动效
 
 Phase UX1 在小程序与 Web 八字、奇门页面增加贴合传统文化场景的轻量 UI 动效，提升氛围与完成感。**仅改 UI 动效，不改后端、数据库、部署。**

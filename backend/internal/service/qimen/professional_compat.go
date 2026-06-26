@@ -72,7 +72,9 @@ func professionalPalacesToPalaces(proPalaces []ProfessionalPalace) []Palace {
 
 func professionalChiefToChief(chief ProfessionalChief) Chief {
 	return Chief{
-		ZhiFu:  chief.ZhiFu,
-		ZhiShi: chief.ZhiShi,
+		ZhiFu:        chief.ZhiFu,
+		ZhiShi:       chief.ZhiShi,
+		ZhiFuPalace:  chief.ZhiFuPalace,
+		ZhiShiPalace: chief.ZhiShiPalace,
 	}
 }

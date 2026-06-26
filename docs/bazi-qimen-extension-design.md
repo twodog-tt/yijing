@@ -1941,3 +1941,24 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 **下一步：** ALG2.7；BAZI1.3；RELEASE-QA。
 
 ---
+
+### 10.46 Phase ALG2.7 交付清单（奇门 professional 完整报告质量增强）
+
+**目标：** 提升 `qimen-v2-professional` 完整报告（DeepSeek + fallback）质量；**不改**排盘算法、小程序、Web、SQL。
+
+**本阶段完成：**
+
+- [x] `pickProfessionalFocusPalaces`：首选 `zhi_fu_palace` / `zhi_shi_palace`，再按 category 选辅助宫（career→乾六/离九；relationship→兑七/巽四；study→离九/坤二；decision→艮八/坎一；general→中五/坤二）
+- [x] focus 2–3 宫；category 仅影响报告关注角度
+- [x] DeepSeek prompt 结构化输入 + 9 段输出要求 + 第一版边界说明
+- [x] fallback 9 段：引用 layout_version、dun、chief、focus 宫位（含干/星/门/神）
+- [x] 隐私：不输出完整原问题 / session_key / payload / prompt
+- [x] 合规：正文无强预测 / 改运化灾
+
+**仍不做：** 排盘算法变更；frontend / miniprogram / SQL。
+
+**部署：** backend-only；curl 验证 `free_unlock` full_content。
+
+**下一步：** ALG2.7-QA；BAZI1.3；RELEASE-QA。
+
+---

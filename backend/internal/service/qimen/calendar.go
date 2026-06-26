@@ -22,11 +22,13 @@ type CalendarBasis struct {
 	Note        string `json:"note"`
 }
 
-// Dun describes yin/yang dun and ju for POC.
+// Dun describes yin/yang dun and ju for POC and professional.
 type Dun struct {
 	Type   string `json:"type"`
 	Ju     int    `json:"ju"`
 	Source string `json:"source"`
+	Method string `json:"method,omitempty"`
+	Yuan   string `json:"yuan,omitempty"`
 }
 
 // Xun holds simplified 旬首 and 空亡 branches for POC.
@@ -35,10 +37,12 @@ type Xun struct {
 	EmptyBranches []string `json:"empty_branches"`
 }
 
-// Chief holds 值符 / 值使 placeholders for POC.
+// Chief holds 值符 / 值使 placeholders for POC and optional palace mapping for professional.
 type Chief struct {
-	ZhiFu string `json:"zhi_fu"`
-	ZhiShi string `json:"zhi_shi"`
+	ZhiFu        string `json:"zhi_fu"`
+	ZhiShi       string `json:"zhi_shi"`
+	ZhiFuPalace  string `json:"zhi_fu_palace,omitempty"`
+	ZhiShiPalace string `json:"zhi_shi_palace,omitempty"`
 }
 
 func normalizeMoment(t time.Time) time.Time {

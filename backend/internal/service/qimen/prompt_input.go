@@ -143,9 +143,14 @@ func buildFullReportPromptInput(resultPayload json.RawMessage, freeContent strin
 	}
 	if len(parsed.Palaces) > 0 {
 		input.Palaces = append([]Palace(nil), parsed.Palaces...)
-		focus := pickQimenV2FocusPalaces(input.Palaces, input.Chief, category)
 		input.PalacesSummary = formatPalacesSummaryForPrompt(input.Palaces)
-		input.FocusPalacesSummary = formatFocusPalacesSummaryForPrompt(focus)
+		if input.AlgorithmVersion == AlgorithmVersionQimenV2Professional {
+			focus := pickProfessionalFocusPalaces(input.Palaces, input.Chief, category)
+			input.FocusPalacesSummary = summarizeProfessionalFocusPalaces(focus)
+		} else {
+			focus := pickQimenV2FocusPalaces(input.Palaces, input.Chief, category)
+			input.FocusPalacesSummary = formatFocusPalacesSummaryForPrompt(focus)
+		}
 	}
 	if parsed.CalculationMeta != nil {
 		input.Limits = append([]string{}, parsed.CalculationMeta.Limits...)
@@ -266,7 +271,12 @@ func formatDunForPrompt(dun Dun) string {
 	if dun.Ju == 0 && dun.Type == "" {
 		return "（无）"
 	}
-	return fmt.Sprintf("type=%s; ju=%d; source=%s", dun.Type, dun.Ju, dun.Source)
+	method := dun.Method
+	if method == "" {
+		method = dun.Source
+	}
+	yuan := professionalYuanLabel(dun)
+	return fmt.Sprintf("type=%s; ju=%d; yuan=%s; method=%s", dun.Type, dun.Ju, yuan, method)
 }
 
 func formatXunForPrompt(xun Xun) string {
@@ -280,7 +290,17 @@ func formatChiefForPrompt(chief Chief) string {
 	if chief.ZhiFu == "" && chief.ZhiShi == "" {
 		return "（无）"
 	}
-	return fmt.Sprintf("zhi_fu=%s; zhi_shi=%s", chief.ZhiFu, chief.ZhiShi)
+	parts := []string{
+		fmt.Sprintf("zhi_fu=%s", chief.ZhiFu),
+		fmt.Sprintf("zhi_shi=%s", chief.ZhiShi),
+	}
+	if strings.TrimSpace(chief.ZhiFuPalace) != "" {
+		parts = append(parts, "zhi_fu_palace="+chief.ZhiFuPalace)
+	}
+	if strings.TrimSpace(chief.ZhiShiPalace) != "" {
+		parts = append(parts, "zhi_shi_palace="+chief.ZhiShiPalace)
+	}
+	return strings.Join(parts, "; ")
 }
 
 func formatPalacesForPrompt(palaces []Palace) string {
