@@ -205,6 +205,92 @@ func TestCreateRejectsTooLongSessionKey(t *testing.T) {
 	}
 }
 
+func TestCreateUsesV2WhenRequested(t *testing.T) {
+	analysisRepo := &mockAnalysisRepo{}
+	svc := bazi.NewServiceWithRepos(&mockSessionRepo{
+		upsertFn: func(_ context.Context, sessionKey, _ string) (*model.Session, error) {
+			return &model.Session{ID: 10, SessionKey: sessionKey}, nil
+		},
+	}, analysisRepo)
+
+	_, err := svc.Create(context.Background(), bazi.CreateInput{
+		SessionKey:       "sess-v2",
+		BirthDate:        "2024-02-05",
+		BirthHourBranch:  "wu",
+		BirthHourUnknown: false,
+		AlgorithmVersion: bazi.AlgorithmVersionBaziV2POC,
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if analysisRepo.lastCreateParams.AlgorithmVersion != bazi.AlgorithmVersionBaziV2POC {
+		t.Fatalf("expected v2 algorithm version, got %q", analysisRepo.lastCreateParams.AlgorithmVersion)
+	}
+
+	var result map[string]any
+	if err := json.Unmarshal(analysisRepo.lastCreateParams.ResultPayload, &result); err != nil {
+		t.Fatalf("result payload: %v", err)
+	}
+	if result["algorithm_version"] != bazi.AlgorithmVersionBaziV2POC {
+		t.Fatalf("expected v2 in result_payload, got %#v", result["algorithm_version"])
+	}
+	if _, ok := result["pillars_v2"]; !ok {
+		t.Fatalf("expected pillars_v2 in result_payload")
+	}
+	raw := string(analysisRepo.lastCreateParams.ResultPayload)
+	for _, forbidden := range []string{"birth_date", "session_key", "prompt"} {
+		if strings.Contains(raw, forbidden) {
+			t.Fatalf("result_payload must not contain %q", forbidden)
+		}
+	}
+}
+
+func TestCreateRejectsInvalidAlgorithmVersion(t *testing.T) {
+	repo := &mockAnalysisRepo{}
+	svc := bazi.NewServiceWithRepos(&mockSessionRepo{}, repo)
+	_, err := svc.Create(context.Background(), bazi.CreateInput{
+		SessionKey:       "sess-1",
+		BirthDate:        "1995-01-01",
+		BirthHourBranch:  "zi",
+		AlgorithmVersion: "bazi-v3",
+	})
+	if !errors.Is(err, bazi.ErrInvalidAlgorithmVersion) {
+		t.Fatalf("expected ErrInvalidAlgorithmVersion, got %v", err)
+	}
+	if repo.createCalls != 0 {
+		t.Fatalf("must not insert on invalid algorithm version")
+	}
+}
+
+func TestCreateExplicitV1AlgorithmVersion(t *testing.T) {
+	analysisRepo := &mockAnalysisRepo{}
+	svc := bazi.NewServiceWithRepos(&mockSessionRepo{
+		upsertFn: func(_ context.Context, _, _ string) (*model.Session, error) {
+			return &model.Session{ID: 10}, nil
+		},
+	}, analysisRepo)
+
+	_, err := svc.Create(context.Background(), bazi.CreateInput{
+		SessionKey:       "sess-1",
+		BirthDate:        "1995-01-01",
+		BirthHourBranch:  "zi",
+		AlgorithmVersion: model.AlgorithmVersionBaziSimpleV1,
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if analysisRepo.lastCreateParams.AlgorithmVersion != model.AlgorithmVersionBaziSimpleV1 {
+		t.Fatalf("expected v1 algorithm version")
+	}
+	var result map[string]any
+	if err := json.Unmarshal(analysisRepo.lastCreateParams.ResultPayload, &result); err != nil {
+		t.Fatalf("result payload: %v", err)
+	}
+	if _, ok := result["pillars_v2"]; ok {
+		t.Fatalf("v1 result_payload must not contain pillars_v2")
+	}
+}
+
 func TestCalculateGeneratesFreeContent(t *testing.T) {
 	calc, err := bazi.Calculate("1995-01-01", "zi", false)
 	if err != nil {

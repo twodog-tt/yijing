@@ -1121,6 +1121,31 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 
 **仍明确不做：** 真太阳时、大运/流年/神煞；节令时刻不升级为天文历算。
 
+## 25.5 Phase ALG1.2：八字 v2 灰度接入（后端）
+
+**说明：** `POST /api/v1/analysis/bazi` 新增可选字段 `algorithm_version`；**默认 `bazi-simple-v1`**；内部测试可传 `bazi-v2-poc`。小程序 / Web **暂不暴露**算法选择 UI。
+
+**请求示例（内部测试）：**
+
+```json
+{
+  "birth_date": "2024-02-05",
+  "birth_hour_branch": "wu",
+  "birth_hour_unknown": false,
+  "confirm_disclaimer": true,
+  "algorithm_version": "bazi-v2-poc"
+}
+```
+
+**规则：**
+
+- 省略 `algorithm_version` → `bazi-simple-v1`
+- `bazi-simple-v1` → `Calculate()`
+- `bazi-v2-poc` → `CalculateV2()` + 兼容 result_payload
+- 其他值 → 400 参数错误，不 fallback
+
+**仍不做：** 真太阳时、大运/流年/神煞、前端算法切换、SQL 变更。
+
 ## 26. Phase UX1：八字 / 奇门轻量动效
 
 Phase UX1 在小程序与 Web 八字、奇门页面增加贴合传统文化场景的轻量 UI 动效，提升氛围与完成感。**仅改 UI 动效，不改后端、数据库、部署。**

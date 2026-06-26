@@ -228,6 +228,115 @@ func TestCreateBaziAcceptsConfirmDisclaimerTrue(t *testing.T) {
 	}
 }
 
+func TestCreateBaziDefaultsToSimpleV1(t *testing.T) {
+	h, _ := newTestAnalysisHandler(t)
+	rec := httptest.NewRecorder()
+	h.CreateBazi(rec, httptest.NewRequest(http.MethodPost, "/api/v1/analysis/bazi", bytes.NewBufferString(validBaziCreateBody)))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", rec.Code, rec.Body.String())
+	}
+	var resp struct {
+		Data struct {
+			AlgorithmVersion string `json:"algorithm_version"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.Data.AlgorithmVersion != model.AlgorithmVersionBaziSimpleV1 {
+		t.Fatalf("algorithm_version=%q", resp.Data.AlgorithmVersion)
+	}
+}
+
+func TestCreateBaziUsesV2AlgorithmVersion(t *testing.T) {
+	h, _ := newTestAnalysisHandler(t)
+	body := bytes.NewBufferString(`{"session_key":"sess-a","birth_date":"2024-02-05","birth_hour_branch":"wu","birth_hour_unknown":false,"confirm_disclaimer":true,"algorithm_version":"bazi-v2-poc"}`)
+	rec := httptest.NewRecorder()
+	h.CreateBazi(rec, httptest.NewRequest(http.MethodPost, "/api/v1/analysis/bazi", body))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", rec.Code, rec.Body.String())
+	}
+	var resp struct {
+		Data struct {
+			AlgorithmVersion string          `json:"algorithm_version"`
+			ResultPayload    json.RawMessage `json:"result_payload"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.Data.AlgorithmVersion != bazi.AlgorithmVersionBaziV2POC {
+		t.Fatalf("algorithm_version=%q", resp.Data.AlgorithmVersion)
+	}
+	raw := string(resp.Data.ResultPayload)
+	if !strings.Contains(raw, `"algorithm_version":"bazi-v2-poc"`) {
+		t.Fatalf("result_payload missing v2 marker: %s", raw)
+	}
+	for _, forbidden := range []string{"birth_date", "session_key", "prompt"} {
+		if strings.Contains(raw, forbidden) {
+			t.Fatalf("result_payload must not contain %q", forbidden)
+		}
+	}
+}
+
+func TestCreateBaziRejectsInvalidAlgorithmVersion(t *testing.T) {
+	h, _ := newTestAnalysisHandler(t)
+	body := bytes.NewBufferString(`{"session_key":"sess-a","birth_date":"1995-01-01","birth_hour_branch":"zi","confirm_disclaimer":true,"algorithm_version":"bazi-v3"}`)
+	rec := httptest.NewRecorder()
+	h.CreateBazi(rec, httptest.NewRequest(http.MethodPost, "/api/v1/analysis/bazi", body))
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d body=%s", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "algorithm_version must be bazi-simple-v1 or bazi-v2-poc") {
+		t.Fatalf("unexpected body: %s", rec.Body.String())
+	}
+}
+
+func TestUnlockAnalysisV2FreeUnlockSuccess(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	sessions.sessions["sess-a"] = &model.Session{ID: 10, SessionKey: "sess-a"}
+	body := bytes.NewBufferString(`{"session_key":"sess-a","birth_date":"2024-02-05","birth_hour_branch":"wu","birth_hour_unknown":false,"confirm_disclaimer":true,"algorithm_version":"bazi-v2-poc"}`)
+	createRec := httptest.NewRecorder()
+	h.CreateBazi(createRec, httptest.NewRequest(http.MethodPost, "/api/v1/analysis/bazi", body))
+	if createRec.Code != http.StatusOK {
+		t.Fatalf("create failed: %s", createRec.Body.String())
+	}
+	var createResp struct {
+		Data struct {
+			ID int64 `json:"id"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(createRec.Body.Bytes(), &createResp); err != nil {
+		t.Fatalf("decode create response: %v", err)
+	}
+
+	unlockRec := httptest.NewRecorder()
+	unlockReq := httptest.NewRequest(http.MethodPost, "/api/v1/analysis/"+strconv.FormatInt(createResp.Data.ID, 10)+"/unlock", bytes.NewBufferString(`{"unlock_type":"free_unlock"}`))
+	unlockReq.Header.Set(sessionkey.HeaderName, "sess-a")
+	h.Unlock(unlockRec, unlockReq)
+	if unlockRec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", unlockRec.Code, unlockRec.Body.String())
+	}
+	var unlockResp struct {
+		Data struct {
+			UnlockType  string `json:"unlock_type"`
+			FullContent string `json:"full_content"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(unlockRec.Body.Bytes(), &unlockResp); err != nil {
+		t.Fatalf("decode unlock response: %v", err)
+	}
+	if unlockResp.Data.UnlockType != model.UnlockTypeFreeUnlock {
+		t.Fatalf("unexpected unlock type: %s", unlockResp.Data.UnlockType)
+	}
+	if strings.TrimSpace(unlockResp.Data.FullContent) == "" {
+		t.Fatalf("expected full content")
+	}
+	if !strings.Contains(unlockResp.Data.FullContent, "bazi-v2-poc") {
+		t.Fatalf("expected v2 full content marker")
+	}
+}
+
 func TestGetAnalysisRequiresHeaderSessionKey(t *testing.T) {
 	h, sessions := newTestAnalysisHandler(t)
 	sessions.sessions["sess-a"] = &model.Session{ID: 10, SessionKey: "sess-a"}

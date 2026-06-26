@@ -8,26 +8,11 @@ import (
 
 const fullReportDisclaimer = "本报告基于 bazi-simple-v1 简化干支文化规则生成，仅用于传统文化学习与自我反思，不等同于专业八字排盘，不构成现实决策依据。"
 
-type parsedResultPayload struct {
-	MethodNote         string              `json:"method_note"`
-	Pillars            Pillars             `json:"pillars"`
-	DayMaster          string              `json:"day_master"`
-	FiveElements       FiveElements        `json:"five_elements"`
-	BaziProfile        *profilePayload     `json:"bazi_profile"`
-	InterpretationLens *lensPayload        `json:"interpretation_lens"`
-	ReflectionFocus    string              `json:"reflection_focus"`
-	ActionSuggestions  []string            `json:"action_suggestions"`
-	CalculationMeta    *calculationMeta    `json:"calculation_meta"`
-}
-
 // BuildFullContent generates a template full report from stored analysis payloads.
 func BuildFullContent(resultPayload json.RawMessage, freeContent string) (string, error) {
-	var parsed parsedResultPayload
-	if err := json.Unmarshal(resultPayload, &parsed); err != nil {
-		return "", fmt.Errorf("invalid result_payload")
-	}
-	if strings.TrimSpace(parsed.DayMaster) == "" {
-		return "", fmt.Errorf("invalid result_payload")
+	parsed, err := parseStoredResultPayload(resultPayload)
+	if err != nil {
+		return "", err
 	}
 
 	hourUnknown := strings.TrimSpace(parsed.Pillars.Hour) == ""
@@ -55,7 +40,11 @@ func BuildFullContent(resultPayload json.RawMessage, freeContent string) (string
 
 	methodNote := strings.TrimSpace(parsed.MethodNote)
 	if methodNote == "" {
-		methodNote = MethodNote
+		if parsed.AlgorithmVersion == AlgorithmVersionBaziV2POC {
+			methodNote = MethodNoteV2
+		} else {
+			methodNote = MethodNote
+		}
 	}
 
 	dayMasterSection := fmt.Sprintf(
@@ -63,7 +52,7 @@ func BuildFullContent(resultPayload json.RawMessage, freeContent string) (string
 		profile.DayMasterObservation,
 		profile.ActionStyle,
 		profile.ReflectionTheme,
-		lens.PacingHint + "。",
+		lens.PacingHint+"。",
 	)
 
 	reflectionQuestions := []string{
@@ -89,21 +78,27 @@ func BuildFullContent(resultPayload json.RawMessage, freeContent string) (string
 			"时辰未知，本次不生成时柱，相关内容仅基于已知信息进行简化分析。",
 		}, observationDirections...)
 	}
+	if parsed.AlgorithmVersion == AlgorithmVersionBaziV2POC {
+		observationDirections = append(observationDirections,
+			"年柱按立春换年、月柱按十二节令切换（bazi-v2-poc），节令时刻为公式近似。",
+		)
+	}
 
 	freeSnippet := strings.TrimSpace(freeContent)
 	if freeSnippet != "" {
 		observationDirections = append(observationDirections, "可参考免费解读中的自我反思要点，继续延伸记录。")
 	}
 
+	disclaimer := fullReportDisclaimerFor(parsed.AlgorithmVersion)
 	sections := []string{
-		"【完整报告说明】\n" + fullReportDisclaimer,
+		"【完整报告说明】\n" + disclaimer,
 		"【1. 简化干支示意】\n" + strings.Join(pillarParts, "\n"),
 		"【2. 五行倾向展开】\n" + elementSection,
 		"【3. 日主与行动风格】\n" + dayMasterSection,
 		"【4. 自我反思问题】\n" + strings.Join(reflectionQuestions, "\n"),
 		"【5. 近期行动建议】\n" + strings.Join(suggestions, "\n"),
 		"【6. 适合记录的观察方向】\n" + strings.Join(observationDirections, "\n"),
-		"【7. 免责声明】\n" + fullReportDisclaimer + "\n" + methodNote,
+		"【7. 免责声明】\n" + disclaimer + "\n" + methodNote,
 	}
 	return strings.Join(sections, "\n\n"), nil
 }

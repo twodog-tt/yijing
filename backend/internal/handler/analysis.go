@@ -48,6 +48,7 @@ type createBaziRequest struct {
 	BirthHourBranch   string `json:"birth_hour_branch"`
 	BirthHourUnknown  bool   `json:"birth_hour_unknown"`
 	ConfirmDisclaimer bool   `json:"confirm_disclaimer"`
+	AlgorithmVersion  string `json:"algorithm_version"`
 }
 
 func (h *AnalysisHandler) CreateBazi(w http.ResponseWriter, r *http.Request) {
@@ -81,6 +82,7 @@ func (h *AnalysisHandler) CreateBazi(w http.ResponseWriter, r *http.Request) {
 		BirthDate:        req.BirthDate,
 		BirthHourBranch:  req.BirthHourBranch,
 		BirthHourUnknown: req.BirthHourUnknown,
+		AlgorithmVersion: req.AlgorithmVersion,
 		ClientInfo:       r.UserAgent(),
 	})
 	if err != nil {
@@ -89,6 +91,8 @@ func (h *AnalysisHandler) CreateBazi(w http.ResponseWriter, r *http.Request) {
 			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "session_key is required")
 		case errors.Is(err, bazi.ErrSessionKeyTooLong):
 			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "session_key exceeds max length")
+		case errors.Is(err, bazi.ErrInvalidAlgorithmVersion):
+			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "invalid params: algorithm_version must be bazi-simple-v1 or bazi-v2-poc")
 		case errors.Is(err, bazi.ErrInvalidParams):
 			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "invalid params: check birth_date and birth_hour_branch")
 		default:

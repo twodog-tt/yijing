@@ -2,60 +2,31 @@ package bazi
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
+
+	"github.com/wangxintong/yijing/backend/internal/model"
 )
 
-type calculationMeta struct {
-	Limits []string `json:"limits"`
-}
-
-type profilePayload struct {
-	DayMasterObservation string `json:"day_master_observation"`
-	SeasonTendency       string `json:"season_tendency"`
-	ElementBalanceType   string `json:"element_balance_type"`
-	ActionStyle          string `json:"action_style"`
-	ReflectionTheme      string `json:"reflection_theme"`
-}
-
-type lensPayload struct {
-	StrengthHint             string `json:"strength_hint"`
-	CautionHint              string `json:"caution_hint"`
-	PacingHint               string `json:"pacing_hint"`
-	RelationshipWithElements string `json:"relationship_with_elements"`
-}
-
 type fullReportPromptInput struct {
-	MethodNote          string
-	Pillars             Pillars
-	HourUnknown         bool
-	DayMaster           string
-	FiveElements        FiveElements
-	BaziProfile         BaziProfile
-	InterpretationLens  InterpretationLens
-	ReflectionFocus     string
-	ActionSuggestions   []string
-	Limits              []string
-	FreeContent         string
+	AlgorithmVersion  string
+	MethodNote        string
+	Pillars           Pillars
+	CalendarBasis     CalendarBasis
+	HourUnknown       bool
+	DayMaster         string
+	FiveElements      FiveElements
+	BaziProfile       BaziProfile
+	InterpretationLens InterpretationLens
+	ReflectionFocus   string
+	ActionSuggestions []string
+	Limits            []string
+	FreeContent       string
 }
 
 func buildFullReportPromptInput(resultPayload json.RawMessage, freeContent string) (*fullReportPromptInput, error) {
-	var parsed struct {
-		MethodNote          string           `json:"method_note"`
-		Pillars             Pillars          `json:"pillars"`
-		DayMaster           string           `json:"day_master"`
-		FiveElements        FiveElements     `json:"five_elements"`
-		BaziProfile         *profilePayload  `json:"bazi_profile"`
-		InterpretationLens  *lensPayload     `json:"interpretation_lens"`
-		ReflectionFocus     string           `json:"reflection_focus"`
-		ActionSuggestions   []string         `json:"action_suggestions"`
-		CalculationMeta     *calculationMeta `json:"calculation_meta"`
-	}
-	if err := json.Unmarshal(resultPayload, &parsed); err != nil {
-		return nil, fmt.Errorf("invalid result_payload")
-	}
-	if strings.TrimSpace(parsed.DayMaster) == "" {
-		return nil, fmt.Errorf("invalid result_payload")
+	parsed, err := parseStoredResultPayload(resultPayload)
+	if err != nil {
+		return nil, err
 	}
 
 	hourUnknown := strings.TrimSpace(parsed.Pillars.Hour) == ""
@@ -63,22 +34,31 @@ func buildFullReportPromptInput(resultPayload json.RawMessage, freeContent strin
 	lens := lensFromPayload(parsed.InterpretationLens, profile, parsed.DayMaster, parsed.FiveElements, hourUnknown)
 
 	input := &fullReportPromptInput{
-		MethodNote:          strings.TrimSpace(parsed.MethodNote),
-		Pillars:             parsed.Pillars,
-		HourUnknown:         hourUnknown,
-		DayMaster:           strings.TrimSpace(parsed.DayMaster),
-		FiveElements:        parsed.FiveElements,
-		BaziProfile:         profile,
-		InterpretationLens:  lens,
-		ReflectionFocus:     strings.TrimSpace(parsed.ReflectionFocus),
-		ActionSuggestions:   append([]string{}, parsed.ActionSuggestions...),
-		FreeContent:         summarizeFreeContentForPrompt(freeContent),
+		AlgorithmVersion:   parsed.AlgorithmVersion,
+		MethodNote:         strings.TrimSpace(parsed.MethodNote),
+		Pillars:            parsed.Pillars,
+		CalendarBasis:      parsed.CalendarBasis,
+		HourUnknown:        hourUnknown,
+		DayMaster:          parsed.DayMaster,
+		FiveElements:       parsed.FiveElements,
+		BaziProfile:        profile,
+		InterpretationLens: lens,
+		ReflectionFocus:    strings.TrimSpace(parsed.ReflectionFocus),
+		ActionSuggestions:  append([]string{}, parsed.ActionSuggestions...),
+		FreeContent:        summarizeFreeContentForPrompt(freeContent),
 	}
 	if parsed.CalculationMeta != nil {
 		input.Limits = append([]string{}, parsed.CalculationMeta.Limits...)
 	}
 	if input.MethodNote == "" {
-		input.MethodNote = MethodNote
+		if input.AlgorithmVersion == AlgorithmVersionBaziV2POC {
+			input.MethodNote = MethodNoteV2
+		} else {
+			input.MethodNote = MethodNote
+		}
+	}
+	if input.AlgorithmVersion == "" {
+		input.AlgorithmVersion = model.AlgorithmVersionBaziSimpleV1
 	}
 	return input, nil
 }

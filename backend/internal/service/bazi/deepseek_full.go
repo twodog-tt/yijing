@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/wangxintong/yijing/backend/internal/config"
+	"github.com/wangxintong/yijing/backend/internal/model"
 )
 
 const (
@@ -29,10 +30,14 @@ const (
 8. 不要恐吓用户，不要诱导付费改运。
 9. 语气温和、克制、不玄乎。
 10. 必须根据 bazi_profile 与 interpretation_lens 写出差异化报告，不要套用固定模板；围绕五行倾向、行动风格、反思主题展开。
+11. 若 algorithm_version 为 bazi-v2-poc，需说明年柱按立春换年、月柱按十二节令切换，节令时刻为公式近似，非天文台精确时刻。
 
 你必须只输出纯文本报告正文，不要输出 Markdown 代码块，不要输出 JSON，不要输出额外解释。`
 
 	baziUserPromptTemplate = `请基于以下简化八字分析信息生成完整报告。
+
+algorithm_version：{{algorithm_version}}
+calendar_basis：{{calendar_basis}}
 
 要求按以下 7 个部分输出，每部分用标题开头：
 1. 简化干支示意
@@ -139,6 +144,8 @@ func buildBaziUserPrompt(input *fullReportPromptInput) string {
 	freeContent := nonEmpty(input.FreeContent, "（无）")
 
 	replacer := strings.NewReplacer(
+		"{{algorithm_version}}", nonEmpty(input.AlgorithmVersion, model.AlgorithmVersionBaziSimpleV1),
+		"{{calendar_basis}}", formatCalendarBasisForPrompt(input.CalendarBasis),
 		"{{method_note}}", input.MethodNote,
 		"{{hour_unknown_note}}", hourUnknownNote,
 		"{{year_pillar}}", nonEmpty(input.Pillars.Year, "—"),

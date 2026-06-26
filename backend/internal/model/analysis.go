@@ -26,6 +26,7 @@ const (
 	AnalysisGenerationStatusFullFailed     = 5
 
 	AlgorithmVersionBaziSimpleV1  = "bazi-simple-v1"
+	AlgorithmVersionBaziV2POC     = "bazi-v2-poc"
 	AlgorithmVersionQimenSimpleV1 = "qimen-simple-v1"
 
 	MaxAnalysisPayloadBytes = 65536
@@ -57,7 +58,7 @@ func ValidateAlgorithmVersion(moduleType int, version string) error {
 	}
 	switch moduleType {
 	case ModuleTypeBazi:
-		if version == AlgorithmVersionBaziSimpleV1 {
+		if version == AlgorithmVersionBaziSimpleV1 || version == AlgorithmVersionBaziV2POC {
 			return nil
 		}
 	case ModuleTypeQimen:

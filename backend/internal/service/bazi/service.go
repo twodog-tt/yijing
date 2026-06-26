@@ -51,23 +51,53 @@ func (s *Service) Create(ctx context.Context, input CreateInput) (*model.Analysi
 		return nil, err
 	}
 
-	calc, err := Calculate(input.BirthDate, input.BirthHourBranch, input.BirthHourUnknown)
+	algorithmVersion, err := ResolveAlgorithmVersion(input.AlgorithmVersion)
 	if err != nil {
 		return nil, err
 	}
 
-	freeContent := BuildFreeContent(calc)
-	if strings.TrimSpace(freeContent) == "" {
-		return nil, fmt.Errorf("%w: free_content generation failed", ErrInvalidParams)
-	}
+	var (
+		freeContent   string
+		inputPayload  []byte
+		resultPayload []byte
+	)
 
-	inputPayload, err := calc.InputPayload()
-	if err != nil {
-		return nil, err
-	}
-	resultPayload, err := calc.ResultPayload()
-	if err != nil {
-		return nil, err
+	switch algorithmVersion {
+	case AlgorithmVersionBaziV2POC:
+		v2, calcErr := CalculateV2(input.BirthDate, input.BirthHourBranch, input.BirthHourUnknown)
+		if calcErr != nil {
+			return nil, calcErr
+		}
+		calc := CalculationResultFromV2(v2)
+		freeContent = BuildFreeContent(calc)
+		if strings.TrimSpace(freeContent) == "" {
+			return nil, fmt.Errorf("%w: free_content generation failed", ErrInvalidParams)
+		}
+		inputPayload, err = calc.InputPayload()
+		if err != nil {
+			return nil, err
+		}
+		resultPayload, err = BuildV2APIResultPayload(v2, calc)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		calc, calcErr := Calculate(input.BirthDate, input.BirthHourBranch, input.BirthHourUnknown)
+		if calcErr != nil {
+			return nil, calcErr
+		}
+		freeContent = BuildFreeContent(calc)
+		if strings.TrimSpace(freeContent) == "" {
+			return nil, fmt.Errorf("%w: free_content generation failed", ErrInvalidParams)
+		}
+		inputPayload, err = calc.InputPayload()
+		if err != nil {
+			return nil, err
+		}
+		resultPayload, err = calc.ResultPayload()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	session, err := s.sessions.Upsert(ctx, sessionKey, input.ClientInfo)
@@ -79,7 +109,7 @@ func (s *Service) Create(ctx context.Context, input CreateInput) (*model.Analysi
 		CreateAnalysisParams: repository.CreateAnalysisParams{
 			SessionID:        session.ID,
 			ModuleType:       model.ModuleTypeBazi,
-			AlgorithmVersion: model.AlgorithmVersionBaziSimpleV1,
+			AlgorithmVersion: algorithmVersion,
 			InputPayload:     inputPayload,
 			ResultPayload:    resultPayload,
 		},

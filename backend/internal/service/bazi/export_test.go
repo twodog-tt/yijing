@@ -1,0 +1,3 @@
+package bazi
+
+var BuildFullReportPromptInputForTest = buildFullReportPromptInput

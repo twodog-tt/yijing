@@ -22,6 +22,7 @@ type CreateInput struct {
 	BirthDate        string
 	BirthHourBranch  string
 	BirthHourUnknown bool
+	AlgorithmVersion string
 	ClientInfo       string
 }
 

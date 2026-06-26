@@ -1388,9 +1388,11 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 - `backend/internal/service/bazi/calculate_v2.go` — `CalculateV2()` + `ResultPayload()`（`algorithm_version=bazi-v2-poc`）
 - `bazi-simple-v1` 的 `Calculate()` **未改默认行为**
 
-**默认策略：** 线上 Create API **仍使用** `bazi-simple-v1`；ALG1.2 再评估是否灰度启用 v2。
+**默认策略：** 线上 Create API **默认仍使用** `bazi-simple-v1`；可通过请求参数 `algorithm_version=bazi-v2-poc` 做内部灰度测试。
 
 **ALG1.1（已完成）：** 扩展节气边界 golden tests（立春/惊蛰/清明/小暑/立秋/白露/寒露/立冬/大雪/小寒）；节令时刻仍为世纪万年历公式 + 本地正午近似，非天文台精确时刻。
+
+**ALG1.2（已完成）：** `POST /api/v1/analysis/bazi` 支持可选 `algorithm_version`（`bazi-simple-v1` | `bazi-v2-poc`）；默认 v1；非法值返回参数错误；v2 result_payload 补齐 `pillars` / `pillars_v2` / `calendar_basis` / 差异化字段以兼容现有结果页；free_unlock / DeepSeek / template fallback 均支持 v2。
 
 **参考来源（仅规则/能力矩阵，未复制代码）：** `bazi-skill`（MIT 规则文档）、taibu-core 能力对照（MIT，未引入 npm 包）。
 
