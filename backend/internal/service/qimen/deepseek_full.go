@@ -29,7 +29,7 @@ const (
 
 你必须只输出纯文本报告正文，不要输出 Markdown 代码块，不要输出 JSON，不要输出额外解释。`
 
-	qimenUserPromptTemplate = `请基于以下结构化奇门问事信息生成完整报告。
+	qimenUserPromptTemplateV1 = `请基于以下结构化奇门问事信息生成完整报告。
 
 algorithm_version：{{algorithm_version}}
 method_note：{{method_note}}
@@ -39,11 +39,6 @@ method_note：{{method_note}}
 问事特征：{{safe_question_summary}}
 question_profile：{{question_profile}}
 qimen_lens：{{qimen_lens}}
-calendar_basis：{{calendar_basis}}
-dun：{{dun}}
-xun：{{xun}}
-chief：{{chief}}
-palaces：{{palaces}}
 局势梳理：{{situation_overview}}
 风险观察：{{risk_observations}}
 行动节奏：{{action_pacing}}
@@ -72,6 +67,48 @@ palaces：{{palaces}}
 - 每个部分都要引用 question_profile / qimen_lens 的具体字段，避免不同问题写出相同段落。
 - 语气保持传统文化学习、自我观察、行动整理，不做精准预测与强吉凶判断。
 - 第七部分必须再次强调：仅供传统文化学习参考，不构成现实决策依据。`
+
+	qimenUserPromptTemplateV2 = `请基于以下结构化奇门问事信息生成完整报告（qimen-v2-poc）。
+
+algorithm_version：{{algorithm_version}}
+method_note：{{method_note}}
+问事分类：{{category_label}}
+时段参考：{{time_bucket_label}}
+问事特征：{{safe_question_summary}}
+question_profile：{{question_profile}}
+qimen_lens：{{qimen_lens}}
+calendar_basis：{{calendar_basis}}
+dun：{{dun}}
+xun：{{xun}}
+chief：{{chief}}
+palaces_summary：{{palaces_summary}}
+focus_palaces_summary：{{focus_palaces_summary}}
+局势梳理：{{situation_overview}}
+风险观察：{{risk_observations}}
+行动节奏：{{action_pacing}}
+自我反思问题：{{reflection_questions}}
+规则限制：{{limits}}
+免费解读摘要：{{free_content}}
+
+必须按以下 9 个部分输出，每部分用标题开头（标题文字需一致）：
+一、局势摘要
+二、排盘口径说明
+三、九宫结构观察
+四、重点宫位提示
+五、可借助的条件
+六、需要留意的阻力
+七、行动节奏建议
+八、自我反思问题
+九、边界声明
+
+写作要求：
+- 必须明确 qimen-v2-poc 仍是 POC，节令/局数/星门神干为近似或占位口径。
+- 必须引用 palaces_summary / focus_palaces_summary 中 2–3 个宫位信息，不要把 JSON 原样贴出。
+- 必须引用 dun / chief 中至少 2 类字段（如阴阳遁+局数、值符+值使）。
+- 不同 category 必须体现不同重点（career/relationship/study/decision/general）。
+- 禁止输出完整原问题、session_key、payload 原始 JSON。
+- 不做精准预测、强吉凶、改运化解、投资/医疗/法律/赌博/军事建议。
+- 第九部分必须再次强调：仅供传统文化学习参考，不构成现实决策依据。`
 )
 
 var qimenForbiddenPhrases = fullReportForbiddenPhrases
@@ -153,7 +190,8 @@ func buildQimenUserPrompt(input *fullReportPromptInput) string {
 		"{{dun}}", formatDunForPrompt(input.Dun),
 		"{{xun}}", formatXunForPrompt(input.Xun),
 		"{{chief}}", formatChiefForPrompt(input.Chief),
-		"{{palaces}}", formatPalacesForPrompt(input.Palaces),
+		"{{palaces_summary}}", nonEmpty(input.PalacesSummary, "（无）"),
+		"{{focus_palaces_summary}}", nonEmpty(input.FocusPalacesSummary, "（无）"),
 		"{{situation_overview}}", input.SituationOverview,
 		"{{risk_observations}}", risks,
 		"{{action_pacing}}", nonEmpty(input.ActionPacing, "（无）"),
@@ -162,7 +200,10 @@ func buildQimenUserPrompt(input *fullReportPromptInput) string {
 		"{{limits}}", limits,
 		"{{free_content}}", nonEmpty(input.FreeContent, "（无）"),
 	)
-	return replacer.Replace(qimenUserPromptTemplate)
+	if input.AlgorithmVersion == AlgorithmVersionQimenV2POC {
+		return replacer.Replace(qimenUserPromptTemplateV2)
+	}
+	return replacer.Replace(qimenUserPromptTemplateV1)
 }
 
 type chatRequest struct {

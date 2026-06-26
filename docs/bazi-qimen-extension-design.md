@@ -1604,3 +1604,20 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 **部署：** 仅 backend；无需 SQL / frontend / 小程序重编译。
 
 ---
+
+### 10.36 Phase QIMEN-REPORT2 交付清单（奇门 v2 完整报告增强）
+
+**目标：** 增强 `qimen-v2-poc` 完整报告（DeepSeek prompt + template fallback），更充分使用九宫 payload；**不改** v2 排盘算法、小程序 / Web / SQL。
+
+- [x] v2 fallback 固定 9 段结构（局势摘要 → 边界声明）
+- [x] 引用 2–3 重点宫位 + dun/ju/chief + calendar_basis POC 说明
+- [x] DeepSeek prompt 使用 `palaces_summary` / `focus_palaces_summary`（非原始 JSON）
+- [x] `qimen-simple-v1` 7 段报告 **不受影响**
+- [x] 默认 API 仍为 `qimen-simple-v1`；小程序 / Web 暂不展示算法选择
+- [ ] 专业排盘口径增强（延后 **ALG2.3**）
+
+**实现位置：** `backend/internal/service/qimen/v2_report.go`、`full_content.go`、`prompt_input.go`、`deepseek_full.go`
+
+**部署：** 仅 backend；无需 SQL / frontend / 小程序重编译。
+
+---

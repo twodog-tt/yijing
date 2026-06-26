@@ -62,6 +62,10 @@ func BuildFullContent(resultPayload json.RawMessage, freeContent string) (string
 	categoryText := categoryLabel(category)
 	disclaimer := fullReportDisclaimerFor(parsed.AlgorithmVersion)
 
+	if parsed.AlgorithmVersion == AlgorithmVersionQimenV2POC {
+		return buildQimenV2FallbackFullContent(parsed, profile, lens, category, categoryText, methodNote, disclaimer, freeContent), nil
+	}
+
 	sections := []string{
 		sectionSummary + "\n" + buildQimenSummarySection(parsed, profile, lens, category, categoryText, methodNote, disclaimer),
 		sectionFocus + "\n" + buildQimenFocusSection(profile, lens, category),

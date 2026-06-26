@@ -1230,6 +1230,25 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 
 **部署：** 仅 backend；无需 SQL / frontend / 小程序重编译。
 
+## 25.9 Phase QIMEN-REPORT2：奇门 v2 完整报告增强（后端）
+
+**说明：** 增强 `qimen-v2-poc` 解锁后的 `full_content`（DeepSeek prompt + template fallback）；更结构化引用九宫 / dun / chief；**不改**小程序 / Web / SQL / v2 排盘算法。
+
+**v2 完整报告结构（9 段）：** 局势摘要 → 排盘口径说明 → 九宫结构观察 → 重点宫位提示 → 可借助 → 阻力 → 行动节奏 → 自我反思 → 边界声明。
+
+**DeepSeek prompt：** 输入 `palaces_summary` / `focus_palaces_summary`（压缩摘要，非 JSON）；含 calendar_basis / dun / xun / chief / limits。
+
+**fallback：** `pickQimenV2FocusPalaces()` 选 2–3 宫；按 category 差异化；明确 POC 近似口径。
+
+**仍不做：** ALG2.3 专业排盘、前端九宫展示、SQL 变更。
+
+**验收（后端）：**
+
+- [x] v2 unlock `full_content` 含九宫/宫位观察 + POC 说明 + 宫名引用
+- [x] v1 完整报告结构不变；八字 unlock 回归正常
+
+**部署：** 仅 backend。
+
 ## 26. Phase UX1：八字 / 奇门轻量动效
 
 Phase UX1 在小程序与 Web 八字、奇门页面增加贴合传统文化场景的轻量 UI 动效，提升氛围与完成感。**仅改 UI 动效，不改后端、数据库、部署。**

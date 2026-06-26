@@ -329,8 +329,11 @@ func TestBuildFullContentSupportsV2Payload(t *testing.T) {
 	if !strings.Contains(content, fullReportDisclaimerV2) {
 		t.Fatalf("expected v2 disclaimer in full content")
 	}
-	if !strings.Contains(content, "九宫结构为 POC 近似排盘") {
-		t.Fatalf("expected v2 palace note in boundary")
+	if !strings.Contains(content, v2SectionPalaces) {
+		t.Fatalf("expected v2 palace section")
+	}
+	if !strings.Contains(content, "POC") {
+		t.Fatalf("expected POC note")
 	}
 }
 
@@ -343,7 +346,7 @@ func TestBuildFullReportPromptInputIncludesV2Fields(t *testing.T) {
 		t.Fatalf("algorithm_version=%q", input.AlgorithmVersion)
 	}
 	prompt := buildQimenUserPrompt(input)
-	for _, want := range []string{"calendar_basis", "palaces", "qimen-v2-poc"} {
+	for _, want := range []string{"calendar_basis", "palaces_summary", "focus_palaces_summary", "qimen-v2-poc"} {
 		if !strings.Contains(prompt, want) {
 			t.Fatalf("prompt missing %q", want)
 		}

@@ -1210,6 +1210,12 @@ func TestUnlockQimenV2FreeUnlockSuccess(t *testing.T) {
 	if strings.TrimSpace(resp.Data.FullContent) == "" {
 		t.Fatalf("expected full_content")
 	}
+	if !strings.Contains(resp.Data.FullContent, "九宫") && !strings.Contains(resp.Data.FullContent, "宫位") {
+		t.Fatalf("expected v2 palace observation in full_content")
+	}
+	if !strings.Contains(resp.Data.FullContent, "POC") {
+		t.Fatalf("expected POC note in full_content")
+	}
 	if strings.Contains(rec.Body.String(), "session_key") || strings.Contains(rec.Body.String(), "prompt") {
 		t.Fatalf("unlock response must not expose session_key or prompt")
 	}

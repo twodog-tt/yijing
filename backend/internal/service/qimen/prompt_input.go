@@ -54,6 +54,8 @@ type fullReportPromptInput struct {
 	Xun                 Xun
 	Chief               Chief
 	Palaces             []Palace
+	PalacesSummary      string
+	FocusPalacesSummary string
 }
 
 func buildFullReportPromptInput(resultPayload json.RawMessage, freeContent string) (*fullReportPromptInput, error) {
@@ -132,6 +134,9 @@ func buildFullReportPromptInput(resultPayload json.RawMessage, freeContent strin
 	}
 	if len(parsed.Palaces) > 0 {
 		input.Palaces = append([]Palace(nil), parsed.Palaces...)
+		focus := pickQimenV2FocusPalaces(input.Palaces, input.Chief, category)
+		input.PalacesSummary = formatPalacesSummaryForPrompt(input.Palaces)
+		input.FocusPalacesSummary = formatFocusPalacesSummaryForPrompt(focus)
 	}
 	if parsed.CalculationMeta != nil {
 		input.Limits = append([]string{}, parsed.CalculationMeta.Limits...)
@@ -260,17 +265,7 @@ func formatChiefForPrompt(chief Chief) string {
 }
 
 func formatPalacesForPrompt(palaces []Palace) string {
-	if len(palaces) == 0 {
-		return "（无）"
-	}
-	lines := make([]string, 0, len(palaces))
-	for _, p := range palaces {
-		lines = append(lines, fmt.Sprintf(
-			"%s: star=%s door=%s deity=%s earth=%s heaven=%s",
-			p.Name, p.Star, p.Door, p.Deity, p.EarthPlateStem, p.HeavenPlateStem,
-		))
-	}
-	return strings.Join(lines, "；")
+	return formatPalacesSummaryForPrompt(palaces)
 }
 
 func categoryLabel(category string) string {
