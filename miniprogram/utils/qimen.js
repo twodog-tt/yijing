@@ -28,6 +28,9 @@ const TIME_BUCKET_LABELS = Object.freeze({
 const METHOD_NOTE =
   "本功能采用 qimen-simple-v1 简化规则，仅供传统文化学习与自我反思参考，不等同于专业奇门排盘，也不构成现实决策依据。";
 
+const FREE_CONTENT_POSTER_NOTE =
+  "以上局势梳理、风险观察、行动节奏、自我反思与行动建议构成本次免费解读要点。";
+
 const MIN_QUESTION_LENGTH = 4;
 const MAX_QUESTION_LENGTH = 120;
 
@@ -71,7 +74,7 @@ function buildQimenView(record) {
     methodNote: result.method_note || METHOD_NOTE,
     category,
     categoryLabel: getCategoryLabel(category),
-    questionSummary: result.question_summary || QUESTION_SUMMARY,
+    questionSummary: QUESTION_SUMMARY,
     timeBucket,
     timeBucketLabel: getTimeBucketLabel(timeBucket),
     situationOverview: result.situation_overview || "",
@@ -96,9 +99,34 @@ function listRecordSubtitle(item) {
   return QUESTION_SUMMARY;
 }
 
+function buildQimenLongPosterData(recordId, view, fullContent) {
+  if (!recordId || !view) return null;
+
+  const normalizedFullContent = String(fullContent || "").trim();
+  if (!normalizedFullContent) return null;
+
+  return {
+    id: String(recordId),
+    methodNote: view.methodNote || METHOD_NOTE,
+    categoryLabel: view.categoryLabel || "",
+    timeBucketLabel: view.timeBucketLabel || "",
+    questionSummary: QUESTION_SUMMARY,
+    situationOverview: view.situationOverview || "",
+    riskObservations: Array.isArray(view.riskObservations) ? view.riskObservations : [],
+    actionPacing: view.actionPacing || "",
+    reflectionQuestions: Array.isArray(view.reflectionQuestions)
+      ? view.reflectionQuestions
+      : [],
+    actionSuggestions: Array.isArray(view.actionSuggestions) ? view.actionSuggestions : [],
+    freeContent: FREE_CONTENT_POSTER_NOTE,
+    fullContent: normalizedFullContent,
+  };
+}
+
 module.exports = {
   ALGORITHM_QIMEN_SIMPLE_V1,
   MAX_QUESTION_LENGTH,
+  FREE_CONTENT_POSTER_NOTE,
   METHOD_NOTE,
   MIN_QUESTION_LENGTH,
   MODULE_QIMEN_LABEL,
@@ -106,6 +134,7 @@ module.exports = {
   QIMEN_CATEGORIES,
   QUESTION_SUMMARY,
   buildQimenView,
+  buildQimenLongPosterData,
   getCategoryLabel,
   isQimenRecord,
   listRecordSubtitle,

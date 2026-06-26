@@ -44,6 +44,92 @@
   white-space: pre-wrap;
 }
 
+.action-block {
+  margin-top: 24rpx;
+}
+
+.action-button {
+  width: 100%;
+  height: 88rpx;
+  min-height: 88rpx;
+  padding: 0 20rpx;
+  margin: 0;
+  border-radius: 20rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.action-button::after {
+  border: 0;
+}
+
+.action-button--unlock {
+  border: 1rpx solid #fcd34d;
+  background: #fffbeb;
+  color: #78350f;
+}
+
+.action-hint {
+  display: block;
+  margin-top: 16rpx;
+  color: #78716c;
+  font-size: 22rpx;
+  line-height: 1.7;
+}
+
+.full-content {
+  display: block;
+  margin-top: 12rpx;
+  color: #292524;
+  font-size: 28rpx;
+  line-height: 1.8;
+}
+
+.full-section {
+  margin-top: 16rpx;
+}
+
+.share-section {
+  margin-top: 32rpx;
+}
+
+.share-hint {
+  display: block;
+  color: #78716c;
+  font-size: 24rpx;
+  line-height: 1.7;
+}
+
+.share-hint--secondary {
+  margin-top: 16rpx;
+  font-size: 22rpx;
+}
+
+.share-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 24rpx;
+}
+
+.share-button {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0 14rpx;
+}
+
+@media (max-width: 340px) {
+  .share-actions {
+    flex-direction: column;
+  }
+}
+
 .danger-section {
   margin-top: 48rpx;
   padding-top: 32rpx;

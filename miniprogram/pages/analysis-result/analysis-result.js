@@ -224,6 +224,38 @@ Page({
     }
   },
 
+  async handleRepairFullReport() {
+    if (
+      !this.data.recordId ||
+      !this.data.isUnlocked ||
+      String(this.data.fullContent || "").trim() ||
+      this.data.unlocking ||
+      this.data.deleting ||
+      this.data.cardGenerating
+    ) {
+      return;
+    }
+
+    this.setData({ unlocking: true, unlockError: "" });
+    try {
+      const unlockResult = await unlockAnalysis(this.data.recordId, {
+        unlockType: "rewarded_video_mock",
+      });
+      const content = unlockResult?.full_content;
+      if (!content) {
+        throw new Error("完整报告暂未返回，请稍后重新加载。");
+      }
+      this.applyFullContent(content);
+      wx.showToast({ title: "完整报告已恢复", icon: "success" });
+    } catch (error) {
+      this.setData({
+        unlockError: mapUnlockError(error),
+      });
+    } finally {
+      this.setData({ unlocking: false });
+    }
+  },
+
   async performUnlock(flowToken) {
     if (!this.data.recordId || !this.isFlowActive(flowToken)) {
       this.endUnlockFlow(flowToken);

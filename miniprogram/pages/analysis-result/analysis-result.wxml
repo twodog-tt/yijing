@@ -98,7 +98,13 @@
       </view>
       <view wx:elif="{{isUnlocked && !fullContent}}" class="card full-card">
         <text class="section-title">完整报告</text>
-        <text class="card-text">完整报告内容暂不可用，请下拉刷新或重新进入页面。</text>
+        <text class="card-text">完整报告内容暂不可用，请尝试重新获取。</text>
+        <button
+          class="secondary-button repair-button"
+          loading="{{unlocking}}"
+          disabled="{{unlocking || deleting || unlockFlowRunning || cardGenerating}}"
+          bindtap="handleRepairFullReport"
+        >重新获取完整报告</button>
       </view>
     </view>
 

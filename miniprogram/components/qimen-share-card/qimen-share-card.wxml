@@ -1,0 +1,18 @@
+<canvas type="2d" id="qimenShareCardCanvas" class="card-canvas" style="width: 600px; height: {{canvasHeight}}px;"></canvas>
+
+<view wx:if="{{previewVisible}}" class="card-overlay" catchtouchmove="preventTouchMove" bindtap="closePreview">
+  <view class="card-dialog" catchtap="preventTouchMove">
+    <view class="card-dialog__header">
+      <text class="card-dialog__title">分享长图</text>
+      <text class="card-dialog__hint">长图不包含完整原问题、session_key 或小程序码</text>
+      <text wx:if="{{truncatedHint}}" class="card-dialog__warning">{{truncatedHint}}</text>
+    </view>
+    <scroll-view class="card-preview" scroll-y="true">
+      <image class="card-image" src="{{imagePath}}" mode="widthFix"></image>
+    </scroll-view>
+    <view class="card-actions">
+      <button class="card-button card-button--secondary" bindtap="closePreview">关闭</button>
+      <button class="card-button card-button--primary" loading="{{saving}}" disabled="{{saving}}" bindtap="saveCard">保存到相册</button>
+    </view>
+  </view>
+</view>

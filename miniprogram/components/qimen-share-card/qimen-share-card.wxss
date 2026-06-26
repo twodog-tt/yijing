@@ -1,0 +1,97 @@
+.card-canvas {
+  position: fixed;
+  left: -9999px;
+  top: -9999px;
+  width: 600px;
+  min-height: 960px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.card-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32rpx;
+  background: rgba(41, 37, 36, 0.55);
+  box-sizing: border-box;
+}
+
+.card-dialog {
+  width: 100%;
+  max-width: 640rpx;
+  max-height: 88vh;
+  padding: 28rpx;
+  border-radius: 24rpx;
+  background: #fffdf8;
+  box-sizing: border-box;
+}
+
+.card-dialog__header {
+  margin-bottom: 20rpx;
+}
+
+.card-dialog__title {
+  display: block;
+  color: #292524;
+  font-size: 34rpx;
+  font-weight: 700;
+}
+
+.card-dialog__hint {
+  display: block;
+  margin-top: 10rpx;
+  color: #78716c;
+  font-size: 22rpx;
+  line-height: 1.6;
+}
+
+.card-dialog__warning {
+  display: block;
+  margin-top: 8rpx;
+  color: #b45309;
+  font-size: 22rpx;
+  line-height: 1.5;
+}
+
+.card-preview {
+  max-height: 58vh;
+}
+
+.card-image {
+  width: 100%;
+  border-radius: 16rpx;
+}
+
+.card-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 24rpx;
+}
+
+.card-button {
+  flex: 1;
+  min-height: 88rpx;
+  border-radius: 18rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  line-height: 88rpx;
+}
+
+.card-button::after {
+  border: 0;
+}
+
+.card-button--secondary {
+  border: 1rpx solid #d6d3d1;
+  background: #ffffff;
+  color: #44403c;
+}
+
+.card-button--primary {
+  background: #292524;
+  color: #ffffff;
+}
