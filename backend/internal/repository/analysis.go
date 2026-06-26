@@ -151,6 +151,30 @@ func (r *AnalysisRepository) UnlockWithFullContent(
 	return nil
 }
 
+func (r *AnalysisRepository) UpdateUnlockedFullContent(
+	ctx context.Context,
+	id, sessionID int64,
+	fullContent, aiProvider string,
+) error {
+	if id <= 0 || sessionID <= 0 {
+		return ErrInvalidAnalysisParams
+	}
+	fullContent = strings.TrimSpace(fullContent)
+	aiProvider = strings.TrimSpace(aiProvider)
+	if fullContent == "" || aiProvider == "" {
+		return ErrInvalidAnalysisParams
+	}
+
+	_, err := r.db.ExecContext(ctx, `
+		UPDATE analysis_records
+		SET full_content = ?, ai_provider = ?, generation_status = ?, updated_at = NOW()
+		WHERE id = ? AND session_id = ? AND status = ? AND unlock_status = ?
+		  AND (full_content IS NULL OR full_content = '')
+	`, fullContent, aiProvider, model.AnalysisGenerationStatusFullDone,
+		id, sessionID, model.AnalysisStatusActive, model.AnalysisUnlockStatusUnlocked)
+	return err
+}
+
 func (r *AnalysisRepository) DeleteOwnedByID(ctx context.Context, id, sessionID int64) error {
 	if id <= 0 || sessionID <= 0 {
 		return ErrInvalidAnalysisParams

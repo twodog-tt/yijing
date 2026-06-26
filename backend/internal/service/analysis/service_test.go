@@ -13,6 +13,7 @@ import (
 	"github.com/wangxintong/yijing/backend/internal/repository"
 	"github.com/wangxintong/yijing/backend/internal/service/analysis"
 	"github.com/wangxintong/yijing/backend/internal/service/bazi"
+	"github.com/wangxintong/yijing/backend/internal/service/qimen"
 )
 
 type mockAnalysisRepo struct {
@@ -20,6 +21,7 @@ type mockAnalysisRepo struct {
 	listFn   func(ctx context.Context, sessionID int64, moduleType *int, page, pageSize int) ([]model.AnalysisListItem, int64, int, int, error)
 	deleteFn func(ctx context.Context, id, sessionID int64) error
 	unlockFn func(ctx context.Context, id, sessionID int64, unlockType, fullContent, aiProvider string) error
+	repairFn func(ctx context.Context, id, sessionID int64, fullContent, aiProvider string) error
 }
 
 type stubFullReportGenerator struct {
@@ -57,6 +59,13 @@ func (m *mockAnalysisRepo) DeleteOwnedByID(ctx context.Context, id, sessionID in
 func (m *mockAnalysisRepo) UnlockWithFullContent(ctx context.Context, id, sessionID int64, unlockType, fullContent, aiProvider string) error {
 	if m.unlockFn != nil {
 		return m.unlockFn(ctx, id, sessionID, unlockType, fullContent, aiProvider)
+	}
+	return nil
+}
+
+func (m *mockAnalysisRepo) UpdateUnlockedFullContent(ctx context.Context, id, sessionID int64, fullContent, aiProvider string) error {
+	if m.repairFn != nil {
+		return m.repairFn(ctx, id, sessionID, fullContent, aiProvider)
 	}
 	return nil
 }
@@ -381,7 +390,7 @@ func TestNewServiceNilGeneratorUsesTemplateFallback(t *testing.T) {
 
 func TestUnlockModuleNotSupported(t *testing.T) {
 	record := sampleBaziRecord(5, 10)
-	record.ModuleType = model.ModuleTypeQimen
+	record.ModuleType = 99
 	svc := analysis.NewServiceWithRepo(&mockAnalysisRepo{
 		findFn: func(_ context.Context, id, sessionID int64) (*model.AnalysisRecord, error) {
 			return record, nil
@@ -390,5 +399,180 @@ func TestUnlockModuleNotSupported(t *testing.T) {
 	_, err := svc.Unlock(context.Background(), 10, 5, model.UnlockTypeRewardedVideoMock)
 	if !errors.Is(err, analysis.ErrModuleNotSupported) {
 		t.Fatalf("expected module not supported, got %v", err)
+	}
+}
+
+func TestUnlockQimenSuccessUsesTemplateFallbackByDefault(t *testing.T) {
+	qimenGen := &stubFullReportGenerator{
+		generateFn: func(_ context.Context, _ int64, resultPayload json.RawMessage, freeContent string) (string, string, error) {
+			content, err := qimen.BuildFullContent(resultPayload, freeContent)
+			if err != nil {
+				return "", "", err
+			}
+			return content, model.AIProviderTemplateFallback, nil
+		},
+	}
+	svc := analysis.NewServiceWithFullReportGenerators(&mockAnalysisRepo{
+		findFn: func(_ context.Context, id, sessionID int64) (*model.AnalysisRecord, error) {
+			return sampleQimenRecord(id, sessionID), nil
+		},
+		unlockFn: func(_ context.Context, id, sessionID int64, unlockType, fullContent, aiProvider string) error {
+			if id != 5 || sessionID != 10 || unlockType != model.UnlockTypeRewardedVideoMock || fullContent == "" {
+				t.Fatalf("unexpected unlock args id=%d sessionID=%d", id, sessionID)
+			}
+			if aiProvider != model.AIProviderTemplateFallback {
+				t.Fatalf("expected template_fallback, got %q", aiProvider)
+			}
+			return nil
+		},
+	}, nil, qimenGen)
+
+	result, err := svc.Unlock(context.Background(), 10, 5, model.UnlockTypeRewardedVideoMock)
+	if err != nil {
+		t.Fatalf("Unlock: %v", err)
+	}
+	if qimenGen.calls != 1 {
+		t.Fatalf("expected generator called once, got %d", qimenGen.calls)
+	}
+	if result.FullContent == "" || result.AIProvider != model.AIProviderTemplateFallback {
+		t.Fatalf("unexpected unlock result: %#v", result)
+	}
+}
+
+func TestUnlockQimenRepairsMissingFullContentWhenAlreadyUnlocked(t *testing.T) {
+	record := sampleQimenRecord(5, 10)
+	record.UnlockStatus = model.AnalysisUnlockStatusUnlocked
+	qimenGen := &stubFullReportGenerator{
+		generateFn: func(_ context.Context, _ int64, resultPayload json.RawMessage, freeContent string) (string, string, error) {
+			content, err := qimen.BuildFullContent(resultPayload, freeContent)
+			if err != nil {
+				return "", "", err
+			}
+			return content, model.AIProviderTemplateFallback, nil
+		},
+	}
+	repairCalled := false
+	svc := analysis.NewServiceWithFullReportGenerators(&mockAnalysisRepo{
+		findFn: func(_ context.Context, id, sessionID int64) (*model.AnalysisRecord, error) {
+			return record, nil
+		},
+		unlockFn: func(_ context.Context, _, _ int64, _, _, _ string) error {
+			t.Fatalf("expected no repository unlock for already unlocked record")
+			return nil
+		},
+		repairFn: func(_ context.Context, id, sessionID int64, fullContent, aiProvider string) error {
+			repairCalled = true
+			if id != 5 || sessionID != 10 || fullContent == "" {
+				t.Fatalf("unexpected repair args id=%d sessionID=%d", id, sessionID)
+			}
+			if aiProvider != model.AIProviderTemplateFallback {
+				t.Fatalf("expected template_fallback, got %q", aiProvider)
+			}
+			return nil
+		},
+	}, nil, qimenGen)
+
+	result, err := svc.Unlock(context.Background(), 10, 5, model.UnlockTypeRewardedVideoMock)
+	if err != nil {
+		t.Fatalf("Unlock: %v", err)
+	}
+	if !repairCalled {
+		t.Fatalf("expected repair persistence call")
+	}
+	if result.FullContent == "" || !strings.Contains(result.FullContent, "【2. 局势梳理展开】") {
+		t.Fatalf("expected repaired full content, got %q", result.FullContent)
+	}
+}
+
+func TestUnlockQimenAlreadyUnlockedSkipsGenerator(t *testing.T) {
+	full := "existing qimen full content"
+	record := sampleQimenRecord(5, 10)
+	record.UnlockStatus = model.AnalysisUnlockStatusUnlocked
+	record.FullContent = &full
+	provider := model.AIProviderDeepSeek
+	record.AIProvider = &provider
+	qimenGen := &stubFullReportGenerator{
+		generateFn: func(_ context.Context, _ int64, _ json.RawMessage, _ string) (string, string, error) {
+			t.Fatalf("expected no generator call for already unlocked qimen record")
+			return "", "", nil
+		},
+	}
+	svc := analysis.NewServiceWithFullReportGenerators(&mockAnalysisRepo{
+		findFn: func(_ context.Context, id, sessionID int64) (*model.AnalysisRecord, error) {
+			return record, nil
+		},
+		unlockFn: func(_ context.Context, _, _ int64, _, _, _ string) error {
+			t.Fatalf("expected no repository unlock for already unlocked record")
+			return nil
+		},
+	}, nil, qimenGen)
+
+	result, err := svc.Unlock(context.Background(), 10, 5, model.UnlockTypeRewardedVideoMock)
+	if err != nil {
+		t.Fatalf("Unlock: %v", err)
+	}
+	if result.FullContent != full {
+		t.Fatalf("expected existing full content, got %q", result.FullContent)
+	}
+}
+
+func sampleQimenRecord(id, sessionID int64) *model.AnalysisRecord {
+	free := "【局势梳理】\n当前局势整理。"
+	return &model.AnalysisRecord{
+		ID:         id,
+		SessionID:  sessionID,
+		ModuleType: model.ModuleTypeQimen,
+		ResultPayload: json.RawMessage(`{
+			"algorithm_version":"qimen-simple-v1",
+			"method_note":"简化奇门规则",
+			"question_summary":"用户问题已用于本次局势梳理",
+			"category":"career",
+			"time_context":{"time_bucket":"day"},
+			"situation_overview":"当前局势更像是在整理方向与节奏。",
+			"risk_observations":["过度依赖单一结论。"],
+			"action_pacing":"建议分步推进。",
+			"reflection_questions":["我真正想推进的核心目标是什么？"],
+			"action_suggestions":["用一页纸写下现状。"]
+		}`),
+		FreeContent:  &free,
+		UnlockStatus: model.AnalysisUnlockStatusLocked,
+	}
+}
+
+func TestGenerateFullReportQimenUsesTemplateFallbackByDefault(t *testing.T) {
+	svc := analysis.NewServiceWithFullReportGenerators(&mockAnalysisRepo{}, nil, nil)
+	content, provider, err := svc.GenerateFullReport(context.Background(), sampleQimenRecord(1, 10))
+	if err != nil {
+		t.Fatalf("GenerateFullReport: %v", err)
+	}
+	if provider != model.AIProviderTemplateFallback {
+		t.Fatalf("expected template_fallback, got %q", provider)
+	}
+	if !strings.Contains(content, "【2. 局势梳理展开】") {
+		t.Fatalf("expected qimen template sections, got %q", content)
+	}
+}
+
+func TestGenerateFullReportRejectsMalformedQimenPayload(t *testing.T) {
+	record := sampleQimenRecord(1, 10)
+	record.ResultPayload = json.RawMessage(`{"category":"career"}`)
+	svc := analysis.NewServiceWithFullReportGenerators(&mockAnalysisRepo{}, nil, nil)
+	_, _, err := svc.GenerateFullReport(context.Background(), record)
+	if err == nil {
+		t.Fatalf("expected error for malformed qimen payload")
+	}
+}
+
+func TestGenerateFullReportBaziStillWorks(t *testing.T) {
+	svc := analysis.NewServiceWithFullReportGenerators(&mockAnalysisRepo{}, nil, nil)
+	content, provider, err := svc.GenerateFullReport(context.Background(), sampleBaziRecord(1, 10))
+	if err != nil {
+		t.Fatalf("GenerateFullReport: %v", err)
+	}
+	if provider != model.AIProviderTemplateFallback {
+		t.Fatalf("expected template_fallback, got %q", provider)
+	}
+	if !strings.Contains(content, "【1. 简化干支示意】") {
+		t.Fatalf("expected bazi template sections")
 	}
 }

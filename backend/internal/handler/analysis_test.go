@@ -121,6 +121,20 @@ func (s *stubAnalysisRepo) UnlockWithFullContent(_ context.Context, id, sessionI
 	return nil
 }
 
+func (s *stubAnalysisRepo) UpdateUnlockedFullContent(_ context.Context, id, sessionID int64, fullContent, aiProvider string) error {
+	record, ok := s.records[id]
+	if !ok || record.SessionID != sessionID || record.Status != model.AnalysisStatusActive || record.UnlockStatus != model.AnalysisUnlockStatusUnlocked {
+		return repository.ErrAnalysisNotFound
+	}
+	if record.FullContent != nil && strings.TrimSpace(*record.FullContent) != "" {
+		return nil
+	}
+	record.FullContent = &fullContent
+	record.AIProvider = &aiProvider
+	record.GenerationStatus = model.AnalysisGenerationStatusFullDone
+	return nil
+}
+
 func newTestAnalysisHandler(t *testing.T) (*handler.AnalysisHandler, *stubSessionRepo) {
 	t.Helper()
 	sessions := &stubSessionRepo{sessions: map[string]*model.Session{}}
@@ -759,9 +773,9 @@ func TestUnlockAnalysisUnsupportedModuleForbidden(t *testing.T) {
 	record := &model.AnalysisRecord{
 		ID:               99,
 		SessionID:        10,
-		ModuleType:       model.ModuleTypeQimen,
-		AlgorithmVersion: model.AlgorithmVersionQimenSimpleV1,
-		InputPayload:     json.RawMessage(`{"question":"test"}`),
+		ModuleType:       99,
+		AlgorithmVersion: model.AlgorithmVersionBaziSimpleV1,
+		InputPayload:     json.RawMessage(`{"birth_date":"1995-01-01"}`),
 		ResultPayload:    json.RawMessage(`{"day_master":"甲","pillars":{"year":"甲子","month":"乙丑","day":"丙寅"},"five_elements":{"wood":1,"fire":1,"earth":1,"metal":1,"water":1}}`),
 		FreeContent:      &free,
 		UnlockStatus:     model.AnalysisUnlockStatusLocked,
@@ -784,7 +798,112 @@ func TestUnlockAnalysisUnsupportedModuleForbidden(t *testing.T) {
 	rec := httptest.NewRecorder()
 	customHandler.Unlock(rec, req)
 	if rec.Code != http.StatusForbidden {
-		t.Fatalf("expected 403 for qimen unlock, got %d body=%s", rec.Code, rec.Body.String())
+		t.Fatalf("expected 403 for unsupported module unlock, got %d body=%s", rec.Code, rec.Body.String())
+	}
+}
+
+func createQimenRecord(t *testing.T, h *handler.AnalysisHandler, sessions *stubSessionRepo, sessionKey string) int64 {
+	t.Helper()
+	sessions.sessions[sessionKey] = &model.Session{ID: 10, SessionKey: sessionKey}
+	body := bytes.NewBufferString(`{"session_key":"` + sessionKey + `","question":"我最近适合推进这个计划吗？","category":"career","confirm_disclaimer":true}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/analysis/qimen", body)
+	rec := httptest.NewRecorder()
+	h.CreateQimen(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("create qimen failed: %s", rec.Body.String())
+	}
+	var createResp struct {
+		Data struct {
+			ID int64 `json:"id"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &createResp); err != nil {
+		t.Fatalf("decode create response: %v", err)
+	}
+	return createResp.Data.ID
+}
+
+func TestUnlockQimenAnalysisSuccess(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	id := createQimenRecord(t, h, sessions, "sess-a")
+
+	rec := unlockAnalysisRequest(t, h, id, "sess-a", `{"unlock_type":"rewarded_video_mock"}`)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200 for qimen unlock, got %d body=%s", rec.Code, rec.Body.String())
+	}
+
+	var resp struct {
+		Data struct {
+			UnlockStatus int    `json:"unlock_status"`
+			FullContent  string `json:"full_content"`
+			AIProvider   string `json:"ai_provider"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode unlock response: %v", err)
+	}
+	if resp.Data.UnlockStatus != model.AnalysisUnlockStatusUnlocked {
+		t.Fatalf("expected unlocked status")
+	}
+	if strings.TrimSpace(resp.Data.FullContent) == "" {
+		t.Fatalf("expected full_content")
+	}
+	if resp.Data.AIProvider != model.AIProviderTemplateFallback {
+		t.Fatalf("expected template_fallback, got %q", resp.Data.AIProvider)
+	}
+	if strings.Contains(rec.Body.String(), "我最近适合推进") {
+		t.Fatalf("unlock response must not contain original question")
+	}
+}
+
+func TestUnlockQimenAnalysisWrongSessionNotFound(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	id := createQimenRecord(t, h, sessions, "sess-a")
+	sessions.sessions["sess-b"] = &model.Session{ID: 11, SessionKey: "sess-b"}
+
+	rec := unlockAnalysisRequest(t, h, id, "sess-b", `{"unlock_type":"rewarded_video_mock"}`)
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 for other session, got %d body=%s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestUnlockQimenAnalysisAlreadyUnlockedReturnsExistingContent(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	id := createQimenRecord(t, h, sessions, "sess-a")
+
+	unlockOnce := func() string {
+		rec := unlockAnalysisRequest(t, h, id, "sess-a", `{"unlock_type":"rewarded_video_mock"}`)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("expected 200, got %d body=%s", rec.Code, rec.Body.String())
+		}
+		var resp struct {
+			Data struct {
+				FullContent string `json:"full_content"`
+			} `json:"data"`
+		}
+		if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+			t.Fatalf("decode unlock response: %v", err)
+		}
+		return resp.Data.FullContent
+	}
+
+	first := unlockOnce()
+	second := unlockOnce()
+	if first == "" || second == "" {
+		t.Fatalf("expected full content on repeated qimen unlock")
+	}
+	if first != second {
+		t.Fatalf("expected repeated qimen unlock to return same full content")
+	}
+}
+
+func TestUnlockQimenAnalysisRejectsMockButton(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	id := createQimenRecord(t, h, sessions, "sess-a")
+
+	rec := unlockAnalysisRequest(t, h, id, "sess-a", `{"unlock_type":"mock_button"}`)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for mock_button on qimen, got %d body=%s", rec.Code, rec.Body.String())
 	}
 }
 

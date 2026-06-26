@@ -24,6 +24,7 @@ type recordRepository interface {
 	ListBySession(ctx context.Context, sessionID int64, moduleType *int, page, pageSize int) ([]model.AnalysisListItem, int64, int, int, error)
 	DeleteOwnedByID(ctx context.Context, id, sessionID int64) error
 	UnlockWithFullContent(ctx context.Context, id, sessionID int64, unlockType, fullContent, aiProvider string) error
+	UpdateUnlockedFullContent(ctx context.Context, id, sessionID int64, fullContent, aiProvider string) error
 }
 
 type fullReportGenerator interface {
@@ -31,29 +32,51 @@ type fullReportGenerator interface {
 }
 
 type Service struct {
-	repo       recordRepository
-	fullReport fullReportGenerator
+	repo            recordRepository
+	baziFullReport  fullReportGenerator
+	qimenFullReport fullReportGenerator
 }
 
-func NewService(repo *repository.AnalysisRepository, generator *bazi.FullReportGenerator) *Service {
-	var gen fullReportGenerator
-	if generator == nil {
-		gen = bazi.NewFullReportGenerator(nil)
+func NewService(repo *repository.AnalysisRepository, baziGen *bazi.FullReportGenerator, qimenGen *qimen.FullReportGenerator) *Service {
+	var baziFR fullReportGenerator
+	if baziGen == nil {
+		baziFR = bazi.NewFullReportGenerator(nil)
 	} else {
-		gen = generator
+		baziFR = baziGen
 	}
-	return &Service{repo: repo, fullReport: gen}
+	var qimenFR fullReportGenerator
+	if qimenGen == nil {
+		qimenFR = qimen.NewFullReportGenerator(nil)
+	} else {
+		qimenFR = qimenGen
+	}
+	return &Service{
+		repo:            repo,
+		baziFullReport:  baziFR,
+		qimenFullReport: qimenFR,
+	}
 }
 
 func NewServiceWithRepo(repo recordRepository) *Service {
-	return NewServiceWithRepoAndGenerator(repo, bazi.NewFullReportGenerator(nil))
+	return NewServiceWithFullReportGenerators(repo, nil, nil)
 }
 
 func NewServiceWithRepoAndGenerator(repo recordRepository, generator fullReportGenerator) *Service {
-	if generator == nil {
-		generator = bazi.NewFullReportGenerator(nil)
+	return NewServiceWithFullReportGenerators(repo, generator, nil)
+}
+
+func NewServiceWithFullReportGenerators(repo recordRepository, baziGen, qimenGen fullReportGenerator) *Service {
+	if baziGen == nil {
+		baziGen = bazi.NewFullReportGenerator(nil)
 	}
-	return &Service{repo: repo, fullReport: generator}
+	if qimenGen == nil {
+		qimenGen = qimen.NewFullReportGenerator(nil)
+	}
+	return &Service{
+		repo:            repo,
+		baziFullReport:  baziGen,
+		qimenFullReport: qimenGen,
+	}
 }
 
 func (s *Service) Get(ctx context.Context, sessionID, id int64) (*model.AnalysisRecord, error) {
@@ -87,7 +110,7 @@ func (s *Service) Unlock(ctx context.Context, sessionID, id int64, unlockType st
 	if record == nil {
 		return nil, ErrNotFound
 	}
-	if record.ModuleType != model.ModuleTypeBazi {
+	if record.ModuleType != model.ModuleTypeBazi && record.ModuleType != model.ModuleTypeQimen {
 		return nil, ErrModuleNotSupported
 	}
 
@@ -95,12 +118,15 @@ func (s *Service) Unlock(ctx context.Context, sessionID, id int64, unlockType st
 		fullContent := strings.TrimSpace(derefString(record.FullContent))
 		aiProvider := derefString(record.AIProvider)
 		if fullContent == "" {
-			generated, provider, genErr := s.fullReport.Generate(ctx, id, record.ResultPayload, derefString(record.FreeContent))
+			generated, provider, genErr := s.generateFullReport(ctx, record)
 			if genErr != nil {
 				return nil, genErr
 			}
 			fullContent = generated
 			aiProvider = provider
+			if err := s.repo.UpdateUnlockedFullContent(ctx, id, sessionID, fullContent, aiProvider); err != nil {
+				return nil, err
+			}
 		}
 		return &model.AnalysisUnlockResult{
 			ID:               record.ID,
@@ -112,7 +138,7 @@ func (s *Service) Unlock(ctx context.Context, sessionID, id int64, unlockType st
 		}, nil
 	}
 
-	fullContent, aiProvider, err := s.fullReport.Generate(ctx, id, record.ResultPayload, derefString(record.FreeContent))
+	fullContent, aiProvider, err := s.generateFullReport(ctx, record)
 	if err != nil {
 		return nil, ErrInvalidParams
 	}
@@ -203,6 +229,27 @@ func (s *Service) List(
 		PageSize: normalizedPageSize,
 		Total:    total,
 	}, nil
+}
+
+// GenerateFullReport produces full report content for a supported analysis module.
+// Phase F4 wires qimen generation here; Phase F5 opens unlock for qimen records.
+func (s *Service) GenerateFullReport(ctx context.Context, record *model.AnalysisRecord) (string, string, error) {
+	if record == nil {
+		return "", "", ErrInvalidParams
+	}
+	return s.generateFullReport(ctx, record)
+}
+
+func (s *Service) generateFullReport(ctx context.Context, record *model.AnalysisRecord) (string, string, error) {
+	freeContent := derefString(record.FreeContent)
+	switch record.ModuleType {
+	case model.ModuleTypeBazi:
+		return s.baziFullReport.Generate(ctx, record.ID, record.ResultPayload, freeContent)
+	case model.ModuleTypeQimen:
+		return s.qimenFullReport.Generate(ctx, record.ID, record.ResultPayload, freeContent)
+	default:
+		return "", "", ErrModuleNotSupported
+	}
 }
 
 func derefString(value *string) string {
