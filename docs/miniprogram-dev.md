@@ -1237,6 +1237,33 @@ Web 端与小程序 UX1 对齐，使用 `frontend/app/globals.css` 中的 CSS an
 
 浏览器移动端宽度检查文案、顺序、样式；`npm run build` 通过。
 
+## 30. Phase AD0：流量主未开通前隐藏 mock 广告
+
+**背景：** 微信小程序尚未开通流量主，生产 UI 不展示 mock 广告与「观看视频」文案。
+
+### 30.1 当前产品规则
+
+| 模块 | 未解锁按钮 | unlock_type |
+|------|-----------|-------------|
+| 八字结果 | 查看完整报告 | `free_unlock` |
+| 奇门结果 | 查看完整报告 | `free_unlock` |
+| 卦象结果 | 查看完整解析 | `mock_button`（六爻 unlock 服务，不变） |
+
+- `rewarded_video_mock`：**仅** dev/测试兼容，生产 UI 不触发
+- `rewarded_video` / `paid` / `admin`：仍拒绝
+- 不接真实 `adUnitId`、不接 AppSecret
+
+### 30.2 未来 Phase AD1
+
+开通流量主 + 正式 adUnitId + 微信审核通过后，再接真实激励视频广告。
+
+### 30.3 验收
+
+- [ ] 八字/奇门结果页无「观看视频」「广告解锁」文案
+- [ ] 点击「查看完整报告」直接生成完整报告
+- [ ] Web 同步无 mock 广告文案
+- [ ] `rewarded-ad.js` 保留但生产页面不引用
+
 ## 29. Phase UX2.1：奇门九宫动效强化
 
 **范围：** `qimen-scan-grid` 组件 + 奇门表单/结果页顶栏布局 + Web 同步；**不改** backend / unlock / API。

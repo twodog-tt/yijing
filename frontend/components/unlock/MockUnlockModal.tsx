@@ -30,12 +30,12 @@ export default function MockUnlockModal({
       const result = await unlockDivination(
         divinationId,
         getSessionKey(),
-        "mock_ad"
+        "mock_button"
       );
       onSuccess(result.full_interpretation);
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "解锁失败，请重试");
+      setError(e instanceof Error ? e.message : "生成失败，请重试");
     } finally {
       setLoading(false);
     }
@@ -50,10 +50,10 @@ export default function MockUnlockModal({
     >
       <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl sm:p-6">
         <h2 id="unlock-title" className="text-lg font-bold text-stone-900">
-          模拟观看激励广告
+          查看完整解析
         </h2>
         <p className="mt-3 text-sm leading-relaxed text-stone-600">
-          当前内测阶段不会播放真实广告，点击确认后视为解锁成功。
+          当前为内测体验，完整解析仅供传统文化学习与自我反思参考，不构成现实决策依据。
         </p>
 
         {error && (
@@ -77,7 +77,7 @@ export default function MockUnlockModal({
             disabled={loading}
             className="min-h-12 flex-1 rounded-xl bg-stone-900 py-3 text-sm font-semibold text-white disabled:opacity-60"
           >
-            {loading ? "解锁中…" : "确认解锁"}
+            {loading ? "生成中…" : "生成完整解析"}
           </button>
         </div>
       </div>

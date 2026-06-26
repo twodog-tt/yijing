@@ -8,7 +8,7 @@ export default function Footer() {
           关于与免责声明
         </Link>
         <span className="mx-2 text-stone-300">·</span>
-        <span className="text-stone-400">AI 解读 · 模拟解锁</span>
+        <span className="text-stone-400">AI 解读 · 内测体验</span>
       </p>
     </footer>
   );

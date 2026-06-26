@@ -328,7 +328,7 @@ export function deleteAnalysis(
 export function unlockAnalysis(
   id: number,
   sessionKey: string,
-  unlockType: "rewarded_video_mock" = "rewarded_video_mock"
+  unlockType: "free_unlock" | "rewarded_video_mock" = "free_unlock"
 ): Promise<AnalysisUnlockResult> {
   const normalizedId = requireAnalysisId(id);
   const controller = new AbortController();

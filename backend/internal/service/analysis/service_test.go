@@ -336,6 +336,56 @@ func TestUnlockRejectsInvalidUnlockType(t *testing.T) {
 	}
 }
 
+func TestUnlockFreeUnlockSuccess(t *testing.T) {
+	svc := analysis.NewServiceWithRepo(&mockAnalysisRepo{
+		findFn: func(_ context.Context, id, sessionID int64) (*model.AnalysisRecord, error) {
+			return sampleBaziRecord(id, sessionID), nil
+		},
+		unlockFn: func(_ context.Context, id, sessionID int64, unlockType, fullContent, aiProvider string) error {
+			if unlockType != model.UnlockTypeFreeUnlock {
+				t.Fatalf("expected free_unlock, got %q", unlockType)
+			}
+			return nil
+		},
+	})
+	result, err := svc.Unlock(context.Background(), 10, 5, model.UnlockTypeFreeUnlock)
+	if err != nil {
+		t.Fatalf("Unlock: %v", err)
+	}
+	if result.UnlockType != model.UnlockTypeFreeUnlock {
+		t.Fatalf("expected free_unlock, got %q", result.UnlockType)
+	}
+}
+
+func TestUnlockQimenFreeUnlockSuccess(t *testing.T) {
+	svc := analysis.NewServiceWithFullReportGenerators(&mockAnalysisRepo{
+		findFn: func(_ context.Context, id, sessionID int64) (*model.AnalysisRecord, error) {
+			return sampleQimenRecord(id, sessionID), nil
+		},
+		unlockFn: func(_ context.Context, id, sessionID int64, unlockType, fullContent, aiProvider string) error {
+			if unlockType != model.UnlockTypeFreeUnlock {
+				t.Fatalf("expected free_unlock, got %q", unlockType)
+			}
+			return nil
+		},
+	}, nil, &stubFullReportGenerator{
+		generateFn: func(_ context.Context, _ int64, resultPayload json.RawMessage, freeContent string) (string, string, error) {
+			content, err := qimen.BuildFullContent(resultPayload, freeContent)
+			if err != nil {
+				return "", "", err
+			}
+			return content, model.AIProviderTemplateFallback, nil
+		},
+	})
+	result, err := svc.Unlock(context.Background(), 10, 5, model.UnlockTypeFreeUnlock)
+	if err != nil {
+		t.Fatalf("Unlock: %v", err)
+	}
+	if result.UnlockType != model.UnlockTypeFreeUnlock {
+		t.Fatalf("expected free_unlock, got %q", result.UnlockType)
+	}
+}
+
 func TestUnlockAlreadyUnlockedSkipsRepositoryUpdateAndGenerator(t *testing.T) {
 	full := "existing full content"
 	record := sampleBaziRecord(5, 10)

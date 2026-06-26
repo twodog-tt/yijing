@@ -99,7 +99,7 @@ func (s *Service) Unlock(ctx context.Context, sessionID, id int64, unlockType st
 		return nil, ErrInvalidParams
 	}
 	unlockType = strings.TrimSpace(unlockType)
-	if unlockType != model.UnlockTypeRewardedVideoMock {
+	if !isAllowedAnalysisUnlockType(unlockType) {
 		return nil, ErrInvalidParams
 	}
 
@@ -249,6 +249,15 @@ func (s *Service) generateFullReport(ctx context.Context, record *model.Analysis
 		return s.qimenFullReport.Generate(ctx, record.ID, record.ResultPayload, freeContent)
 	default:
 		return "", "", ErrModuleNotSupported
+	}
+}
+
+func isAllowedAnalysisUnlockType(unlockType string) bool {
+	switch unlockType {
+	case model.UnlockTypeFreeUnlock, model.UnlockTypeRewardedVideoMock:
+		return true
+	default:
+		return false
 	}
 }
 

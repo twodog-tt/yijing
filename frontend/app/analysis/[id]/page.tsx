@@ -262,10 +262,10 @@ export default function AnalysisResultPage() {
                 unlocking || unlockModalOpen ? "unlock-glow" : ""
               }`}
             >
-              解锁完整报告（Web 内测模拟）
+              查看完整报告
             </button>
             <p className="text-center text-xs leading-relaxed text-stone-500">
-              完整报告仍基于简化规则，仅供传统文化学习与自我反思参考。
+              当前为内测体验，完整报告仅供传统文化学习与自我反思参考。
             </p>
           </div>
         </SectionReveal>

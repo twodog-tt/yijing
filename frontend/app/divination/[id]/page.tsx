@@ -191,7 +191,7 @@ export default function DivinationResultPage() {
           onClick={() => setUnlockModalOpen(true)}
           className="w-full rounded-xl border border-amber-300 bg-amber-50 py-3.5 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
         >
-          观看广告解锁完整解读（模拟）
+          查看完整解析
         </button>
       )}
 

@@ -22,6 +22,7 @@ const (
 
 	UnlockTypeMockAd            = "mock_ad"
 	UnlockTypeMockButton        = "mock_button"
+	UnlockTypeFreeUnlock        = "free_unlock"
 	UnlockTypeRewardedVideoMock = "rewarded_video_mock"
 	UnlockTypeRewardedVideo     = "rewarded_video"
 

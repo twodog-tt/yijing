@@ -561,6 +561,66 @@ func TestUnlockAnalysisSuccess(t *testing.T) {
 	}
 }
 
+func TestUnlockAnalysisFreeUnlockSuccess(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	id := createBaziRecord(t, h, sessions, "sess-a")
+
+	body := bytes.NewBufferString(`{"unlock_type":"free_unlock"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/analysis/"+strconv.FormatInt(id, 10)+"/unlock", body)
+	req.Header.Set(sessionkey.HeaderName, "sess-a")
+	rec := httptest.NewRecorder()
+	h.Unlock(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", rec.Code, rec.Body.String())
+	}
+
+	var unlockResp struct {
+		Data struct {
+			UnlockType  string `json:"unlock_type"`
+			FullContent string `json:"full_content"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &unlockResp); err != nil {
+		t.Fatalf("decode unlock response: %v", err)
+	}
+	if unlockResp.Data.UnlockType != model.UnlockTypeFreeUnlock {
+		t.Fatalf("unexpected unlock type: %s", unlockResp.Data.UnlockType)
+	}
+	if strings.TrimSpace(unlockResp.Data.FullContent) == "" {
+		t.Fatalf("expected full content")
+	}
+}
+
+func TestUnlockAnalysisQimenFreeUnlockSuccess(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	id := createQimenRecord(t, h, sessions, "sess-a")
+
+	body := bytes.NewBufferString(`{"unlock_type":"free_unlock"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/analysis/"+strconv.FormatInt(id, 10)+"/unlock", body)
+	req.Header.Set(sessionkey.HeaderName, "sess-a")
+	rec := httptest.NewRecorder()
+	h.Unlock(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", rec.Code, rec.Body.String())
+	}
+
+	var unlockResp struct {
+		Data struct {
+			UnlockType  string `json:"unlock_type"`
+			FullContent string `json:"full_content"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &unlockResp); err != nil {
+		t.Fatalf("decode unlock response: %v", err)
+	}
+	if unlockResp.Data.UnlockType != model.UnlockTypeFreeUnlock {
+		t.Fatalf("unexpected unlock type: %s", unlockResp.Data.UnlockType)
+	}
+	if strings.TrimSpace(unlockResp.Data.FullContent) == "" {
+		t.Fatalf("expected full content")
+	}
+}
+
 func TestGetAnalysisUnlockedIncludesAIProvider(t *testing.T) {
 	h, sessions := newTestAnalysisHandler(t)
 	id := createBaziRecord(t, h, sessions, "sess-a")

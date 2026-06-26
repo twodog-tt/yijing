@@ -1314,3 +1314,20 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 - [x] Web 同步 + `prefers-reduced-motion` 降级
 
 **未改：** unlock / 删除 / 长图 / API / 隐私边界
+
+---
+
+### 10.25 Phase AD0 交付清单（隐藏 mock 广告，内测 free_unlock）
+
+**范围：** 小程序八字/奇门结果页 + Web analysis 解锁 + 后端 analysis unlock API；**不改** sql / deploy。
+
+**产品变化：**
+
+- [x] 八字/奇门未解锁按钮：「查看完整报告」
+- [x] 直接调用 `unlock_type=free_unlock`，不走 `rewarded-ad.js`
+- [x] Web analysis 同步 `free_unlock`，移除 mock 广告文案
+- [x] 后端新增允许 `free_unlock`；`rewarded_video_mock` 保留 dev 兼容
+
+**仍拒绝：** `rewarded_video` / `paid` / `admin` / analysis 路径的 `mock_button`
+
+**未来：** Phase AD1 接入真实微信激励视频（需流量主 + adUnitId）

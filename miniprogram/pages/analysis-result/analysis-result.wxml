@@ -112,8 +112,8 @@
           loading="{{unlockFlowRunning || unlocking}}"
           disabled="{{unlockFlowRunning || unlocking || deleting || cardGenerating}}"
           bindtap="handleUnlock"
-        >观看视频，解锁完整报告</button>
-        <text class="action-hint">完整报告仍基于简化干支文化规则，仅供学习与自我反思参考。解锁完整报告后可生成分享长图。</text>
+        >查看完整报告</button>
+        <text class="action-hint">当前为内测体验，完整报告仅供传统文化学习与自我反思参考。解锁后可生成分享长图。</text>
       </view>
     </section-reveal>
 

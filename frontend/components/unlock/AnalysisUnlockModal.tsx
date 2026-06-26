@@ -39,7 +39,7 @@ export default function AnalysisUnlockModal({
       const result = await unlockAnalysis(
         analysisId,
         getSessionKey(),
-        "rewarded_video_mock"
+        "free_unlock"
       );
       const content = String(result.full_content || "").trim();
       if (!content) {
@@ -48,7 +48,7 @@ export default function AnalysisUnlockModal({
       onSuccess(content);
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "解锁失败，请重试");
+      setError(e instanceof Error ? e.message : "生成失败，请重试");
     } finally {
       setLoading(false);
       onLoadingChange?.(false);
@@ -64,10 +64,10 @@ export default function AnalysisUnlockModal({
     >
       <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl sm:p-6">
         <h2 id="analysis-unlock-title" className="text-lg font-bold text-stone-900">
-          解锁完整报告
+          查看完整报告
         </h2>
         <p className="mt-3 text-sm leading-relaxed text-stone-600">
-          Web 内测阶段不会播放真实广告，点击确认后视为解锁成功。完整报告仍基于简化规则，仅供传统文化学习与自我反思参考。
+          当前为内测体验，完整报告仅供传统文化学习与自我反思参考，不构成现实决策依据。
         </p>
 
         {error && (
@@ -91,7 +91,7 @@ export default function AnalysisUnlockModal({
             disabled={loading}
             className="min-h-12 flex-1 rounded-xl bg-stone-900 py-3 text-sm font-semibold text-white disabled:opacity-60"
           >
-            {loading ? "解锁中…" : "确认解锁"}
+            {loading ? "生成中…" : "生成完整报告"}
           </button>
         </div>
       </div>

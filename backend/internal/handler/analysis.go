@@ -306,7 +306,7 @@ func (h *AnalysisHandler) Unlock(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, analysis.ErrInvalidParams):
-			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "invalid params: unlock_type must be rewarded_video_mock")
+			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "invalid params: unlock_type must be free_unlock or rewarded_video_mock")
 		case errors.Is(err, analysis.ErrModuleNotSupported):
 			response.Error(w, http.StatusForbidden, response.CodeForbidden, "analysis unlock not supported for this module")
 		case errors.Is(err, analysis.ErrNotFound):

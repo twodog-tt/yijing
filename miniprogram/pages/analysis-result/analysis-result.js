@@ -1,6 +1,4 @@
 const { getAnalysis, deleteAnalysis, unlockAnalysis } = require("../../utils/api");
-const { getAdConfig, getCurrentEnvironment } = require("../../utils/config");
-const { createRewardedAdController } = require("../../utils/rewarded-ad");
 const {
   buildAnalysisView,
   buildBaziLongPosterData,
@@ -9,21 +7,6 @@ const {
 } = require("../../utils/bazi");
 const { formatDateTime } = require("../../utils/date");
 const { ERROR_TYPES, isBusinessError } = require("../../utils/request");
-
-const AD_RESULT_MESSAGES = Object.freeze({
-  cancelled: "需要完整观看后才能解锁",
-  disabled: "当前环境暂未开启视频解锁",
-  invalid_config: "视频解锁配置未完成",
-  load_failed: "视频加载失败，请稍后再试",
-  show_failed: "视频展示失败，请稍后再试",
-  unsupported: "当前微信版本暂不支持视频解锁",
-  busy: "正在处理中，请稍候",
-  page_unloaded: "",
-});
-
-function getAdResultMessage(reason) {
-  return AD_RESULT_MESSAGES[reason] || AD_RESULT_MESSAGES.cancelled;
-}
 
 function mapLoadError(error) {
   if (!error) return "加载失败，请稍后重试。";
@@ -108,10 +91,6 @@ Page({
     this.pageUnloaded = false;
     this.unlockFlowToken = 0;
     this.unlockFlowRunning = false;
-    this.rewardedAdController = createRewardedAdController({
-      ...getAdConfig(),
-      env: getCurrentEnvironment(),
-    });
     this.loadResult();
   },
 
@@ -119,10 +98,6 @@ Page({
     this.pageUnloaded = true;
     this.unlockFlowToken += 1;
     this.unlockFlowRunning = false;
-    if (this.rewardedAdController) {
-      this.rewardedAdController.dispose();
-      this.rewardedAdController = null;
-    }
   },
 
   safeSetData(data) {
@@ -132,13 +107,6 @@ Page({
 
   isFlowActive(flowToken) {
     return !this.pageUnloaded && flowToken === this.unlockFlowToken;
-  },
-
-  showAdResultToast(reason) {
-    if (this.pageUnloaded || reason === "page_unloaded") return;
-    const message = getAdResultMessage(reason);
-    if (!message) return;
-    wx.showToast({ title: message, icon: "none" });
   },
 
   beginUnlockFlow() {
@@ -248,7 +216,7 @@ Page({
     this.setData({ unlocking: true, unlockError: "" });
     try {
       const unlockResult = await unlockAnalysis(this.data.recordId, {
-        unlockType: "rewarded_video_mock",
+        unlockType: "free_unlock",
       });
       const content = unlockResult?.full_content;
       if (!content) {
@@ -275,7 +243,7 @@ Page({
 
     try {
       const unlockResult = await unlockAnalysis(this.data.recordId, {
-        unlockType: "rewarded_video_mock",
+        unlockType: "free_unlock",
       });
       if (!this.isFlowActive(flowToken)) return;
 
@@ -285,7 +253,7 @@ Page({
       }
 
       this.applyFullContent(content);
-      wx.showToast({ title: "完整报告已解锁", icon: "success" });
+      wx.showToast({ title: "完整报告已生成", icon: "success" });
     } catch (error) {
       if (!this.isFlowActive(flowToken)) return;
       this.safeSetData({
@@ -297,56 +265,14 @@ Page({
     }
   },
 
-  handleUnlock() {
+  async handleUnlock() {
     if (!this.data.recordId || this.data.isUnlocked) return;
     if (this.data.deleting || this.data.cardGenerating) return;
-    if (!this.rewardedAdController) {
-      wx.showToast({ title: "广告模块暂不可用", icon: "none" });
-      return;
-    }
 
     const flowToken = this.beginUnlockFlow();
     if (flowToken === null) return;
 
-    wx.showModal({
-      title: "解锁完整报告",
-      content:
-        "观看一段视频，解锁完整报告。完整观看后可以解锁；中途退出不会解锁。",
-      confirmText: "观看视频",
-      cancelText: "取消",
-      success: async (res) => {
-        if (!this.isFlowActive(flowToken)) {
-          this.endUnlockFlow(flowToken);
-          return;
-        }
-
-        if (!res.confirm) {
-          this.endUnlockFlow(flowToken);
-          return;
-        }
-
-        try {
-          const adResult = await this.rewardedAdController.show();
-          if (!this.isFlowActive(flowToken)) return;
-
-          if (adResult.completed !== true) {
-            this.showAdResultToast(adResult.reason);
-            this.endUnlockFlow(flowToken);
-            return;
-          }
-
-          await this.performUnlock(flowToken);
-        } catch (_error) {
-          if (this.isFlowActive(flowToken)) {
-            this.showAdResultToast("cancelled");
-            this.endUnlockFlow(flowToken);
-          }
-        }
-      },
-      fail: () => {
-        this.endUnlockFlow(flowToken);
-      },
-    });
+    await this.performUnlock(flowToken);
   },
 
   handleDelete() {

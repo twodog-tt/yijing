@@ -1,6 +1,9 @@
 /**
  * 页面级激励视频广告 controller。
  * 每个页面独立实例，禁止跨页面共享 wx 广告对象。
+ *
+ * Phase AD0：生产 UI 不引用本模块；仅 dev 环境可用于开发测试。
+ * 流量主开通后由 Phase AD1 接入真实激励视频广告。
  */
 
 function createResult(mode, completed, reason) {

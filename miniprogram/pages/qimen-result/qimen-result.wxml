@@ -101,8 +101,8 @@
           loading="{{unlockFlowRunning || unlocking}}"
           disabled="{{unlockFlowRunning || unlocking || deleting || cardGenerating}}"
           bindtap="handleUnlock"
-        >观看视频，解锁完整报告</button>
-        <text class="action-hint">完整报告基于 qimen-simple-v1 简化规则，仅供传统文化学习与自我反思参考。</text>
+        >查看完整报告</button>
+        <text class="action-hint">当前为内测体验，完整报告仅供传统文化学习与自我反思参考。</text>
       </view>
     </section-reveal>
 
