@@ -1249,6 +1249,36 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 
 **部署：** 仅 backend。
 
+## 25.10 Phase ALG2.3-SPEC：奇门 v2 专业口径设计与 fixtures 规划（后端设计 only）
+
+**说明：** 本阶段 **只做** `qimen-v2-professional` 目标数据结构、口径差距审计与 golden fixtures **元数据**规划；**不实现**专业完整排盘、**不接** Create API、**不改**小程序 / Web、**不部署**。
+
+**交付物：**
+
+- `backend/internal/service/qimen/professional_spec.go` — 常量、差距审计表、payload 草案、`ProfessionalFixturePlans`、`ProfessionalModuleRoadmap`
+- `backend/internal/service/qimen/professional_fixtures_test.go` — fixtures 元数据完整性、payload 结构、POC 回归、合规
+
+**版本策略：**
+
+| 版本 | 状态 |
+|------|------|
+| `qimen-simple-v1` | 线上默认，不变 |
+| `qimen-v2-poc` | 内部灰度 + QIMEN-REPORT2，保留 |
+| `qimen-v2-professional` | 设计目标 only，未接入 `ResolveAlgorithmVersion` |
+
+**fixtures（10 组）：** 含 2024-06-20/21、2024-12-21/22 夏至/冬至小时级边界；各 fixture 记录 input / category / focus / assert 字段 / POC 行为 / professional 期望 / 暂不可断言项。
+
+**仍不做：** ALG2.4 专业计算实现、API 接入 professional、frontend / miniprogram 展示、SQL 变更、部署。
+
+**验收（后端）：**
+
+- [x] `TestQimenV2ProfessionalFixturesAreDocumented` — 10 组元数据完整
+- [x] `TestQimenV2ProfessionalPayloadStructureDraft` — payload 字段完整
+- [x] `qimen-v2-poc` / `qimen-simple-v1` 现有 tests 全部通过
+- [x] 无强预测 / 应期 / 改运化灾文案
+
+**下一步：** ALG2.4 第一批专业口径实现；QIMEN-V2-VIEW 前端九宫；BAZI1.3。
+
 ## 26. Phase UX1：八字 / 奇门轻量动效
 
 Phase UX1 在小程序与 Web 八字、奇门页面增加贴合传统文化场景的轻量 UI 动效，提升氛围与完成感。**仅改 UI 动效，不改后端、数据库、部署。**

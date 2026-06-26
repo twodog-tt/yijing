@@ -1614,10 +1614,102 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 - [x] DeepSeek prompt 使用 `palaces_summary` / `focus_palaces_summary`（非原始 JSON）
 - [x] `qimen-simple-v1` 7 段报告 **不受影响**
 - [x] 默认 API 仍为 `qimen-simple-v1`；小程序 / Web 暂不展示算法选择
-- [ ] 专业排盘口径增强（延后 **ALG2.3**）
+- [ ] 专业排盘口径增强（延后 **ALG2.4** 实现；**ALG2.3-SPEC** 已完成设计）
 
 **实现位置：** `backend/internal/service/qimen/v2_report.go`、`full_content.go`、`prompt_input.go`、`deepseek_full.go`
 
 **部署：** 仅 backend；无需 SQL / frontend / 小程序重编译。
+
+---
+
+### 10.37 Phase ALG2.3-SPEC 交付清单（奇门 v2 专业口径设计与 fixtures 规划）
+
+**目标：** 在 **不接 API、不改小程序 / Web、不部署、不替换 qimen-v2-poc / qimen-simple-v1** 前提下，设计 `qimen-v2-professional` 目标数据结构与 golden fixtures 元数据表，为 **ALG2.4** 第一批专业口径实现做准备。
+
+**本阶段完成：**
+
+- [x] 口径差距审计表（8 维度：节令交节、阴阳遁、局数、旬首/空亡、值符值使、九星八门八神、天盘/地盘干、天禽寄宫）
+- [x] `AlgorithmVersionQimenV2Professional = "qimen-v2-professional"` 常量草案
+- [x] `CalculationResultV2Professional` + `ResultPayloadDraft()` JSON 结构草案
+- [x] `ProfessionalFixturePlans` 10 组 fixtures 元数据（含夏至/冬至/节令边界 + category 差异）
+- [x] `ProfessionalModuleRoadmap`（ALG2.4–ALG2.5 模块拆分）
+- [x] `TestQimenV2ProfessionalFixturesAreDocumented` 等测试（元数据完整性，非假装已有专业计算）
+
+**实现位置（设计 only，未接 Create / handler）：**
+
+- `backend/internal/service/qimen/professional_spec.go`
+- `backend/internal/service/qimen/professional_fixtures_test.go`
+
+**口径差距审计（POC → professional）：**
+
+| 维度 | 当前 `qimen-v2-poc` | 目标 `qimen-v2-professional` | 状态 |
+|------|---------------------|--------------------------------|------|
+| 节气交节 | bazi/calendar 十二节公式近似 | 精确交节时刻（秒级），可扩展真太阳时 | gap → ALG2.4 |
+| 阴阳遁 | 公历 6/21、12/22 简化切换 | 与冬至/夏至节气交节绑定 | gap → ALG2.4 |
+| 局数 | hash(RFC3339+category+遁) % 9 + 1 | 拆补 / 置闰 / 三元明确口径 | gap → ALG2.4–ALG2.5 |
+| 旬首/空亡 | 六旬首固定表 + hash | 由日时干支推导符头、旬首与空亡 | gap → ALG2.4 |
+| 值符/值使 | 按局数宫位占位 | 旬首 + 转盘后星门落宫规则 | gap → ALG2.5 |
+| 九星/八门/八神 | 固定名表 + hash 轮转 | 转盘 / 飞布规则 | gap → ALG2.5 |
+| 天盘干/地盘干 | 十天干表取模轮转 | 按局数、遁法、旬首排布 | gap → ALG2.5 |
+| 天禽寄宫 | 中五宫门为 —，未专业寄宫 | 寄坤二 / 寄艮八等流派口径文档化 | gap → ALG2.5 |
+
+**professional payload 草案（节选）：**
+
+```json
+{
+  "algorithm_version": "qimen-v2-professional",
+  "calendar_basis": {
+    "solar_term": "",
+    "solar_term_time": "",
+    "jieqi_basis": "professional_pending",
+    "time_basis": "local_time",
+    "note": ""
+  },
+  "dun": {
+    "type": "yang_or_yin",
+    "ju": 1,
+    "method": "chai_bu_or_zhi_run_pending",
+    "yuan": "upper_middle_lower_pending"
+  },
+  "ganzhi": { "year": "", "month": "", "day": "", "hour": "" },
+  "xun": { "xun_shou": "", "empty_branches": [] },
+  "chief": {
+    "zhi_fu": "",
+    "zhi_shi": "",
+    "zhi_fu_palace": "",
+    "zhi_shi_palace": ""
+  },
+  "palaces": [],
+  "method_note": "",
+  "limits": []
+}
+```
+
+**fixtures 规划（10 组，元数据 only）：**
+
+| 输入时间 | category | 关注边界 |
+|----------|----------|----------|
+| 2024-02-04 10:30 | general | 小寒区间内 |
+| 2024-03-20 09:00 | career | 惊蛰 + category |
+| 2024-06-20 23:30 | study | 夏至 POC 边界前（仍阳遁） |
+| 2024-06-21 00:30 | study | 夏至 POC 边界后（阴遁） |
+| 2024-08-07 15:00 | relationship | 小暑 + category |
+| 2024-09-22 18:30 | decision | 白露 + 决策类 |
+| 2024-12-21 23:10 | general | 冬至 POC 边界前（阴遁） |
+| 2024-12-22 00:30 | general | 冬至 POC 边界后（阳遁） |
+| 2025-02-03 11:30 | career | 小寒 + 跨年 |
+| 2025-06-21 09:00 | study | 次年夏至重复样例 |
+
+**仍不做（ALG2.3-SPEC）：**
+
+- [ ] API 接入 `qimen-v2-professional`（延后 **ALG2.4+**）
+- [ ] 替换 `qimen-simple-v1` 默认策略
+- [ ] 删除或替换 `qimen-v2-poc`
+- [ ] 专业完整排盘计算实现
+- [ ] frontend / miniprogram / SQL / deploy 变更
+
+**默认策略：** 线上仍默认 `qimen-simple-v1`；`qimen-v2-poc` 继续可用于内部灰度与 QIMEN-REPORT2；`qimen-v2-professional` 仅为后续目标版本标识。
+
+**下一步：** **ALG2.4** 实现第一批专业口径（精确节令交节、阴阳遁绑定、拆补局数、干支旬首推导）；**QIMEN-V2-VIEW** 前端九宫展示；**BAZI1.3** 八字后续口径。
 
 ---
