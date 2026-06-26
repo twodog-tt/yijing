@@ -1161,7 +1161,42 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 - [x] 节令 / 阴阳遁 / 局数为 POC 近似口径，limits 明确「不提供精准预测 / 不构成现实决策依据」
 - [x] `qimen-simple-v1` 现有测试未被破坏
 
-**仍不做：** API 灰度（ALG2.2）、专业完整起局校准（ALG2.1）、frontend / miniprogram 展示、SQL 变更。
+**仍不做：** API 灰度（ALG2.2）、专业完整起局（ALG2.3）、frontend / miniprogram 展示、SQL 变更。
+
+## 25.7 Phase ALG2.1：奇门 v2 golden fixtures 扩展（后端）
+
+**说明：** 扩展 `calculate_v2_test.go` golden fixtures 与边界测试；文档化 POC 口径审计；**不接 API、不改小程序 / Web、不部署**。
+
+**golden fixtures（10 组）：**
+
+- 2024-02-04 10:30 general
+- 2024-03-20 09:00 career
+- 2024-06-21 / 2024-06-22 09:00 study（夏至日及次日，均为阴遁 POC）
+- 2024-08-07 15:00 relationship
+- 2024-09-22 18:30 decision
+- 2024-12-21 23:10 / 2024-12-22 09:00 general（冬至前阴遁 → 冬至日阳遁）
+- 2025-02-03 11:30 career
+- 2025-06-21 09:00 study
+
+**边界测试：**
+
+- 冬至：12/21 阴遁 → 12/22 阳遁
+- 夏至（POC 公历近似）：6/20 阳遁 → 6/21 阴遁
+
+**口径说明（仍为 POC，非专业排盘）：**
+
+- 节令：bazi calendar 公式近似
+- 阴阳遁：公历 12/22 与 6/21 简化切换
+- 局数 / 旬首 / 星门神干：hash 稳定占位
+- 值符值使：局宫星门占位
+
+**验收（后端）：**
+
+- [x] `go test ./internal/service/qimen/...` 通过
+- [x] 10 组 golden + 冬至/夏至边界 + 九宫结构 + 合规
+- [x] `qimen-simple-v1` 回归未破坏
+
+**仍不做：** ALG2.2 API 灰度、ALG2.3 专业排盘、frontend / miniprogram、SQL 变更。
 
 ## 26. Phase UX1：八字 / 奇门轻量动效
 
