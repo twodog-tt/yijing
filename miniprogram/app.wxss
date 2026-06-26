@@ -153,3 +153,44 @@ page {
   font-size: 24rpx;
   line-height: 1.65;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .header-aura,
+  .header-aura--subtle,
+  .section-reveal--active,
+  .element-orbit__track,
+  .element-orbit__ring,
+  .element-orbit__node,
+  .qimen-scan-grid__scan-h,
+  .qimen-scan-grid__scan-v,
+  .qimen-scan-grid__dot,
+  .element-row--wood .element-label,
+  .element-row--fire .element-label,
+  .element-row--earth .element-label,
+  .element-row--metal .element-label,
+  .element-row--water .element-label,
+  .submit-button--loading,
+  .action-button--glow,
+  .picker-field--pulse,
+  .full-card--visible,
+  .share-section--ready .share-button--reveal,
+  .pillar-card--flip {
+    animation: none !important;
+  }
+
+  .section-reveal,
+  .section-reveal--active {
+    opacity: 1;
+    transform: none;
+  }
+
+  .full-card--reveal.full-card--visible,
+  .pillar-card--flip {
+    opacity: 1;
+    transform: none;
+  }
+
+  .share-section--ready .share-button--reveal {
+    opacity: 1;
+  }
+}

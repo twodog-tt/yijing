@@ -7,6 +7,108 @@
   font-size: 24rpx;
 }
 
+.page-header--result {
+  position: relative;
+  overflow: hidden;
+}
+
+.header-aura--subtle {
+  position: absolute;
+  top: -30rpx;
+  right: -10rpx;
+  width: 220rpx;
+  height: 220rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(252, 211, 77, 0.14) 0%, rgba(252, 211, 77, 0) 70%);
+  animation: header-aura-float 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.disclaimer--static {
+  animation: none;
+}
+
+.element-row--wood .element-label,
+.element-row--fire .element-label,
+.element-row--earth .element-label,
+.element-row--metal .element-label,
+.element-row--water .element-label {
+  animation: element-label-glow 8s ease-in-out infinite;
+}
+
+.element-row--wood .element-label { animation-delay: 0s; color: #166534; }
+.element-row--fire .element-label { animation-delay: 1.6s; color: #c2410c; }
+.element-row--earth .element-label { animation-delay: 3.2s; color: #92400e; }
+.element-row--metal .element-label { animation-delay: 4.8s; color: #57534e; }
+.element-row--water .element-label { animation-delay: 6.4s; color: #1d4ed8; }
+
+.full-card--reveal {
+  opacity: 0;
+  transform: translateY(16rpx);
+}
+
+.full-card--visible {
+  animation: full-fade-in 0.65s ease forwards;
+}
+
+.action-button--glow {
+  animation: unlock-glow 1.4s ease-in-out infinite;
+}
+
+.share-section--ready .share-button--reveal {
+  animation: share-emerge 0.55s ease 0.12s forwards;
+  opacity: 0;
+}
+
+@keyframes header-aura-float {
+  0%,
+  100% {
+    transform: translate(0, 0);
+    opacity: 0.8;
+  }
+
+  50% {
+    transform: translate(-10rpx, 8rpx);
+    opacity: 1;
+  }
+}
+
+@keyframes header-aura-float {
+  0%,
+  12%,
+  100% {
+    opacity: 0.72;
+  }
+
+  6% {
+    opacity: 1;
+  }
+}
+
+@keyframes full-fade-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes unlock-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(252, 211, 77, 0);
+  }
+
+  50% {
+    box-shadow: 0 0 20rpx rgba(252, 211, 77, 0.35);
+  }
+}
+
+@keyframes share-emerge {
+  to {
+    opacity: 1;
+  }
+}
+
 .page-error {
   margin-top: 24rpx;
 }

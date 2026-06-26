@@ -55,10 +55,36 @@ Page({
     recentList: [],
     moduleLabel: MODULE_QIMEN_LABEL,
     questionSummary: QUESTION_SUMMARY,
+    categoryPulse: false,
+  },
+
+  onLoad() {
+    this.pageUnloaded = false;
   },
 
   onShow() {
     this.loadRecentList();
+  },
+
+  onUnload() {
+    this.pageUnloaded = true;
+    if (this.categoryPulseTimer) {
+      clearTimeout(this.categoryPulseTimer);
+      this.categoryPulseTimer = null;
+    }
+  },
+
+  pulseCategoryField() {
+    if (this.categoryPulseTimer) {
+      clearTimeout(this.categoryPulseTimer);
+    }
+    this.setData({ categoryPulse: true });
+    this.categoryPulseTimer = setTimeout(() => {
+      this.categoryPulseTimer = null;
+      if (!this.pageUnloaded) {
+        this.setData({ categoryPulse: false });
+      }
+    }, 480);
   },
 
   onCategoryChange(event) {
@@ -72,6 +98,7 @@ Page({
       fieldError: "",
       submitError: "",
     });
+    this.pulseCategoryField();
   },
 
   onQuestionInput(event) {

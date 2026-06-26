@@ -1,10 +1,12 @@
 <view class="page">
   <navigator class="back-link" open-type="navigateBack" delta="1">← 返回</navigator>
 
-  <view class="page-header">
+  <view class="page-header page-header--bazi">
+    <view class="header-aura" aria-hidden="true"></view>
     <text class="eyebrow">八字简析</text>
     <text class="page-title">基于传统干支文化的性格与五行倾向学习</text>
     <text class="page-description">本功能采用简化干支文化规则，仅用于传统文化学习和自我反思，不等同于专业八字排盘，也不构成现实决策依据。</text>
+    <element-orbit></element-orbit>
   </view>
 
   <view class="card form-card">
@@ -34,7 +36,7 @@
     </block>
 
     <checkbox-group bindchange="onDisclaimerChange">
-      <label class="agreement">
+      <label class="agreement agreement--static">
         <checkbox value="confirmed" checked="{{confirmDisclaimer}}" color="#292524"></checkbox>
         <text>我理解本内容仅用于传统文化学习和自我反思，不作为现实决策依据。</text>
       </label>
@@ -43,7 +45,12 @@
     <text wx:if="{{fieldError}}" class="field-error">{{fieldError}}</text>
     <error-state wx:if="{{submitError}}" visible="{{true}}" message="{{submitError}}" show-retry="{{submitCanRetry}}" bindretry="submitForm"></error-state>
 
-    <button class="primary-button submit-button" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submitForm">{{submitting ? '提交中…' : '生成八字简析'}}</button>
+    <button
+      class="primary-button submit-button {{submitting ? 'submit-button--loading' : ''}}"
+      loading="{{submitting}}"
+      disabled="{{submitting}}"
+      bindtap="submitForm"
+    >{{submitting ? '生成中…' : '生成八字简析'}}</button>
   </view>
 
   <view class="history-section">
@@ -64,5 +71,5 @@
     </view>
   </view>
 
-  <text class="disclaimer">内容仅用于传统文化学习、自我反思和行动整理，不构成现实决策建议。</text>
+  <text class="disclaimer disclaimer--static">内容仅用于传统文化学习、自我反思和行动整理，不构成现实决策建议。</text>
 </view>

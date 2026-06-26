@@ -1,0 +1,6 @@
+<view
+  class="section-reveal {{static ? 'section-reveal--static' : ''}} {{active ? 'section-reveal--active' : ''}}"
+  style="{{active && !static ? 'animation-delay: ' + delay + 'ms;' : ''}}"
+>
+  <slot></slot>
+</view>

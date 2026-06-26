@@ -1077,3 +1077,139 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 - 标题：「一份传统文化视角的奇门问事简析」
 - 路径：`/pages/qimen-result/qimen-result?id={id}`
 - 加载失败回退奇门页入口
+
+## 26. Phase UX1：八字 / 奇门轻量动效
+
+Phase UX1 在小程序与 Web 八字、奇门页面增加贴合传统文化场景的轻量 UI 动效，提升氛围与完成感。**仅改 UI 动效，不改后端、数据库、部署。**
+
+### 26.1 技术原则
+
+- 优先使用 WXSS `animation` / `transition`
+- **不引入** Lottie / `lottie-miniprogram`
+- **不新增**远程动效资源、npm 包、视频/音频/震动
+- 动效不遮挡正文、不高频闪烁、不影响按钮点击
+- 不使用 `setInterval` 频繁 `setData`；页面卸载时清理 timer
+
+### 26.2 新增组件
+
+| 组件 | 路径 | 用途 |
+|------|------|------|
+| `element-flow` | `components/element-flow/` | 木火土金水标签慢速流转高亮（八字表单/结果页） |
+| `qimen-grid` | `components/qimen-grid/` | 九宫格线框装饰 + 光点慢速变化（奇门表单/结果页） |
+| `result-reveal` | `components/result-reveal/` | 结果分段延迟渐入（`active` + `delay` props） |
+
+### 26.3 八字动效
+
+**表单页（`pages/bazi/bazi`）：**
+
+- 顶部柔和光晕浮动
+- `element-flow` 五行标签依次轻微高亮
+- 提交 loading 文案「生成中…」+ 按钮呼吸光晕
+- 免责声明保持静态、清晰
+
+**结果页（`pages/analysis-result/analysis-result`）：**
+
+- `result-reveal` 分段渐入：方法说明 → 四柱（依次）→ 日主 → 五行 → 建议 → 免费解读
+- 五行标签行慢速高亮
+- 解锁 loading 按钮光晕；解锁成功后完整报告淡入
+- 已解锁时长图按钮一次性浮现（非持续闪烁）
+
+### 26.4 奇门动效
+
+**表单页（`pages/qimen/qimen`）：**
+
+- 顶部 `qimen-grid` 九宫格装饰
+- 分类切换轻微选中反馈
+- 提交 loading 文案「整理局势中…」+ 按钮呼吸
+
+**结果页（`pages/qimen-result/qimen-result`）：**
+
+- 顶部九宫格装饰
+- 局势梳理 / 风险观察 / 行动节奏 / 自我反思 / 行动建议 分段渐入
+- 解锁后完整报告淡入
+
+### 26.5 不变项
+
+- **不改变** unlock 行为、`rewarded_video_mock` 流程
+- **不接** 真实广告 / 支付 / 微信登录
+- **不展示** 出生日期/时辰、完整原问题、`session_key`、`payload`
+- **不打印** `full_content` / `session_key` / `payload` 到 Console
+
+### 26.7 Web 端同步（Phase UX1-W）
+
+Web 端与小程序 UX1 对齐，使用 `frontend/app/globals.css` 中的 CSS animation（无 Lottie / 无远程资源）：
+
+| Web 路由 / 组件 | 动效 |
+|-----------------|------|
+| `/bazi` | 顶部光晕、`ElementFlow`、提交「生成中…」+ 呼吸 |
+| `/qimen` | `QimenGrid`、分类选中 pulse、「整理局势中…」 |
+| `/analysis/[id]` | `ResultReveal` 分段渐入、完整报告淡入、解锁光晕 |
+| `components/motion/*` | `ElementFlow` / `QimenGrid` / `ResultReveal` |
+
+支持 `prefers-reduced-motion: reduce` 自动关闭动画。
+
+**八字：**
+
+- [ ] 表单页有轻量五行氛围动效
+- [ ] 提交按钮 loading 清晰（「生成中…」）
+- [ ] 结果页卡片分段渐入
+- [ ] 四柱 / 五行 / 建议展示更有层次
+- [ ] 解锁完整报告后淡入正常
+- [ ] 未改变 `rewarded_video_mock` 解锁逻辑
+- [ ] 不展示出生日期 / 出生时辰
+- [ ] Console 不打印 full_content / session_key / payload
+- [ ] 低端机无明显卡顿
+
+**奇门：**
+
+- [ ] 表单页有轻量九宫格氛围
+- [ ] 分类选中态有轻微反馈
+- [ ] 提交 loading 文案克制（「整理局势中…」）
+- [ ] 结果页分段渐入
+- [ ] 不展示完整原问题
+- [ ] 不展示 session_key / payload
+- [ ] 无强预测 / 改运 / 大凶大吉文案
+- [ ] 低端机无明显卡顿
+
+### 26.8 微信开发者工具 / 浏览器验收清单
+
+见上文 **八字** / **奇门** 复选框列表；Web 另可在 Chrome DevTools 开启「 prefers-reduced-motion 」模拟验证动画关闭。
+
+### 26.9 Phase UX1 自审（2026-06-26）
+
+| 检查项 | 小程序 | Web | 结论 |
+|--------|--------|-----|------|
+| 纯 CSS 动效，无 Lottie / 远程资源 | ✓ | ✓ | 通过 |
+| 无 `setInterval` / 频繁 `setData` | ✓ | ✓ | 通过 |
+| unlock / 隐私 / 文案边界未改 | ✓ | ✓ | 通过 |
+| 无 `console.log` 敏感字段 | ✓ | ✓ | 通过 |
+| 结果分段 delay 与段落顺序一致 | ✓ | ✓ | 通过 |
+| `prefers-reduced-motion` 降级 | ✓ | ✓ | 自审已补齐 |
+| 四柱双重渐入 | 已修复 | 已修复 | 移除冗余动画 |
+| Web 解锁光晕与弹窗态一致 | — | 已修复 | 弹窗打开时亦显示光晕 |
+
+**残留低风险：** 已解锁时分享长图按钮有约 0.5s 浮现延迟（符合设计）；Web 修复区块未包渐入动画（不影响功能）。
+
+## 27. Phase UX2：可感知动效升级（小程序 + Web）
+
+在 UX1 基础上升级为**更明显**的 CSS/WXSS 动效（参考 lottie-web / sparticles / awesome-css-animations 等开源思路，**未引入第三方库或 Lottie JSON**）。
+
+### 27.1 核心效果
+
+| 效果 | 组件 | 场景 |
+|------|------|------|
+| A 五行环形流转 | `element-orbit` | 八字表单/结果顶、Web `/bazi`、首页入口 |
+| B 四柱翻入 | `section-reveal` + `pillar-card--flip` | 八字结果四柱 |
+| C 九宫扫描光点 | `qimen-scan-grid` | 奇门表单/结果顶、Web `/qimen`、首页入口 |
+| D 结果分段展开 | `section-reveal` | 八字/奇门结果各 section（80ms 步进） |
+
+### 27.2 技术约束
+
+- 无 Lottie / 无远程动画 / 无 npm 动画库
+- 无 setInterval / 无每帧 setData
+- 删除区、免责声明使用 `static` 不做夸张动效
+- `prefers-reduced-motion` 降级（`app.wxss` / `globals.css`）
+
+### 27.3 验收清单
+
+见 Phase UX2 任务文档；微信开发者工具 + 浏览器实机确认动效**明显可见**。

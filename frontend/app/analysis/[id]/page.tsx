@@ -3,6 +3,9 @@
 import AnalysisFullContent from "@/components/analysis/AnalysisFullContent";
 import BaziResultCards from "@/components/analysis/BaziResultCards";
 import QimenResultCards from "@/components/analysis/QimenResultCards";
+import ElementOrbit from "@/components/motion/ElementOrbit";
+import QimenScanGrid from "@/components/motion/QimenScanGrid";
+import SectionReveal from "@/components/motion/SectionReveal";
 import FreeInterpretationCard from "@/components/interpretation/FreeInterpretationCard";
 import AnalysisUnlockModal from "@/components/unlock/AnalysisUnlockModal";
 import ErrorAlert from "@/components/ui/ErrorAlert";
@@ -37,6 +40,7 @@ export default function AnalysisResultPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [shouldScrollToFull, setShouldScrollToFull] = useState(false);
+  const [fullRevealActive, setFullRevealActive] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!id || Number.isNaN(id)) {
@@ -53,7 +57,9 @@ export default function AnalysisResultPage() {
       const data = await getAnalysis(id, getSessionKey());
       setRecord(data);
       const unlocked = data.unlock_status === 1;
-      setFullContent(unlocked ? String(data.full_content || "").trim() : "");
+      const content = unlocked ? String(data.full_content || "").trim() : "";
+      setFullContent(content);
+      setFullRevealActive(unlocked && Boolean(content));
     } catch (e) {
       setError(e instanceof Error ? e.message : "加载失败");
       setRecord(null);
@@ -82,6 +88,7 @@ export default function AnalysisResultPage() {
 
   function handleUnlockSuccess(content: string) {
     setFullContent(content);
+    setFullRevealActive(true);
     setShouldScrollToFull(true);
     if (record) {
       setRecord({ ...record, unlock_status: 1, full_content: content });
@@ -173,6 +180,9 @@ export default function AnalysisResultPage() {
   const freeContent = baziView?.freeContent || qimenView?.freeContent || "";
   const isUnlocked = record.unlock_status === 1;
   const hasFull = Boolean(fullContent);
+  const resultReady = true;
+  const freeRevealDelay = isBazi ? 880 : 560;
+  const unlockRevealDelay = isBazi ? 960 : 640;
 
   if (!isBazi && !isQimen) {
     return (
@@ -194,40 +204,53 @@ export default function AnalysisResultPage() {
         ← 返回{moduleLabel}
       </Link>
 
-      <header>
-        <p className="text-sm tracking-[0.15em] text-amber-800">{moduleLabel}</p>
-        <h1 className="mt-2 text-2xl font-bold text-stone-900">{pageTitle}</h1>
-        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-stone-500">
-          <span>{record.algorithm_version}</span>
-          {qimenView?.categoryLabel && <span>{qimenView.categoryLabel}</span>}
-          {qimenView?.timeBucketLabel && (
-            <span>{qimenView.timeBucketLabel}</span>
-          )}
-          <span>{formatDateTime(record.created_at)}</span>
-        </div>
-      </header>
+      <SectionReveal active={resultReady} delay={0}>
+        <header className="relative overflow-hidden">
+          {isBazi && <div className="header-aura header-aura--subtle" aria-hidden />}
+          {isQimen && <QimenScanGrid />}
+          <p className="text-sm tracking-[0.15em] text-amber-800">{moduleLabel}</p>
+          <h1 className="mt-2 text-2xl font-bold text-stone-900">{pageTitle}</h1>
+          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-stone-500">
+            <span>{record.algorithm_version}</span>
+            {qimenView?.categoryLabel && <span>{qimenView.categoryLabel}</span>}
+            {qimenView?.timeBucketLabel && (
+              <span>{qimenView.timeBucketLabel}</span>
+            )}
+            <span>{formatDateTime(record.created_at)}</span>
+          </div>
+          {isBazi && <ElementOrbit />}
+        </header>
+      </SectionReveal>
 
       {error && <ErrorAlert message={error} onRetry={loadData} />}
 
-      {baziView && <BaziResultCards view={baziView} />}
-      {qimenView && <QimenResultCards view={qimenView} />}
+      {baziView && <BaziResultCards view={baziView} revealed={resultReady} />}
+      {qimenView && <QimenResultCards view={qimenView} revealed={resultReady} />}
 
-      {freeContent && <FreeInterpretationCard content={freeContent} />}
+      {freeContent && (
+        <SectionReveal active={resultReady} delay={freeRevealDelay}>
+          <FreeInterpretationCard content={freeContent} />
+        </SectionReveal>
+      )}
 
       {!isUnlocked && !hasFull && (
-        <div className="space-y-2">
-          <button
-            type="button"
-            onClick={() => setUnlockModalOpen(true)}
-            disabled={deleting || unlocking || repairing}
-            className="w-full rounded-xl border border-amber-300 bg-amber-50 py-3.5 text-sm font-semibold text-amber-900 transition hover:bg-amber-100 disabled:opacity-60"
-          >
-            解锁完整报告（Web 内测模拟）
-          </button>
-          <p className="text-center text-xs leading-relaxed text-stone-500">
-            完整报告仍基于简化规则，仅供传统文化学习与自我反思参考。
-          </p>
-        </div>
+        <SectionReveal active={resultReady} delay={unlockRevealDelay}>
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => setUnlockModalOpen(true)}
+              disabled={deleting || unlocking || repairing}
+              className={`w-full rounded-xl border border-amber-300 bg-amber-50 py-3.5 text-sm font-semibold text-amber-900 transition hover:bg-amber-100 disabled:opacity-60 ${
+                unlocking || unlockModalOpen ? "unlock-glow" : ""
+              }`}
+            >
+              解锁完整报告（Web 内测模拟）
+            </button>
+            <p className="text-center text-xs leading-relaxed text-stone-500">
+              完整报告仍基于简化规则，仅供传统文化学习与自我反思参考。
+            </p>
+          </div>
+        </SectionReveal>
       )}
 
       {isUnlocked && !hasFull && (
@@ -249,11 +272,12 @@ export default function AnalysisResultPage() {
 
       {hasFull && (
         <div ref={fullSectionRef}>
-          <AnalysisFullContent content={fullContent} />
+          <AnalysisFullContent content={fullContent} revealed={fullRevealActive} />
         </div>
       )}
 
-      <section className="rounded-2xl border border-red-100 bg-red-50/40 p-5">
+      <SectionReveal staticSection>
+        <section className="rounded-2xl border border-red-100 bg-red-50/40 p-5">
         <p className="text-xs font-medium uppercase tracking-wide text-red-800">
           危险操作
         </p>
@@ -270,7 +294,8 @@ export default function AnalysisResultPage() {
         >
           {deleting ? "删除中…" : "删除记录"}
         </button>
-      </section>
+        </section>
+      </SectionReveal>
 
       <p className="text-center text-xs leading-relaxed text-stone-500">
         内容仅用于传统文化学习、自我反思和行动整理，不构成现实决策建议。

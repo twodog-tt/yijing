@@ -3,6 +3,8 @@
   "usingComponents": {
     "loading-state": "/components/loading-state/loading-state",
     "error-state": "/components/error-state/error-state",
-    "bazi-share-card": "/components/bazi-share-card/bazi-share-card"
+    "bazi-share-card": "/components/bazi-share-card/bazi-share-card",
+    "section-reveal": "/components/section-reveal/section-reveal",
+    "element-orbit": "/components/element-orbit/element-orbit"
   }
 }

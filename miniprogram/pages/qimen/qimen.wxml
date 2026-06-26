@@ -1,7 +1,8 @@
 <view class="page">
   <navigator class="back-link" open-type="navigateBack" delta="1">← 返回</navigator>
 
-  <view class="page-header">
+  <view class="page-header page-header--qimen">
+    <qimen-scan-grid variant="header"></qimen-scan-grid>
     <text class="eyebrow">奇门问事</text>
     <text class="page-title">基于传统奇门文化的局势梳理与行动节奏参考</text>
     <text class="page-description">{{methodNote}}</text>
@@ -10,7 +11,7 @@
   <view class="card form-card">
     <text class="field-label">问事分类</text>
     <picker mode="selector" range="{{categories}}" range-key="label" value="{{categoryIndex}}" bindchange="onCategoryChange">
-      <view class="picker-field picker-field--selected">
+      <view class="picker-field picker-field--selected picker-field--category {{categoryPulse ? 'picker-field--pulse' : ''}}">
         <text>{{selectedCategoryLabel}}</text>
         <text>⌄</text>
       </view>
@@ -29,7 +30,7 @@
     <view class="safety-hint">请勿输入医疗、法律、投资、赌博、伤害自己或他人等问题。本工具不会处理此类内容。</view>
 
     <checkbox-group bindchange="onDisclaimerChange">
-      <label class="agreement">
+      <label class="agreement agreement--static">
         <checkbox value="confirmed" checked="{{confirmDisclaimer}}" color="#292524"></checkbox>
         <text>{{methodNote}}</text>
       </label>
@@ -38,7 +39,12 @@
     <text wx:if="{{fieldError}}" class="field-error">{{fieldError}}</text>
     <error-state wx:if="{{submitError}}" visible="{{true}}" message="{{submitError}}" show-retry="{{submitCanRetry}}" bindretry="submitForm"></error-state>
 
-    <button class="primary-button submit-button" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submitForm">{{submitting ? '提交中…' : '生成奇门简析'}}</button>
+    <button
+      class="primary-button submit-button {{submitting ? 'submit-button--loading' : ''}}"
+      loading="{{submitting}}"
+      disabled="{{submitting}}"
+      bindtap="submitForm"
+    >{{submitting ? '整理局势中…' : '生成奇门简析'}}</button>
   </view>
 
   <view class="history-section">
@@ -59,5 +65,5 @@
     </view>
   </view>
 
-  <text class="disclaimer">内容仅用于传统文化学习、自我反思和行动整理，不构成现实决策建议。</text>
+  <text class="disclaimer disclaimer--static">内容仅用于传统文化学习、自我反思和行动整理，不构成现实决策建议。</text>
 </view>

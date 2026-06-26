@@ -351,6 +351,18 @@ Phase A (验收)
 | [miniprogram-dev.md](./miniprogram-dev.md) | 小程序开发与 Phase 6 分享验收 |
 | [phase9-aliyun-deployment-plan.md](./phase9-aliyun-deployment-plan.md) | Web/ECS 部署，与小程序并行 |
 | [local-acceptance-test.md](./local-acceptance-test.md) | Phase A 验收参考 |
+| [bazi-qimen-extension-design.md](./bazi-qimen-extension-design.md) | 八字/奇门 Phase 交付（含 UX1/UX2） |
+
+---
+
+## 9.1 体验动效路线（UX）
+
+| Phase | 范围 | 状态 |
+|-------|------|------|
+| UX1 | 轻量 CSS 动效（五行标签、九宫装饰、分段渐入） | ✅ |
+| UX2 | 可感知升级：五行环形流转、四柱翻入、九宫扫描；无 Lottie | ✅ |
+
+详见 [miniprogram-dev.md](./miniprogram-dev.md) §27。
 
 ---
 

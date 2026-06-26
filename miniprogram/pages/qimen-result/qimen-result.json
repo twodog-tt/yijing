@@ -3,6 +3,8 @@
   "usingComponents": {
     "loading-state": "/components/loading-state/loading-state",
     "error-state": "/components/error-state/error-state",
-    "qimen-share-card": "/components/qimen-share-card/qimen-share-card"
+    "qimen-share-card": "/components/qimen-share-card/qimen-share-card",
+    "section-reveal": "/components/section-reveal/section-reveal",
+    "qimen-scan-grid": "/components/qimen-scan-grid/qimen-scan-grid"
   }
 }

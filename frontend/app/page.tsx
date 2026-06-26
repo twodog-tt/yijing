@@ -1,3 +1,5 @@
+import ElementOrbit from "@/components/motion/ElementOrbit";
+import QimenScanGrid from "@/components/motion/QimenScanGrid";
 import Link from "next/link";
 
 export default function Home() {
@@ -22,14 +24,20 @@ export default function Home() {
           <div className="grid gap-3 sm:grid-cols-2">
             <Link
               href="/bazi"
-              className="inline-flex items-center justify-center rounded-xl border border-amber-300 bg-amber-50 px-6 py-3.5 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
+              className="relative inline-flex items-center justify-center overflow-hidden rounded-xl border border-amber-300 bg-amber-50 py-3.5 pl-14 pr-6 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
             >
+              <span className="home-entry-deco absolute left-3 top-1/2 -translate-y-1/2">
+                <ElementOrbit compact />
+              </span>
               八字简析
             </Link>
             <Link
               href="/qimen"
-              className="inline-flex items-center justify-center rounded-xl border border-amber-300 bg-amber-50 px-6 py-3.5 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
+              className="relative inline-flex items-center justify-center overflow-hidden rounded-xl border border-amber-300 bg-amber-50 py-3.5 pl-14 pr-6 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
             >
+              <span className="home-entry-deco absolute left-3 top-1/2 -translate-y-1/2">
+                <QimenScanGrid compact />
+              </span>
               奇门问事
             </Link>
           </div>

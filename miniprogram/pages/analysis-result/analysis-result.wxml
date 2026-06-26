@@ -9,90 +9,118 @@
   </view>
 
   <block wx:if="{{!loading && view}}">
-    <view class="page-header">
-      <text class="eyebrow">八字简析</text>
-      <text class="page-title">{{moduleLabel}}</text>
-      <view class="result-meta">
-        <text>{{view.algorithmVersion}}</text>
-        <text>{{createdAtDisplay}}</text>
+    <section-reveal active="{{resultReady}}" delay="0">
+      <view class="page-header page-header--result">
+        <view class="header-aura header-aura--subtle" aria-hidden="true"></view>
+        <text class="eyebrow">八字简析</text>
+        <text class="page-title">{{moduleLabel}}</text>
+        <view class="result-meta">
+          <text>{{view.algorithmVersion}}</text>
+          <text>{{createdAtDisplay}}</text>
+        </view>
+        <element-orbit></element-orbit>
       </view>
-    </view>
+    </section-reveal>
 
-    <view class="card">
-      <text class="card-title">方法说明</text>
-      <text class="card-text">{{view.methodNote}}</text>
-      <text class="muted-text privacy-note">{{privacyNote}}</text>
-    </view>
+    <section-reveal active="{{resultReady}}" delay="80">
+      <view class="card">
+        <text class="card-title">方法说明</text>
+        <text class="card-text">{{view.methodNote}}</text>
+        <text class="muted-text privacy-note">{{privacyNote}}</text>
+      </view>
+    </section-reveal>
 
-    <view class="card">
-      <text class="section-title">简化干支示意</text>
-      <view class="pillar-grid">
-        <view class="pillar-item">
-          <text class="pillar-label">年柱</text>
-          <text class="pillar-value">{{view.pillars.year}}</text>
-        </view>
-        <view class="pillar-item">
-          <text class="pillar-label">月柱</text>
-          <text class="pillar-value">{{view.pillars.month}}</text>
-        </view>
-        <view class="pillar-item">
-          <text class="pillar-label">日柱</text>
-          <text class="pillar-value">{{view.pillars.day}}</text>
-        </view>
-        <view class="pillar-item">
-          <text class="pillar-label">时柱</text>
-          <text wx:if="{{!view.hourUnknown}}" class="pillar-value">{{view.pillars.hour}}</text>
-          <text wx:else class="pillar-unknown">时辰未知，本次不生成时柱</text>
+    <section-reveal active="{{resultReady}}" delay="160">
+      <view class="card">
+        <text class="section-title">简化干支示意</text>
+        <view class="pillar-grid">
+          <section-reveal active="{{resultReady}}" delay="240">
+            <view class="pillar-item pillar-card--flip">
+              <text class="pillar-label">年柱</text>
+              <text class="pillar-value">{{view.pillars.year}}</text>
+            </view>
+          </section-reveal>
+          <section-reveal active="{{resultReady}}" delay="320">
+            <view class="pillar-item pillar-card--flip">
+              <text class="pillar-label">月柱</text>
+              <text class="pillar-value">{{view.pillars.month}}</text>
+            </view>
+          </section-reveal>
+          <section-reveal active="{{resultReady}}" delay="400">
+            <view class="pillar-item pillar-card--flip">
+              <text class="pillar-label">日柱</text>
+              <text class="pillar-value">{{view.pillars.day}}</text>
+            </view>
+          </section-reveal>
+          <section-reveal active="{{resultReady}}" delay="480">
+            <view class="pillar-item pillar-card--flip">
+              <text class="pillar-label">时柱</text>
+              <text wx:if="{{!view.hourUnknown}}" class="pillar-value">{{view.pillars.hour}}</text>
+              <text wx:else class="pillar-unknown">时辰未知，本次不生成时柱</text>
+            </view>
+          </section-reveal>
         </view>
       </view>
-    </view>
+    </section-reveal>
 
-    <view class="card">
-      <text class="section-title">日主</text>
-      <text class="highlight-text">{{view.dayMaster}}</text>
-    </view>
+    <section-reveal active="{{resultReady}}" delay="540">
+      <view class="card">
+        <text class="section-title">日主</text>
+        <text class="highlight-text">{{view.dayMaster}}</text>
+      </view>
+    </section-reveal>
 
-    <view class="card">
-      <text class="section-title">五行倾向</text>
-      <view class="element-list">
-        <view class="element-row" wx:for="{{elementRows}}" wx:key="key">
-          <text class="element-label">{{item.label}}</text>
-          <text class="element-value">{{item.value}}</text>
+    <section-reveal active="{{resultReady}}" delay="620">
+      <view class="card">
+        <text class="section-title">五行倾向</text>
+        <view class="element-list">
+          <view class="element-row element-row--{{item.key}}" wx:for="{{elementRows}}" wx:key="key">
+            <text class="element-label">{{item.label}}</text>
+            <text class="element-value">{{item.value}}</text>
+          </view>
         </view>
       </view>
-    </view>
+    </section-reveal>
 
-    <view wx:if="{{view.reflectionFocus}}" class="card">
-      <text class="section-title">反思焦点</text>
-      <text class="card-text pre-wrap">{{view.reflectionFocus}}</text>
-    </view>
-
-    <view wx:if="{{view.actionSuggestions.length}}" class="card">
-      <text class="section-title">行动建议</text>
-      <view class="suggestion-list">
-        <text class="suggestion-item" wx:for="{{view.actionSuggestions}}" wx:key="*this">· {{item}}</text>
+    <section-reveal wx:if="{{view.reflectionFocus}}" active="{{resultReady}}" delay="700">
+      <view class="card">
+        <text class="section-title">反思焦点</text>
+        <text class="card-text pre-wrap">{{view.reflectionFocus}}</text>
       </view>
-    </view>
+    </section-reveal>
 
-    <view class="card free-card">
-      <text class="section-title">免费解读</text>
-      <text class="free-content pre-wrap">{{view.freeContent}}</text>
-    </view>
+    <section-reveal wx:if="{{view.actionSuggestions.length}}" active="{{resultReady}}" delay="780">
+      <view class="card">
+        <text class="section-title">行动建议</text>
+        <view class="suggestion-list">
+          <text class="suggestion-item" wx:for="{{view.actionSuggestions}}" wx:key="*this">· {{item}}</text>
+        </view>
+      </view>
+    </section-reveal>
 
-    <view wx:if="{{!isUnlocked}}" class="action-block">
-      <button
-        class="action-button action-button--unlock"
-        loading="{{unlockFlowRunning || unlocking}}"
-        disabled="{{unlockFlowRunning || unlocking || deleting || cardGenerating}}"
-        bindtap="handleUnlock"
-      >观看视频，解锁完整报告</button>
-      <text class="action-hint">完整报告仍基于简化干支文化规则，仅供学习与自我反思参考。解锁完整报告后可生成分享长图。</text>
-    </view>
+    <section-reveal active="{{resultReady}}" delay="860">
+      <view class="card free-card">
+        <text class="section-title">免费解读</text>
+        <text class="free-content pre-wrap">{{view.freeContent}}</text>
+      </view>
+    </section-reveal>
+
+    <section-reveal wx:if="{{!isUnlocked}}" active="{{resultReady}}" delay="940">
+      <view class="action-block">
+        <button
+          class="action-button action-button--unlock {{unlockFlowRunning || unlocking ? 'action-button--glow' : ''}}"
+          loading="{{unlockFlowRunning || unlocking}}"
+          disabled="{{unlockFlowRunning || unlocking || deleting || cardGenerating}}"
+          bindtap="handleUnlock"
+        >观看视频，解锁完整报告</button>
+        <text class="action-hint">完整报告仍基于简化干支文化规则，仅供学习与自我反思参考。解锁完整报告后可生成分享长图。</text>
+      </view>
+    </section-reveal>
 
     <view class="full-section">
       <error-state wx:if="{{unlockError}}" visible="{{true}}" message="{{unlockError}}" show-retry="{{false}}"></error-state>
 
-      <view wx:if="{{isUnlocked && fullContent}}" id="full-report" class="card full-card">
+      <view wx:if="{{isUnlocked && fullContent}}" id="full-report" class="card full-card full-card--reveal {{fullRevealActive ? 'full-card--visible' : ''}}">
         <text class="section-title">完整报告</text>
         <text class="full-content pre-wrap">{{fullContent}}</text>
       </view>
@@ -108,35 +136,39 @@
       </view>
     </view>
 
-    <view class="card share-section">
-      <text class="section-title">分享这份简析</text>
-      <text class="share-hint">发送微信分享卡片，邀请朋友体验八字简析。分享为入口引导，不包含出生信息。</text>
-      <view class="share-actions">
-        <button class="secondary-button share-button" open-type="share">分享给朋友</button>
-        <button
-          wx:if="{{isUnlocked}}"
-          class="primary-button share-button"
-          loading="{{cardGenerating}}"
-          disabled="{{cardGenerating || deleting || unlockFlowRunning || unlocking}}"
-          bindtap="handleGenerateCard"
-        >生成分享长图</button>
+    <section-reveal active="{{resultReady}}" delay="1020">
+      <view class="card share-section {{isUnlocked ? 'share-section--ready' : ''}}">
+        <text class="section-title">分享这份简析</text>
+        <text class="share-hint">发送微信分享卡片，邀请朋友体验八字简析。分享为入口引导，不包含出生信息。</text>
+        <view class="share-actions">
+          <button class="secondary-button share-button" open-type="share">分享给朋友</button>
+          <button
+            wx:if="{{isUnlocked}}"
+            class="primary-button share-button share-button--reveal"
+            loading="{{cardGenerating}}"
+            disabled="{{cardGenerating || deleting || unlockFlowRunning || unlocking}}"
+            bindtap="handleGenerateCard"
+          >生成分享长图</button>
+        </view>
+        <text wx:if="{{isUnlocked}}" class="share-hint share-hint--secondary">长图包含免费解读与完整报告，不包含出生日期、时辰或小程序码。</text>
       </view>
-      <text wx:if="{{isUnlocked}}" class="share-hint share-hint--secondary">长图包含免费解读与完整报告，不包含出生日期、时辰或小程序码。</text>
-    </view>
+    </section-reveal>
 
     <bazi-share-card id="baziShareCard" card-data="{{cardData}}"></bazi-share-card>
 
-    <view class="danger-section">
-      <text class="danger-label">危险操作</text>
-      <error-state wx:if="{{deleteError}}" visible="{{true}}" message="{{deleteError}}" show-retry="{{false}}"></error-state>
-      <button
-        class="danger-button"
-        loading="{{deleting}}"
-        disabled="{{deleting || unlockFlowRunning || unlocking || cardGenerating}}"
-        bindtap="handleDelete"
-      >删除记录</button>
-    </view>
+    <section-reveal static="{{true}}">
+      <view class="danger-section">
+        <text class="danger-label">危险操作</text>
+        <error-state wx:if="{{deleteError}}" visible="{{true}}" message="{{deleteError}}" show-retry="{{false}}"></error-state>
+        <button
+          class="danger-button"
+          loading="{{deleting}}"
+          disabled="{{deleting || unlockFlowRunning || unlocking || cardGenerating}}"
+          bindtap="handleDelete"
+        >删除记录</button>
+      </view>
+    </section-reveal>
 
-    <text class="disclaimer">内容仅用于传统文化学习、自我反思和行动整理，不构成现实决策建议。</text>
+    <text class="disclaimer disclaimer--static">内容仅用于传统文化学习、自我反思和行动整理，不构成现实决策建议。</text>
   </block>
 </view>

@@ -90,6 +90,8 @@ Page({
     deleteError: "",
     cardData: null,
     cardGenerating: false,
+    resultReady: false,
+    fullRevealActive: false,
   },
 
   onLoad(options) {
@@ -176,6 +178,7 @@ Page({
       fullStatus: "loaded",
       fullContent,
       isUnlocked: true,
+      fullRevealActive: true,
       unlockError: "",
       cardData: buildBaziLongPosterData(
         this.data.recordId,
@@ -191,6 +194,8 @@ Page({
       error: "",
       deleteError: "",
       unlockError: "",
+      resultReady: false,
+      fullRevealActive: false,
     });
 
     try {
@@ -207,6 +212,8 @@ Page({
         isUnlocked,
         fullStatus: isUnlocked ? "loaded" : "locked",
         fullContent,
+        fullRevealActive: isUnlocked && !!fullContent,
+        resultReady: true,
         cardData: isUnlocked
           ? buildBaziLongPosterData(this.data.recordId, view, fullContent)
           : null,
@@ -219,6 +226,8 @@ Page({
         isUnlocked: false,
         fullStatus: "locked",
         fullContent: "",
+        resultReady: false,
+        fullRevealActive: false,
         cardData: null,
       });
     }

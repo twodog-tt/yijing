@@ -7,6 +7,56 @@
   font-size: 24rpx;
 }
 
+.page-header--result {
+  position: relative;
+}
+
+.disclaimer--static {
+  animation: none;
+}
+
+.full-card--reveal {
+  opacity: 0;
+  transform: translateY(16rpx);
+}
+
+.full-card--visible {
+  animation: full-fade-in 0.65s ease forwards;
+}
+
+.action-button--glow {
+  animation: unlock-glow 1.4s ease-in-out infinite;
+}
+
+.share-section--ready .share-button--reveal {
+  animation: share-emerge 0.55s ease 0.12s forwards;
+  opacity: 0;
+}
+
+@keyframes full-fade-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes unlock-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(252, 211, 77, 0);
+  }
+
+  50% {
+    box-shadow: 0 0 20rpx rgba(252, 211, 77, 0.35);
+  }
+}
+
+@keyframes share-emerge {
+  to {
+    opacity: 1;
+  }
+}
+
 .page-error {
   margin-top: 24rpx;
 }

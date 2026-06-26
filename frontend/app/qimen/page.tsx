@@ -1,6 +1,7 @@
 "use client";
 
 import RecentAnalysisList from "@/components/analysis/RecentAnalysisList";
+import QimenScanGrid from "@/components/motion/QimenScanGrid";
 import ErrorAlert from "@/components/ui/ErrorAlert";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import Select from "@/components/ui/Select";
@@ -22,7 +23,7 @@ import { getSessionKey } from "@/lib/session";
 import type { AnalysisListItem } from "@/lib/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 
 const DISCLAIMER =
   "内容仅用于传统文化学习、自我反思和行动整理，不构成现实决策建议。";
@@ -39,6 +40,8 @@ export default function QimenPage() {
   const [recentList, setRecentList] = useState<AnalysisListItem[]>([]);
   const [listLoading, setListLoading] = useState(false);
   const [listError, setListError] = useState("");
+  const [categoryPulse, setCategoryPulse] = useState(false);
+  const categoryPulseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadRecentList = useCallback(async () => {
     setListLoading(true);
@@ -77,6 +80,31 @@ export default function QimenPage() {
     window.addEventListener("pageshow", handlePageShow);
     return () => window.removeEventListener("pageshow", handlePageShow);
   }, [loadRecentList]);
+
+  useEffect(() => {
+    return () => {
+      if (categoryPulseTimer.current) {
+        clearTimeout(categoryPulseTimer.current);
+      }
+    };
+  }, []);
+
+  function pulseCategoryField() {
+    if (categoryPulseTimer.current) {
+      clearTimeout(categoryPulseTimer.current);
+    }
+    setCategoryPulse(true);
+    categoryPulseTimer.current = setTimeout(() => {
+      categoryPulseTimer.current = null;
+      setCategoryPulse(false);
+    }, 480);
+  }
+
+  function handleCategoryChange(next: string) {
+    setCategory(next);
+    setFieldError("");
+    pulseCategoryField();
+  }
 
   function validate(): string {
     const q = question.trim();
@@ -138,6 +166,7 @@ export default function QimenPage() {
         >
           ← 返回首页
         </Link>
+        <QimenScanGrid />
         <p className="mt-4 text-sm tracking-[0.15em] text-amber-800">
           奇门问事
         </p>
@@ -161,18 +190,17 @@ export default function QimenPage() {
       >
         <label className="block">
           <span className="text-sm font-medium text-stone-800">问事分类</span>
-          <Select
-            value={category}
-            onChange={(v) => {
-              setCategory(String(v));
-              setFieldError("");
-            }}
-            options={QIMEN_CATEGORIES.map((item) => ({
-              value: item.value,
-              label: item.label,
-            }))}
-            disabled={submitting}
-          />
+          <div className={categoryPulse ? "category-pulse" : ""}>
+            <Select
+              value={category}
+              onChange={(v) => handleCategoryChange(String(v))}
+              options={QIMEN_CATEGORIES.map((item) => ({
+                value: item.value,
+                label: item.label,
+              }))}
+              disabled={submitting}
+            />
+          </div>
         </label>
 
         <label className="mt-5 block">
@@ -220,9 +248,11 @@ export default function QimenPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="mt-6 min-h-12 w-full rounded-xl bg-stone-900 py-3.5 text-sm font-semibold text-white transition hover:bg-stone-800 disabled:opacity-60"
+          className={`mt-6 min-h-12 w-full rounded-xl bg-stone-900 py-3.5 text-sm font-semibold text-white transition hover:bg-stone-800 disabled:opacity-60 ${
+            submitting ? "submit-breathe" : ""
+          }`}
         >
-          {submitting ? "提交中…" : "生成奇门简析"}
+          {submitting ? "整理局势中…" : "生成奇门简析"}
         </button>
       </form>
 

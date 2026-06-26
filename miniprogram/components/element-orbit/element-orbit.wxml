@@ -1,0 +1,15 @@
+<view class="element-orbit" aria-hidden="true">
+  <view class="element-orbit__ring element-orbit__ring--outer"></view>
+  <view class="element-orbit__ring element-orbit__ring--inner"></view>
+  <view class="element-orbit__center">
+    <text class="element-orbit__title">五行流转</text>
+    <text class="element-orbit__subtitle">简化干支</text>
+  </view>
+  <view class="element-orbit__track">
+    <text class="element-orbit__node element-orbit__node--wood" style="--i:0">木</text>
+    <text class="element-orbit__node element-orbit__node--fire" style="--i:1">火</text>
+    <text class="element-orbit__node element-orbit__node--earth" style="--i:2">土</text>
+    <text class="element-orbit__node element-orbit__node--metal" style="--i:3">金</text>
+    <text class="element-orbit__node element-orbit__node--water" style="--i:4">水</text>
+  </view>
+</view>

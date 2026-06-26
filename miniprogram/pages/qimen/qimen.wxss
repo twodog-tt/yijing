@@ -1,5 +1,26 @@
 @import "../ask/ask.wxss";
 
+.page-header--qimen {
+  position: relative;
+}
+
+.picker-field--category {
+  transition: border-color 0.28s ease, box-shadow 0.28s ease;
+}
+
+.picker-field--pulse {
+  animation: category-select 0.55s ease;
+}
+
+.submit-button--loading {
+  animation: submit-breathe 1.6s ease-in-out infinite;
+}
+
+.agreement--static,
+.disclaimer--static {
+  animation: none;
+}
+
 .question-label {
   margin-top: 32rpx;
 }
@@ -48,4 +69,32 @@
   color: #a8a29e;
   font-size: 22rpx;
   white-space: nowrap;
+}
+
+@keyframes category-select {
+  0% {
+    border-color: #d6d3d1;
+    box-shadow: 0 0 0 rgba(146, 64, 14, 0);
+  }
+
+  50% {
+    border-color: #92400e;
+    box-shadow: 0 0 16rpx rgba(146, 64, 14, 0.12);
+  }
+
+  100% {
+    border-color: #d6d3d1;
+    box-shadow: 0 0 0 rgba(146, 64, 14, 0);
+  }
+}
+
+@keyframes submit-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(41, 37, 36, 0);
+  }
+
+  50% {
+    box-shadow: 0 0 24rpx rgba(41, 37, 36, 0.12);
+  }
 }

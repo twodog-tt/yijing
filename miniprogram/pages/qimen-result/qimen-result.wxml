@@ -9,80 +9,101 @@
   </view>
 
   <block wx:if="{{!loading && view}}">
-    <view class="page-header">
-      <text class="eyebrow">奇门问事</text>
-      <text class="page-title">{{moduleLabel}}</text>
-      <view class="result-meta">
-        <text>{{view.algorithmVersion}}</text>
-        <text>{{view.categoryLabel}}</text>
-        <text wx:if="{{view.timeBucketLabel}}">{{view.timeBucketLabel}}</text>
-        <text>{{createdAtDisplay}}</text>
+    <section-reveal active="{{resultReady}}" delay="0">
+      <view class="page-header page-header--result">
+        <qimen-scan-grid variant="header"></qimen-scan-grid>
+        <text class="eyebrow">奇门问事</text>
+        <text class="page-title">{{moduleLabel}}</text>
+        <view class="result-meta">
+          <text>{{view.algorithmVersion}}</text>
+          <text>{{view.categoryLabel}}</text>
+          <text wx:if="{{view.timeBucketLabel}}">{{view.timeBucketLabel}}</text>
+          <text>{{createdAtDisplay}}</text>
+        </view>
       </view>
-    </view>
+    </section-reveal>
 
-    <view class="card">
-      <text class="card-title">方法说明</text>
-      <text class="card-text">{{view.methodNote}}</text>
-      <text class="muted-text privacy-note">{{privacyNote}}</text>
-    </view>
-
-    <view class="card">
-      <text class="section-title">局势梳理</text>
-      <text class="card-text pre-wrap">{{view.situationOverview}}</text>
-    </view>
-
-    <view wx:if="{{view.riskObservations.length}}" class="card">
-      <text class="section-title">风险观察</text>
-      <view class="bullet-list">
-        <text class="bullet-item" wx:for="{{view.riskObservations}}" wx:key="*this">· {{item}}</text>
+    <section-reveal active="{{resultReady}}" delay="80">
+      <view class="card">
+        <text class="card-title">方法说明</text>
+        <text class="card-text">{{view.methodNote}}</text>
+        <text class="muted-text privacy-note">{{privacyNote}}</text>
       </view>
-    </view>
+    </section-reveal>
 
-    <view wx:if="{{view.actionPacing}}" class="card">
-      <text class="section-title">行动节奏</text>
-      <text class="card-text pre-wrap">{{view.actionPacing}}</text>
-    </view>
-
-    <view wx:if="{{view.reflectionQuestions.length}}" class="card">
-      <text class="section-title">自我反思问题</text>
-      <view class="bullet-list">
-        <text class="bullet-item" wx:for="{{view.reflectionQuestions}}" wx:key="*this">· {{item}}</text>
+    <section-reveal active="{{resultReady}}" delay="160">
+      <view class="card">
+        <text class="section-title">局势梳理</text>
+        <text class="card-text pre-wrap">{{view.situationOverview}}</text>
       </view>
-    </view>
+    </section-reveal>
 
-    <view wx:if="{{view.actionSuggestions.length}}" class="card">
-      <text class="section-title">行动建议</text>
-      <view class="bullet-list">
-        <text class="bullet-item" wx:for="{{view.actionSuggestions}}" wx:key="*this">· {{item}}</text>
+    <section-reveal wx:if="{{view.riskObservations.length}}" active="{{resultReady}}" delay="240">
+      <view class="card">
+        <text class="section-title">风险观察</text>
+        <view class="bullet-list">
+          <text class="bullet-item" wx:for="{{view.riskObservations}}" wx:key="*this">· {{item}}</text>
+        </view>
       </view>
-    </view>
+    </section-reveal>
 
-    <view wx:if="{{view.freeContent}}" class="card free-card">
-      <text class="section-title">免费解读</text>
-      <text class="free-content pre-wrap">{{view.freeContent}}</text>
-    </view>
-
-    <view wx:if="{{view.limits.length}}" class="card limits-card">
-      <text class="section-title">简化说明</text>
-      <view class="bullet-list">
-        <text class="bullet-item" wx:for="{{view.limits}}" wx:key="*this">· {{item}}</text>
+    <section-reveal wx:if="{{view.actionPacing}}" active="{{resultReady}}" delay="320">
+      <view class="card">
+        <text class="section-title">行动节奏</text>
+        <text class="card-text pre-wrap">{{view.actionPacing}}</text>
       </view>
-    </view>
+    </section-reveal>
 
-    <view wx:if="{{!isUnlocked}}" class="action-block">
-      <button
-        class="action-button action-button--unlock"
-        loading="{{unlockFlowRunning || unlocking}}"
-        disabled="{{unlockFlowRunning || unlocking || deleting}}"
-        bindtap="handleUnlock"
-      >观看视频，解锁完整报告</button>
-      <text class="action-hint">完整报告基于 qimen-simple-v1 简化规则，仅供传统文化学习与自我反思参考。</text>
-    </view>
+    <section-reveal wx:if="{{view.reflectionQuestions.length}}" active="{{resultReady}}" delay="400">
+      <view class="card">
+        <text class="section-title">自我反思问题</text>
+        <view class="bullet-list">
+          <text class="bullet-item" wx:for="{{view.reflectionQuestions}}" wx:key="*this">· {{item}}</text>
+        </view>
+      </view>
+    </section-reveal>
+
+    <section-reveal wx:if="{{view.actionSuggestions.length}}" active="{{resultReady}}" delay="480">
+      <view class="card">
+        <text class="section-title">行动建议</text>
+        <view class="bullet-list">
+          <text class="bullet-item" wx:for="{{view.actionSuggestions}}" wx:key="*this">· {{item}}</text>
+        </view>
+      </view>
+    </section-reveal>
+
+    <section-reveal wx:if="{{view.freeContent}}" active="{{resultReady}}" delay="560">
+      <view class="card free-card">
+        <text class="section-title">免费解读</text>
+        <text class="free-content pre-wrap">{{view.freeContent}}</text>
+      </view>
+    </section-reveal>
+
+    <section-reveal wx:if="{{view.limits.length}}" active="{{resultReady}}" delay="640">
+      <view class="card limits-card">
+        <text class="section-title">简化说明</text>
+        <view class="bullet-list">
+          <text class="bullet-item" wx:for="{{view.limits}}" wx:key="*this">· {{item}}</text>
+        </view>
+      </view>
+    </section-reveal>
+
+    <section-reveal wx:if="{{!isUnlocked}}" active="{{resultReady}}" delay="720">
+      <view class="action-block">
+        <button
+          class="action-button action-button--unlock {{unlockFlowRunning || unlocking ? 'action-button--glow' : ''}}"
+          loading="{{unlockFlowRunning || unlocking}}"
+          disabled="{{unlockFlowRunning || unlocking || deleting || cardGenerating}}"
+          bindtap="handleUnlock"
+        >观看视频，解锁完整报告</button>
+        <text class="action-hint">完整报告基于 qimen-simple-v1 简化规则，仅供传统文化学习与自我反思参考。</text>
+      </view>
+    </section-reveal>
 
     <view class="full-section">
       <error-state wx:if="{{unlockError}}" visible="{{true}}" message="{{unlockError}}" show-retry="{{false}}"></error-state>
 
-      <view wx:if="{{isUnlocked && fullContent}}" id="full-report" class="card full-card">
+      <view wx:if="{{isUnlocked && fullContent}}" id="full-report" class="card full-card full-card--reveal {{fullRevealActive ? 'full-card--visible' : ''}}">
         <text class="section-title">完整报告</text>
         <text class="full-content pre-wrap">{{fullContent}}</text>
       </view>
@@ -98,35 +119,39 @@
       </view>
     </view>
 
-    <view class="card share-section">
-      <text class="section-title">分享这份简析</text>
-      <text class="share-hint">发送微信分享卡片，邀请朋友体验奇门问事。分享为入口引导，不包含完整原问题。</text>
-      <view class="share-actions">
-        <button class="secondary-button share-button" open-type="share">分享给朋友</button>
-        <button
-          wx:if="{{isUnlocked}}"
-          class="primary-button share-button"
-          loading="{{cardGenerating}}"
-          disabled="{{cardGenerating || deleting || unlockFlowRunning || unlocking}}"
-          bindtap="handleGenerateCard"
-        >生成分享长图</button>
+    <section-reveal active="{{resultReady}}" delay="800">
+      <view class="card share-section {{isUnlocked ? 'share-section--ready' : ''}}">
+        <text class="section-title">分享这份简析</text>
+        <text class="share-hint">发送微信分享卡片，邀请朋友体验奇门问事。分享为入口引导，不包含完整原问题。</text>
+        <view class="share-actions">
+          <button class="secondary-button share-button" open-type="share">分享给朋友</button>
+          <button
+            wx:if="{{isUnlocked}}"
+            class="primary-button share-button share-button--reveal"
+            loading="{{cardGenerating}}"
+            disabled="{{cardGenerating || deleting || unlockFlowRunning || unlocking}}"
+            bindtap="handleGenerateCard"
+          >生成分享长图</button>
+        </view>
+        <text wx:if="{{isUnlocked}}" class="share-hint share-hint--secondary">长图包含免费解读与完整报告，不包含完整原问题或小程序码。</text>
       </view>
-      <text wx:if="{{isUnlocked}}" class="share-hint share-hint--secondary">长图包含免费解读与完整报告，不包含完整原问题或小程序码。</text>
-    </view>
+    </section-reveal>
 
     <qimen-share-card id="qimenShareCard" card-data="{{cardData}}"></qimen-share-card>
 
-    <view class="danger-section">
-      <text class="danger-label">危险操作</text>
-      <error-state wx:if="{{deleteError}}" visible="{{true}}" message="{{deleteError}}" show-retry="{{false}}"></error-state>
-      <button
-        class="danger-button"
-        loading="{{deleting}}"
-        disabled="{{deleting || unlockFlowRunning || unlocking || cardGenerating}}"
-        bindtap="handleDelete"
-      >删除记录</button>
-    </view>
+    <section-reveal static="{{true}}">
+      <view class="danger-section">
+        <text class="danger-label">危险操作</text>
+        <error-state wx:if="{{deleteError}}" visible="{{true}}" message="{{deleteError}}" show-retry="{{false}}"></error-state>
+        <button
+          class="danger-button"
+          loading="{{deleting}}"
+          disabled="{{deleting || unlockFlowRunning || unlocking || cardGenerating}}"
+          bindtap="handleDelete"
+        >删除记录</button>
+      </view>
+    </section-reveal>
 
-    <text class="disclaimer">内容仅用于传统文化学习、自我反思和行动整理，不构成现实决策建议。</text>
+    <text class="disclaimer disclaimer--static">内容仅用于传统文化学习、自我反思和行动整理，不构成现实决策建议。</text>
   </block>
 </view>

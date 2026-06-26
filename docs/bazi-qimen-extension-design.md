@@ -1199,4 +1199,70 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 
 ---
 
+### 10.20 Phase UX1 交付清单（小程序 + Web 八字/奇门轻量动效，已完成）
+
+**范围：** 小程序 + Web UI 动效；**不改** backend / sql / deploy。
+
+**小程序新增组件：**
+
+- [x] `miniprogram/components/element-flow/` — 五行标签慢速流转（纯 CSS）
+- [x] `miniprogram/components/qimen-grid/` — 九宫格线框装饰 + 光点（纯 CSS）
+- [x] `miniprogram/components/result-reveal/` — 结果分段延迟渐入
+
+**Web 新增组件：**
+
+- [x] `frontend/components/motion/ElementFlow.tsx`
+- [x] `frontend/components/motion/QimenGrid.tsx`
+- [x] `frontend/components/motion/ResultReveal.tsx`
+- [x] `frontend/app/globals.css` — 共享 animation 工具类 + `prefers-reduced-motion`
+
+**八字 / 奇门（小程序 + Web 对齐）：**
+
+- [x] 表单页：顶部氛围、`element-flow` / `qimen-grid`、提交呼吸 loading
+- [x] 结果页：分段渐入、四柱/段落依次、五行高亮、解锁/完整报告淡入
+
+**技术约束：**
+
+- [x] 不引入 Lottie / 远程资源 / 额外 npm 动画库
+- [x] 无频繁 timer + 状态抖动（分类 pulse 单次 timeout，卸载清理）
+- [x] 不改变 unlock / 隐私边界 / 文案合规
+
+**明确未做：**
+
+- [ ] Lottie 复杂动效（UX2 评估后仍用手写 CSS，未引入 JSON）
+
+---
+
+### 10.22 Phase UX2 交付清单（可感知动效升级，已完成）
+
+**参考方向（仅思路，未引入代码/资源）：**
+
+- airbnb/lottie-web、wechat-miniprogram/lottie-miniprogram → 未引入（包体/license 风险）
+- simeydotme/sparticles 等粒子库 → 未引入；采用 CSS 光点/扫描线
+- streamich/awesome-css-animations → 参考 keyframes 思路，项目内手写
+
+**新增组件：**
+
+- [x] `element-orbit` / `ElementOrbit` — 五行环形流转 + 中心「五行流转 / 简化干支」
+- [x] `qimen-scan-grid` / `QimenScanGrid` — 九宫扫描线 + 光点路径
+- [x] `section-reveal` / `SectionReveal` — 分段上移淡入（80ms 步进）
+
+**覆盖页面：** 小程序 bazi / analysis-result / qimen / qimen-result；Web `/` `/bazi` `/qimen` `/analysis/[id]`
+
+**未改：** backend / sql / deploy / unlock / 隐私边界
+
+---
+
+*Phase UX2 可感知动效已交付。*
+
+*Phase UX1 小程序 + Web 轻量动效已交付。*
+
+### 10.21 Phase UX1 自审摘要
+
+- **修复：** 四柱卡片移除 `result-reveal` 与 `pillar-emerge` 双重动画；小程序 / Web 均补充 `prefers-reduced-motion`；Web 解锁按钮光晕覆盖弹窗打开态。
+- **验证：** `node --check`（小程序页面 + 组件）、`npm run build`（frontend）。
+- **未改：** backend / sql / deploy / unlock 逻辑。
+
+---
+
 *Phase W1 Web 端同步已交付。*

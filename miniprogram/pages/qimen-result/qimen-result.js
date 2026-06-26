@@ -88,6 +88,8 @@ Page({
     deleteError: "",
     cardData: null,
     cardGenerating: false,
+    resultReady: false,
+    fullRevealActive: false,
   },
 
   onLoad(options) {
@@ -165,6 +167,7 @@ Page({
     this.safeSetData({
       fullContent,
       isUnlocked: true,
+      fullRevealActive: true,
       unlockError: "",
       cardData: buildQimenLongPosterData(
         this.data.recordId,
@@ -180,6 +183,8 @@ Page({
       error: "",
       deleteError: "",
       unlockError: "",
+      resultReady: false,
+      fullRevealActive: false,
     });
 
     try {
@@ -191,6 +196,8 @@ Page({
           view: null,
           isUnlocked: false,
           fullContent: "",
+          resultReady: false,
+          fullRevealActive: false,
           cardData: null,
         });
         return;
@@ -206,6 +213,8 @@ Page({
         createdAtDisplay: formatDateTime(record.created_at) || "—",
         isUnlocked,
         fullContent,
+        fullRevealActive: isUnlocked && !!fullContent,
+        resultReady: true,
         cardData:
           isUnlocked && fullContent
             ? buildQimenLongPosterData(this.data.recordId, view, fullContent)
@@ -218,6 +227,8 @@ Page({
         view: null,
         isUnlocked: false,
         fullContent: "",
+        resultReady: false,
+        fullRevealActive: false,
         cardData: null,
       });
     }

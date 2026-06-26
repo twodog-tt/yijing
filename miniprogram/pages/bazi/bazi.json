@@ -2,6 +2,7 @@
   "navigationBarTitleText": "八字简析",
   "usingComponents": {
     "loading-state": "/components/loading-state/loading-state",
-    "error-state": "/components/error-state/error-state"
+    "error-state": "/components/error-state/error-state",
+    "element-orbit": "/components/element-orbit/element-orbit"
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import RecentAnalysisList from "@/components/analysis/RecentAnalysisList";
+import ElementOrbit from "@/components/motion/ElementOrbit";
 import ErrorAlert from "@/components/ui/ErrorAlert";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import Select from "@/components/ui/Select";
@@ -126,7 +127,8 @@ export default function BaziPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-8 sm:py-10">
-      <div className="mb-6">
+      <div className="relative mb-6 overflow-hidden">
+        <div className="header-aura" aria-hidden />
         <Link
           href="/"
           className="-ml-3 inline-flex min-h-11 items-center rounded-lg px-3 text-sm text-amber-800 hover:underline"
@@ -142,6 +144,7 @@ export default function BaziPage() {
         <p className="mt-2 text-sm leading-relaxed text-stone-600">
           本功能采用简化干支文化规则，仅用于传统文化学习和自我反思，不等同于专业八字排盘，也不构成现实决策依据。
         </p>
+        <ElementOrbit />
       </div>
 
       {apiError && (
@@ -228,9 +231,11 @@ export default function BaziPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="mt-6 min-h-12 w-full rounded-xl bg-stone-900 py-3.5 text-sm font-semibold text-white transition hover:bg-stone-800 disabled:opacity-60"
+          className={`mt-6 min-h-12 w-full rounded-xl bg-stone-900 py-3.5 text-sm font-semibold text-white transition hover:bg-stone-800 disabled:opacity-60 ${
+            submitting ? "submit-breathe" : ""
+          }`}
         >
-          {submitting ? "提交中…" : "生成八字简析"}
+          {submitting ? "生成中…" : "生成八字简析"}
         </button>
       </form>
 
