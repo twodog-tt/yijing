@@ -141,6 +141,8 @@ func yearPillar(year int) string {
 }
 
 func dayPillar(t time.Time) string {
+	// Fixed epoch: 1900-01-01 12:00 UTC ≈ 甲戌日；用于 v1 与 v2 POC 的稳定日柱。
+	// 未校正真太阳时或子时换日口径；ALG1 阶段仅补充测试，不大改逻辑。
 	base := time.Date(1900, 1, 1, 12, 0, 0, 0, time.UTC)
 	current := time.Date(t.Year(), t.Month(), t.Day(), 12, 0, 0, 0, time.UTC)
 	days := int(current.Sub(base).Hours() / 24)

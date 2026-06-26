@@ -1366,3 +1366,30 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 - [x] `free_content` / 模板 full_content / DeepSeek prompt 引用上述字段
 - [x] 小程序 / Web 结果页新增「解读视角」卡片
 - [x] 未知时辰仍不生成时柱；result_payload 不含 birth_date
+
+---
+
+### 10.28 Phase ALG1 交付清单（八字 v2 POC · 后端算法）
+
+**目标：** 在 **不复制 GitHub 源码、不引入 AGPL、不新增外部依赖** 的前提下，自研 Go 实现 `bazi-v2-poc` 最小算法层，与 `bazi-simple-v1` 并存。
+
+**范围（仅后端 POC）：**
+
+- [x] 立春换年（年柱不再按公历 1 月 1 日切换）
+- [x] 节气月柱（十二「节」切换月令，年上起月法）
+- [x] 日柱沿用 v1 固定基准日算法（已补充 golden 说明）
+- [x] 时柱沿用 v1 十二时辰 + 五鼠遁；未知时辰不生成时柱
+- [ ] 真太阳时（延后 **ALG1.1**）
+- [ ] 大运 / 流年 / 神煞 / 格局 / 旺衰强断（明确不做）
+
+**实现位置：**
+
+- `backend/internal/service/bazi/calendar/` — 节气近似时刻、立春换年、月令
+- `backend/internal/service/bazi/calculate_v2.go` — `CalculateV2()` + `ResultPayload()`（`algorithm_version=bazi-v2-poc`）
+- `bazi-simple-v1` 的 `Calculate()` **未改默认行为**
+
+**默认策略：** 线上 Create API **仍使用** `bazi-simple-v1`；ALG1.1 再评估是否灰度启用 v2。
+
+**参考来源（仅规则/能力矩阵，未复制代码）：** `bazi-skill`（MIT 规则文档）、taibu-core 能力对照（MIT，未引入 npm 包）。
+
+**产品边界：** 仅供传统文化学习参考，不承诺专业排盘准确性；result_payload 不含完整 birth_date / session_key / prompt。

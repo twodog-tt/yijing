@@ -319,6 +319,7 @@ Tab: 今日 | 问事 | 扩展(八字/奇门) | 我的(历史/设置)
 | **Phase E10** | 八字差异化解读 | bazi_profile / interpretation_lens、prompt 与 UI 展示 | Cursor ✅ |
 | **Phase F6** | 奇门长图分享 | 解锁后 Canvas 长图 | Cursor ✅ |
 | **Phase F7** | 奇门差异化解读 | question_profile / qimen_lens、prompt 与 UI 展示 | Cursor ✅ |
+| **Phase ALG1** | 八字 v2 POC（后端） | 立春换年、节气月柱、`CalculateV2`、golden tests；**未默认切换线上** | Cursor 🚧 |
 | **Phase G** | 奇门增强（unlock / AI / 高级 UI） | 完整解读、九宫盘等（规划，未启动） | Cursor + Codex review |
 | **Phase H（P4）** | 统一报告中心 & 商业化 | 会员/次数包调研、支付资质、**暂不实施** | 产品决策后单独立项 |
 
