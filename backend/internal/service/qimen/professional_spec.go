@@ -13,7 +13,7 @@ const (
 	DunYuanPending                = "upper_middle_lower_pending"
 	DunMethodSolarTermBoundary    = "solar_term_boundary"
 
-	MethodNoteV2Professional = "奇门 v2 专业口径（ALG2.4A/B），含拆补法第一版局数；仅供传统文化学习与结构化观察，不等同于线下大师排盘，不构成现实决策依据。"
+	MethodNoteV2Professional = "奇门 v2 专业口径（ALG2.4A–C），含二十四节气第一版拆补局数；仅供传统文化学习与结构化观察，不等同于线下大师排盘，不构成现实决策依据。"
 )
 
 // CalculationLimitsV2Professional returns limits for the professional target payload (design only).
@@ -25,7 +25,7 @@ var calculationLimitsV2Professional = []string{
 	"当前不提供精准预测",
 	"当前不提供应期断言",
 	"当前不构成现实决策依据",
-	"拆补局数为 ALG2.4B 第一版十二节近似，置闰法尚未实现",
+	"拆补局数为 ALG2.4C 二十四节气第一版映射（pending_verification），置闰法尚未实现",
 	"转盘飞布、值符落宫与天禽寄宫尚未实现（professional_pending）",
 }
 
@@ -53,7 +53,7 @@ var ProfessionalGapAudits = []ProfessionalGapAudit{
 	{
 		Dimension: "局数", CurrentPOC: "hash(RFC3339+category+阴阳遁) % 9 + 1",
 		TargetPro: "拆补法 / 置闰法 / 三元（上中下元）明确口径",
-		Status: "partial", Implementation: "ALG2.4B",
+		Status: "partial", Implementation: "ALG2.4C",
 	},
 	{
 		Dimension: "旬首/空亡", CurrentPOC: "六旬首固定表 + 日期/category hash",

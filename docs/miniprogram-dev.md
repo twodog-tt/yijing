@@ -1326,6 +1326,22 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 - [x] 同时间不同 category，ju/yuan 一致
 - [x] `qimen-v2-poc` / `qimen-simple-v1` 回归未破坏
 
+## 25.13 Phase ALG2.4C：奇门 v2 professional 二十四节气映射增强（后端，不接 API）
+
+**说明：** 扩展 `TwentyFourTerms` provider、`ResolveCurrentProfessionalTerm`、24 节气拆补映射（`twenty_four_terms_chai_bu_v1`）。十二气用中点近似并标记 `pending_verification`。**不接** API；**不部署**。
+
+**preview 变化：**
+
+- `calendar_basis.solar_term` → 当前 24 节气之一
+- `dun.source` / basis → `twenty_four_terms_chai_bu_v1`
+- 三元方案 A 不变；置闰仍 pending
+
+**验收（后端）：**
+
+- [x] 24 节气列表 / jie·qi 分布 / base ju 全覆盖
+- [x] 11 组边界 fixtures preview 通过
+- [x] category 不影响 ju；POC/v1 回归正常
+
 ## 26. Phase UX1：八字 / 奇门轻量动效
 
 Phase UX1 在小程序与 Web 八字、奇门页面增加贴合传统文化场景的轻量 UI 动效，提升氛围与完成感。**仅改 UI 动效，不改后端、数据库、部署。**

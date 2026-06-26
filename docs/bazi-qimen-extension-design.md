@@ -1778,6 +1778,38 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 - [ ] 转盘飞布 / 值符落宫 / 天禽寄宫（**ALG2.5**）
 - [ ] frontend / miniprogram / SQL / deploy
 
-**下一步：** ALG2.4C 二十四节气映射增强；ALG2.5 转盘飞布；QIMEN-V2-VIEW。
+**下一步：** ALG2.5 转盘飞布；ALG2.4D 置闰法设计；QIMEN-V2-VIEW。
+
+---
+
+### 10.40 Phase ALG2.4C 交付清单（奇门 v2 professional 二十四节气映射增强）
+
+**目标：** 扩展 professional calendar 至二十四节气数据层，拆补 basis 升级为 `twenty_four_terms_chai_bu_v1`；**不接 API、不部署**。
+
+**本阶段完成：**
+
+- [x] `ProfessionalSolarTerm` + `TwentyFourSolarTermCatalog`（24 名称、index、jie/qi）
+- [x] `FormulaSolarTermProvider.TwentyFourTerms` — 十二节公式 + 十二气中点近似 + 夏至/冬至公式
+- [x] `ResolveCurrentProfessionalTerm` / `ResolvePreviousProfessionalTerm`（跨年稳定）
+- [x] `BaseJuForProfessionalTerm` — 24 节气全覆盖（`pending_verification`）
+- [x] `ResolveChaiBuJu` basis → `twenty_four_terms_chai_bu_v1`
+- [x] preview `calendar_basis` 使用当前二十四节气结果
+
+**精度说明：**
+
+| 类型 | precision | 说明 |
+|------|-----------|------|
+| 十二节 | `formula_approximation` | 沿用 bazi/calendar 公式 |
+| 夏至/冬至 | `formula_approximation` | 阴阳遁边界公式 |
+| 其余十气 | `formula_midpoint_approximation` | 相邻节令中点，pending_verification |
+
+**仍不做（ALG2.4C）：**
+
+- [ ] API 接入 `qimen-v2-professional`
+- [ ] 置闰法完整实现（`zhi_run_pending` 仍预留）
+- [ ] 转盘飞布 / 值符落宫 / 天禽寄宫（**ALG2.5**）
+- [ ] frontend / miniprogram / SQL / deploy
+
+**下一步：** ALG2.5 转盘飞布；ALG2.4D 置闰法；QIMEN-V2-VIEW。
 
 ---

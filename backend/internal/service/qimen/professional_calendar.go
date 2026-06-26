@@ -11,7 +11,7 @@ import (
 const (
 	professionalSolarTermSource   = "formula_solar_term_provider"
 	professionalSolarTermPrecision = "day_hour_formula_approximation"
-	professionalCalendarNote        = "节令与中气时刻仍为公式近似（本地时），非天文台秒级交节；后续可替换为权威交节表"
+	professionalCalendarNote        = "ALG2.4C 二十四节气第一版：节令公式近似、气令中点近似（本地时），非天文台秒级交节；后续可替换权威交节表"
 	professionalTimeBasis           = "local_time"
 )
 
@@ -109,49 +109,37 @@ func normalizeProfessionalMoment(t time.Time) time.Time {
 }
 
 func resolveCurrentJiePoint(t time.Time, provider SolarTermProvider) ProfessionalSolarTermPoint {
-	t = normalizeProfessionalMoment(t)
-	loc := t.Location()
-	var best time.Time
-	point := ProfessionalSolarTermPoint{Name: "小寒", Source: professionalSolarTermSource, Precision: professionalSolarTermPrecision}
-	found := false
-	for y := t.Year() - 1; y <= t.Year()+1; y++ {
-		for _, p := range provider.TermPoints(y, loc) {
-			if isDunBoundaryTerm(p.Name) {
-				continue
-			}
-			if p.Time.After(t) {
-				continue
-			}
-			if !found || p.Time.After(best) {
-				best = p.Time
-				point = p
-				found = true
-			}
-		}
+	term := ResolveCurrentProfessionalTerm(t, provider)
+	return professionalSolarTermPointFromTerm(term)
+}
+
+func professionalSolarTermPointFromTerm(term ProfessionalSolarTerm) ProfessionalSolarTermPoint {
+	return ProfessionalSolarTermPoint{
+		Name:      term.Name,
+		Time:      term.Time,
+		Source:    term.Source,
+		Precision: term.Precision,
+		Note:      term.Note,
 	}
-	if !found {
-		point.Note = professionalCalendarNote
-	}
-	return point
 }
 
 func isDunBoundaryTerm(name string) bool {
 	return name == "冬至" || name == "夏至"
 }
 
-// ResolveProfessionalCalendarBasis builds calendar metadata for professional preview.
+// ResolveProfessionalCalendarBasis builds calendar metadata for professional preview (24-term).
 func ResolveProfessionalCalendarBasis(t time.Time, provider SolarTermProvider) ProfessionalCalendarBasis {
 	if provider == nil {
 		provider = defaultSolarTermProvider()
 	}
 	t = normalizeProfessionalMoment(t)
-	jie := resolveCurrentJiePoint(t, provider)
+	term := ResolveCurrentProfessionalTerm(t, provider)
 	return ProfessionalCalendarBasis{
-		SolarTerm:     jie.Name,
-		SolarTermTime: jie.Time.Format(time.RFC3339),
+		SolarTerm:     term.Name,
+		SolarTermTime: term.Time.Format(time.RFC3339),
 		JieqiBasis:    jieqiBasisPOC,
 		TimeBasis:     professionalTimeBasis,
-		Note:          professionalCalendarNote,
+		Note:          twentyFourTermCalendarNote(term),
 	}
 }
 

@@ -85,8 +85,54 @@ func TestCalculateProfessionalPreviewChiefAndPalacesPending(t *testing.T) {
 	if result.Dun.Ju < 1 || result.Dun.Ju > 9 {
 		t.Fatalf("ju should be 1-9, got %d", result.Dun.Ju)
 	}
+	if result.Dun.Source != qimen.JuBasisTwentyFourTermsChaiBu() {
+		t.Fatalf("dun source/basis=%q", result.Dun.Source)
+	}
 	if result.Dun.Method != qimen.DunMethodChaiBu {
 		t.Fatalf("method=%q want chai_bu", result.Dun.Method)
+	}
+}
+
+func TestCalculateProfessionalPreviewTwentyFourTermFixtures(t *testing.T) {
+	provider := qimen.FormulaSolarTermProvider{}
+	fixtures := []struct {
+		when string
+		cat  string
+	}{
+		{"2024-01-06 09:00", "general"},
+		{"2024-02-04 10:30", "general"},
+		{"2024-03-20 09:00", "career"},
+		{"2024-06-20 23:30", "study"},
+		{"2024-06-21 00:30", "study"},
+		{"2024-08-07 15:00", "relationship"},
+		{"2024-09-22 18:30", "decision"},
+		{"2024-12-21 23:10", "general"},
+		{"2024-12-22 00:30", "general"},
+		{"2025-01-05 09:00", "general"},
+		{"2025-02-03 11:30", "career"},
+	}
+	for _, fx := range fixtures {
+		t.Run(fx.when, func(t *testing.T) {
+			when, err := time.ParseInLocation("2006-01-02 15:04", fx.when, clock.Location())
+			if err != nil {
+				t.Fatalf("parse: %v", err)
+			}
+			result, err := qimen.CalculateProfessionalPreview(qimen.CalculateInputProfessional{
+				Category: fx.cat, Now: when, Provider: provider,
+			})
+			if err != nil {
+				t.Fatalf("preview: %v", err)
+			}
+			if result.CalendarBasis.SolarTerm == "" {
+				t.Fatal("calendar solar_term empty")
+			}
+			if result.Dun.Ju < 1 || result.Dun.Ju > 9 {
+				t.Fatalf("ju=%d", result.Dun.Ju)
+			}
+			if result.Dun.Source != qimen.JuBasisTwentyFourTermsChaiBu() {
+				t.Fatalf("basis=%q", result.Dun.Source)
+			}
+		})
 	}
 }
 
@@ -156,6 +202,9 @@ func assertProfessionalPreviewPayload(t *testing.T, obj map[string]any, when tim
 	note, _ := dun["note"].(string)
 	if note == "" || !strings.Contains(note, "第一版") {
 		t.Fatalf("dun.note should mention first version approximation: %q", note)
+	}
+	if src, _ := dun["source"].(string); src != qimen.JuBasisTwentyFourTermsChaiBu() {
+		t.Fatalf("dun.source/basis=%v", dun["source"])
 	}
 
 	gz := obj["ganzhi"].(map[string]any)

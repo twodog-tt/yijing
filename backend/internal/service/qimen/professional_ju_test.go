@@ -66,6 +66,9 @@ func TestResolveChaiBuJuRangeAndMethod(t *testing.T) {
 	if ju.Yuan != DunYuanUpper && ju.Yuan != DunYuanMiddle && ju.Yuan != DunYuanLower {
 		t.Fatalf("invalid yuan %q", ju.Yuan)
 	}
+	if ju.Basis != juBasisTwentyFourTermsChaiBu {
+		t.Fatalf("basis=%q", ju.Basis)
+	}
 	if !strings.Contains(ju.Note, "第一版") {
 		t.Fatalf("note should mention first version: %q", ju.Note)
 	}
@@ -89,13 +92,17 @@ func TestResolveChaiBuJuYangYinDirection(t *testing.T) {
 	loc := clock.Location()
 	basis := ProfessionalCalendarBasis{SolarTerm: "惊蛰", SolarTermTime: time.Date(2024, 3, 6, 12, 0, 0, 0, loc).Format(time.RFC3339)}
 	gz := ProfessionalGanzhi{Day: "甲子", Hour: "甲子"}
-	base := chaiBuBaseJuByJie["惊蛰"]
+	base, ok := BaseJuForProfessionalTerm("惊蛰", "yang")
+	if !ok {
+		t.Fatal("missing base ju for 惊蛰")
+	}
 
 	yangDun := ProfessionalDun{Type: "yang"}
 	yinDun := ProfessionalDun{Type: "yin"}
 
 	whenUpper := time.Date(2024, 3, 7, 9, 0, 0, 0, loc)
-	yangJu := ResolveChaiBuJu(whenUpper, yangDun, basis, gz)
+	basisUpper := ProfessionalCalendarBasis{SolarTerm: "惊蛰", SolarTermTime: time.Date(2024, 3, 6, 12, 0, 0, 0, loc).Format(time.RFC3339)}
+	yangJu := ResolveChaiBuJu(whenUpper, yangDun, basisUpper, gz)
 	if yangJu.Ju != base {
 		t.Fatalf("yang upper ju=%d want %d", yangJu.Ju, base)
 	}
@@ -144,5 +151,13 @@ func TestChaiBuBaseJuCoversTwelveJie(t *testing.T) {
 		if chaiBuBaseJuByJie[name] < 1 || chaiBuBaseJuByJie[name] > 9 {
 			t.Fatalf("invalid base ju for %q: %d", name, chaiBuBaseJuByJie[name])
 		}
+	}
+}
+
+func TestResolveChaiBuJuUsesTwentyFourTermBasis(t *testing.T) {
+	when := time.Date(2024, 3, 20, 9, 0, 0, 0, clock.Location())
+	ju := ResolveChaiBuJu(when, ResolveProfessionalDun(when, FormulaSolarTermProvider{}), ResolveProfessionalCalendarBasis(when, FormulaSolarTermProvider{}), ResolveProfessionalGanZhi(when))
+	if ju.Basis != juBasisTwentyFourTermsChaiBu {
+		t.Fatalf("basis=%q", ju.Basis)
 	}
 }
