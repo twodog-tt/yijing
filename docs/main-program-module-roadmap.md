@@ -361,8 +361,9 @@ Phase A (验收)
 |-------|------|------|
 | UX1 | 轻量 CSS 动效（五行标签、九宫装饰、分段渐入） | ✅ |
 | UX2 | 可感知升级：五行环形流转、四柱翻入、九宫扫描；无 Lottie | ✅ |
+| W2 | Web 首页 IA/文案/样式对齐小程序 index | ✅ |
 
-详见 [miniprogram-dev.md](./miniprogram-dev.md) §27。
+详见 [miniprogram-dev.md](./miniprogram-dev.md) §27–§28。
 
 ---
 

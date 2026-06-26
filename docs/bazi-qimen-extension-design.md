@@ -1266,3 +1266,34 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 ---
 
 *Phase W1 Web 端同步已交付。*
+
+---
+
+### 10.23 Phase W2 交付清单（Web 首页对齐小程序，进行中）
+
+**范围：** 仅 `frontend/` + 相关 `docs/`；**不改** backend / miniprogram / sql / deploy。
+
+**对齐目标：** Web 首页移动端信息架构与小程序 `pages/index` 一致。
+
+**文案：**
+
+- [x] 顶部 eyebrow：易经问事
+- [x] 主标题：从卦象中整理当下思路
+- [x] 副标题：以传统文化学习和趣味解读为基础…
+- [x] 四标签：传统文化学习 / 趣味卦象解读 / 自我反思整理 / 克制的行动建议
+- [x] 底部免责声明（与小程序 index 一致）
+
+**入口顺序（纵向 nav-link 风格）：**
+
+1. 问事起卦（主按钮深色）
+2. 八字简析（副标题 + compact `ElementOrbit`）
+3. 奇门问事（副标题 + compact `QimenScanGrid`）
+4. 今日一卦（淡金边框，非独立大卡片）
+5. 历史记录
+6. 关于与免责声明
+
+**移除：** Web 首页独立「今日运势」大卡片。
+
+**样式：** `frontend/app/globals.css` 新增 `.home-*` 类；页面背景 `#faf8f3`；桌面端居中窄卡片。
+
+**未改：** API、unlock、DeepSeek、广告、支付、微信登录。

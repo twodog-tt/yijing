@@ -23,7 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN" className={`${notoSerif.variable} h-full`}>
-      <body className="flex min-h-dvh flex-col bg-stone-100 font-serif text-stone-900 antialiased">
+      <body className="flex min-h-dvh flex-col bg-[#faf8f3] font-serif text-stone-900 antialiased">
         <DisclaimerBanner />
         <div className="flex flex-1 flex-col">{children}</div>
         <Footer />

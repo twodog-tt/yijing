@@ -1,5 +1,5 @@
 const DISCLAIMER =
-  "仅供娱乐和传统文化参考，不构成任何预测、医疗、法律或投资建议。";
+  "仅供娱乐、传统文化学习和自我反思参考，不构成预测、医疗、法律、投资或重大决策建议。";
 
 export default function DisclaimerBanner() {
   return (

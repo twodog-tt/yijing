@@ -2,87 +2,110 @@ import ElementOrbit from "@/components/motion/ElementOrbit";
 import QimenScanGrid from "@/components/motion/QimenScanGrid";
 import Link from "next/link";
 
+const POSITIONING_TAGS = [
+  "传统文化学习",
+  "趣味卦象解读",
+  "自我反思整理",
+  "克制的行动建议",
+] as const;
+
+const HOME_DISCLAIMER =
+  "仅供娱乐、传统文化学习和自我反思参考，不构成预测、医疗、法律、投资或重大决策建议。";
+
+const NAV_ENTRIES = [
+  {
+    href: "/ask",
+    title: "问事起卦",
+    variant: "primary" as const,
+  },
+  {
+    href: "/bazi",
+    title: "八字简析",
+    subtitle: "基于传统干支文化的性格与五行倾向参考",
+    variant: "bazi" as const,
+    deco: "orbit" as const,
+  },
+  {
+    href: "/qimen",
+    title: "奇门问事",
+    subtitle: "基于传统奇门文化的局势梳理与行动节奏参考",
+    variant: "qimen" as const,
+    deco: "scan" as const,
+  },
+  {
+    href: "/today",
+    title: "今日一卦",
+    variant: "today" as const,
+  },
+  {
+    href: "/history",
+    title: "历史记录",
+    variant: "default" as const,
+  },
+  {
+    href: "/about",
+    title: "关于与免责声明",
+    variant: "default" as const,
+  },
+] as const;
+
 export default function Home() {
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-8 sm:py-16">
-      <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm sm:p-10">
-        <p className="text-sm tracking-[0.2em] text-amber-800">易经问事</p>
-        <h1 className="mt-4 text-3xl font-bold leading-tight text-stone-900 sm:text-4xl">
-          心中有事，起一卦。
-        </h1>
-        <p className="mt-5 text-base leading-relaxed text-stone-600">
-          用传统易经卦象，帮你整理当下处境、风险与下一步行动。
+    <main className="home-page mx-auto w-full max-w-lg flex-1 px-4 py-6 sm:max-w-xl sm:py-10">
+      <header className="home-hero">
+        <p className="home-eyebrow">易经问事</p>
+        <h1 className="home-title">从卦象中整理当下思路</h1>
+        <p className="home-description">
+          以传统文化学习和趣味解读为基础，为自我反思、风险梳理与下一步行动提供参考。
         </p>
+      </header>
 
-        <div className="mt-8 flex flex-col gap-3">
-          <Link
-            href="/ask"
-            className="inline-flex items-center justify-center rounded-xl bg-stone-900 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-stone-800"
-          >
-            立即起卦
-          </Link>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Link
-              href="/bazi"
-              className="relative inline-flex items-center justify-center overflow-hidden rounded-xl border border-amber-300 bg-amber-50 py-3.5 pl-14 pr-6 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
-            >
-              <span className="home-entry-deco absolute left-3 top-1/2 -translate-y-1/2">
-                <ElementOrbit compact />
-              </span>
-              八字简析
-            </Link>
-            <Link
-              href="/qimen"
-              className="relative inline-flex items-center justify-center overflow-hidden rounded-xl border border-amber-300 bg-amber-50 py-3.5 pl-14 pr-6 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
-            >
-              <span className="home-entry-deco absolute left-3 top-1/2 -translate-y-1/2">
-                <QimenScanGrid compact />
-              </span>
-              奇门问事
-            </Link>
+      <div className="home-positioning" aria-label="产品定位">
+        {POSITIONING_TAGS.map((tag) => (
+          <div key={tag} className="home-positioning-item">
+            <span className="home-positioning-dot" aria-hidden />
+            <span>{tag}</span>
           </div>
+        ))}
+      </div>
+
+      <nav className="home-nav" aria-label="功能入口">
+        {NAV_ENTRIES.map((entry) => (
           <Link
-            href="/today"
-            className="inline-flex items-center justify-center rounded-xl border border-stone-300 bg-white px-6 py-3.5 text-sm font-semibold text-stone-800 transition hover:bg-stone-50"
+            key={entry.href}
+            href={entry.href}
+            className={`home-nav-link home-nav-link--${entry.variant}`}
           >
-            查看今日一卦
+            {"subtitle" in entry ? (
+              <span className="home-nav-link__content">
+                {"deco" in entry && entry.deco === "orbit" ? (
+                  <span className="home-entry-deco home-entry-deco-wrap" aria-hidden>
+                    <ElementOrbit compact />
+                  </span>
+                ) : null}
+                {"deco" in entry && entry.deco === "scan" ? (
+                  <span className="home-entry-deco home-entry-deco-wrap" aria-hidden>
+                    <QimenScanGrid compact />
+                  </span>
+                ) : null}
+                <span className="home-nav-link__text">
+                  <span>{entry.title}</span>
+                  <span className="home-nav-subtitle">{entry.subtitle}</span>
+                </span>
+              </span>
+            ) : (
+              <span>{entry.title}</span>
+            )}
+            <span className="home-nav-arrow" aria-hidden>
+              →
+            </span>
           </Link>
-          <div className="flex gap-3">
-            <Link
-              href="/history"
-              className="inline-flex flex-1 items-center justify-center rounded-xl border border-stone-300 bg-white px-3 py-3.5 text-sm font-semibold text-stone-800 transition hover:bg-stone-50 sm:px-6"
-            >
-              历史记录
-            </Link>
-            <Link
-              href="/about"
-              className="inline-flex flex-1 items-center justify-center rounded-xl border border-stone-300 bg-white px-3 py-3.5 text-sm font-semibold text-stone-800 transition hover:bg-stone-50 sm:px-6"
-            >
-              关于说明
-            </Link>
-          </div>
-        </div>
-      </section>
+        ))}
+      </nav>
 
-      <section className="mt-6 rounded-xl border border-amber-200/80 bg-gradient-to-r from-amber-50 to-stone-50 p-5">
-        <p className="text-sm font-medium text-amber-900">今日运势</p>
-        <p className="mt-1 text-xs leading-relaxed text-stone-600">
-          用一卦整理今天的状态、节奏与行动提醒。
-        </p>
-        <Link
-          href="/today"
-          className="mt-1 inline-flex min-h-11 items-center text-sm font-semibold text-amber-800 hover:underline"
-        >
-          查看今日一卦 →
-        </Link>
-      </section>
-
-      <section className="mt-6 rounded-xl border border-stone-200 bg-stone-50 p-5 text-xs leading-relaxed text-stone-500">
-        仅供娱乐和传统文化参考，不构成任何预测、医疗、法律或投资建议。
-        <Link href="/about" className="ml-1 text-amber-800 hover:underline">
-          查看完整说明
-        </Link>
-      </section>
+      <p className="home-disclaimer" role="note">
+        {HOME_DISCLAIMER}
+      </p>
     </main>
   );
 }
