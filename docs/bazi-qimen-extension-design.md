@@ -1918,3 +1918,26 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 **下一步：** QIMEN-V2-VIEW-QA；ALG2.7；BAZI1.3。
 
 ---
+
+### 10.45 Phase QIMEN-V2-VIEW-QA 交付清单（小程序 professional 九宫回归验收）
+
+**目标：** 回归验收 QIMEN-V2-VIEW；确认 v1 / poc / professional 展示边界与隐私合规；**不改** backend / Web / SQL。
+
+**验收通过（自动化 / API / 视图层）：**
+
+- [x] 普通创建默认 `qimen-simple-v1`，结果页不展示 professional 九宫区块
+- [x] `qimen-v2-poc` 虽有 `palaces=9`，`buildProfessionalQimenView` 返回 null，不误触发 professional 区块
+- [x] `qimen-v2-professional`：`palaces=9`、`layout_version=professional_layout_v1_center_tianqin`、`chief` 非 pending；九宫格 3×3 洛书序；中五宫 `door=—` 有 fallback
+- [x] 分享长图仅增加 professional 一句摘要，不绘制完整九宫
+- [x] 不展示 session_key / prompt / payload 原始 JSON / 完整原问题
+- [x] 无强预测 / 改运化灾文案；禁用词仅在过滤器列表
+
+**仍待本地微信开发者工具确认：**
+
+- [ ] 结果页 UI 渲染、历史页跳转、分享卡片与长图实际导出
+
+**本阶段未做：** backend / frontend / SQL / deploy 变更。
+
+**下一步：** ALG2.7；BAZI1.3；RELEASE-QA。
+
+---

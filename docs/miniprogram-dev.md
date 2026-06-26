@@ -1414,7 +1414,50 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 
 - 小程序普通入口仍默认 `qimen-simple-v1`
 - professional 记录仅通过内部 `algorithm_version` 参数创建
-- 详情页「有 palaces 就展示」，不是面向用户的算法开关
+- 详情页仅在 `algorithm_version=qimen-v2-professional` 且 `palaces.length=9` 时展示九宫区块（`qimen-v2-poc` 虽有 palaces 但不触发）
+
+## 25.18 Phase QIMEN-V2-VIEW-QA：小程序 professional 九宫展示回归验收
+
+**说明：** 对 QIMEN-V2-VIEW（`ccba5f8`）做回归验收；**不改** backend / Web / SQL / deploy；发现显示问题可小修 miniprogram 允许范围。
+
+**Git 起点：** `main` @ `ccba5f8`；`git status` 仅 `?? .deploy-patches/`。
+
+**静态检查：**
+
+- [x] 全部 miniprogram JS `node --check` 通过
+- [x] 无生产广告文案（`观看视频` / `广告解锁` 等）
+- [x] 禁用词仅出现在 `long-poster-canvas.js` 过滤器列表
+- [x] `git diff --check` 无冲突标记
+
+**API 验收（ECS `123.57.48.214`，临时 session，不输出真实 session_key）：**
+
+- [x] 默认创建 → `qimen-simple-v1`（id=86），无 `palaces`
+- [x] `qimen-v2-poc` 创建成功（id=87），有 9 宫但不触发 professional 视图层
+- [x] `qimen-v2-professional` 创建成功（id=85），`palaces=9`，`layout_version=professional_layout_v1_center_tianqin`，`chief.zhi_fu=天任`
+- [x] `GET /api/v1/analysis/{id}` 可加载 professional 详情；响应体不含 `session_key` / `prompt`
+
+**视图层程序化验收（`buildQimenView`）：**
+
+- [x] v1：`isProfessionalQimen=false`
+- [x] poc：虽有 9 宫，`isProfessionalQimen=false`
+- [x] professional：`isProfessionalQimen=true`，`palaceGrid.length=9`，中五宫 `door=—` 正常 fallback
+- [x] 页面摘要用 `QUESTION_SUMMARY`，不展示完整原问题
+
+**微信开发者工具（需本地重新编译 / 预览）：**
+
+- [ ] 普通入口创建 v1 → 结果页无 professional 区块
+- [ ] professional 记录（如 id=85 + 对应临时 session）→ 展示九宫 / layout / 值符值使
+- [ ] poc 记录 → 不展示 professional 区块、不白屏
+- [ ] 历史页跳转、分享卡片、长图（professional 仅一句摘要，不含完整九宫）
+
+**本阶段结论：**
+
+- 普通用户仍无算法选择 UI；创建默认仍为 `qimen-simple-v1`
+- professional 九宫仅 internal 记录详情页条件展示
+- **不涉及** backend / Web / SQL 变更；**不需要** backend 部署
+- **需要** 微信开发者工具重新编译 / 预览确认 UI 渲染
+
+**下一步：** ALG2.7 professional 报告质量增强；BAZI1.3；RELEASE-QA。
 
 ## 26. Phase UX1：八字 / 奇门轻量动效
 
