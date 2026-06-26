@@ -529,7 +529,7 @@ func TestUnlockQimenRepairsMissingFullContentWhenAlreadyUnlocked(t *testing.T) {
 	if !repairCalled {
 		t.Fatalf("expected repair persistence call")
 	}
-	if result.FullContent == "" || !strings.Contains(result.FullContent, "【2. 局势梳理展开】") {
+	if result.FullContent == "" || !strings.Contains(result.FullContent, "【一、问题局势摘要】") {
 		t.Fatalf("expected repaired full content, got %q", result.FullContent)
 	}
 }
@@ -598,7 +598,7 @@ func TestGenerateFullReportQimenUsesTemplateFallbackByDefault(t *testing.T) {
 	if provider != model.AIProviderTemplateFallback {
 		t.Fatalf("expected template_fallback, got %q", provider)
 	}
-	if !strings.Contains(content, "【2. 局势梳理展开】") {
+	if !strings.Contains(content, "【一、问题局势摘要】") {
 		t.Fatalf("expected qimen template sections, got %q", content)
 	}
 }
@@ -622,7 +622,7 @@ func TestGenerateFullReportBaziStillWorks(t *testing.T) {
 	if provider != model.AIProviderTemplateFallback {
 		t.Fatalf("expected template_fallback, got %q", provider)
 	}
-	if !strings.Contains(content, "【1. 简化干支示意】") {
+	if !strings.Contains(content, "【一、简要说明】") {
 		t.Fatalf("expected bazi template sections")
 	}
 }

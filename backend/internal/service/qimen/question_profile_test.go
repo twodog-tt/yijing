@@ -169,7 +169,7 @@ func TestBuildQimenUserPromptIncludesProfileAndLens(t *testing.T) {
 	for _, required := range []string{
 		"question_profile",
 		"qimen_lens",
-		"安全问事特征",
+		"问事特征",
 		"intent_type=推进计划",
 		"focus_theme=",
 	} {

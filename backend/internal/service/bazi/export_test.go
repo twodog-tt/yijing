@@ -1,3 +1,5 @@
 package bazi
 
 var BuildFullReportPromptInputForTest = buildFullReportPromptInput
+
+var ReportBodyExcludingBoundaryForTest = reportBodyExcludingBoundary

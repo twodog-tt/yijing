@@ -1352,3 +1352,23 @@ Web 端与小程序 UX1 对齐，使用 `frontend/app/globals.css` 中的 CSS an
 - 表单 / 解锁 / 删除 / 长图 / 分享逻辑
 - 无 setData / 无 JS 帧动画 / 无新依赖
 - `prefers-reduced-motion` 降级
+
+## 31. Phase REPORT1：完整报告质量增强（后端）
+
+**范围：** 八字 / 奇门 `full_content` DeepSeek prompt + template fallback + 测试；**不改** 小程序页面 / Web UI / SQL。
+
+**变化摘要：**
+
+- 完整报告统一为 7 段中文标题结构（八字：简要说明→边界声明；奇门：问题局势摘要→边界声明）
+- 报告正文引用 `bazi_profile` / `interpretation_lens` 或 `question_profile` / `qimen_lens`，不同输入差异更明显
+- DeepSeek 失败时 fallback 仍输出完整 7 段，而非一句兜底
+- 禁用强预测 / 改运 / 投资医疗法律等表述；边界声明可列举禁止项
+
+**小程序侧：** 无需重新编译；解锁后展示的 `full_content` 来自后端，部署 backend 后自动生效。
+
+**验收：**
+
+- [ ] 八字 free_unlock 后完整报告更具体，且不同出生信息差异明显
+- [ ] 奇门 free_unlock 后完整报告更具体，且不同 category 重点不同
+- [ ] 报告正文不含完整出生日期 / 原问题全文 / session_key
+- [ ] 报告正文不含强预测、改运、投资/医疗/法律建议

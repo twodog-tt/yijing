@@ -10,8 +10,6 @@ const fullReportDisclaimer = "本报告基于 qimen-simple-v1 简化奇门文化
 
 type parsedResultPayload struct {
 	MethodNote          string                  `json:"method_note"`
-	QuestionSummary     string                  `json:"question_summary"`
-	SafeQuestionSummary string                  `json:"safe_question_summary"`
 	Category            string                  `json:"category"`
 	TimeContext         *timeContextPayload     `json:"time_context"`
 	QuestionProfile     *profilePayload         `json:"question_profile"`
@@ -20,11 +18,21 @@ type parsedResultPayload struct {
 	RiskObservations    []string                `json:"risk_observations"`
 	ActionPacing        string                  `json:"action_pacing"`
 	ReflectionQuestions []string                `json:"reflection_questions"`
-	ActionSuggestions   []string                `json:"action_suggestions"`
 	CalculationMeta     *calculationMetaPayload `json:"calculation_meta"`
+	SafeQuestionSummary string                  `json:"safe_question_summary"`
 }
 
-// BuildFullContent generates a template full report from stored analysis payloads.
+const (
+	sectionSummary    = "【一、问题局势摘要】"
+	sectionFocus      = "【二、关注主题】"
+	sectionSupport    = "【三、可借助的条件】"
+	sectionRisks      = "【四、主要风险与阻力】"
+	sectionPacing     = "【五、行动节奏建议】"
+	sectionReflection = "【六、自我反思问题】"
+	sectionBoundary   = "【七、边界声明】"
+)
+
+// BuildFullContent generates a structured template full report from stored analysis payloads.
 func BuildFullContent(resultPayload json.RawMessage, freeContent string) (string, error) {
 	var parsed parsedResultPayload
 	if err := json.Unmarshal(resultPayload, &parsed); err != nil {
@@ -40,94 +48,190 @@ func BuildFullContent(resultPayload json.RawMessage, freeContent string) (string
 	}
 
 	category := NormalizeCategory(parsed.Category)
+	profile := profileFromPayload(parsed.QuestionProfile, category)
+	lens := lensFromPayload(parsed.QimenLens, profile, category)
 	categoryText := categoryLabel(category)
+
+	sections := []string{
+		sectionSummary + "\n" + buildQimenSummarySection(parsed, profile, lens, category, categoryText, methodNote),
+		sectionFocus + "\n" + buildQimenFocusSection(profile, lens, category),
+		sectionSupport + "\n" + buildQimenSupportSection(profile, lens, category),
+		sectionRisks + "\n" + buildQimenRiskSection(parsed.RiskObservations, profile, lens, category),
+		sectionPacing + "\n" + buildQimenPacingSection(parsed.ActionPacing, profile, lens, category),
+		sectionReflection + "\n" + buildQimenReflectionSection(parsed.ReflectionQuestions, profile, category),
+		sectionBoundary + "\n" + buildQimenBoundarySection(methodNote, parsed.CalculationMeta),
+	}
+
+	if snippet := strings.TrimSpace(freeContent); snippet != "" {
+		sections[0] = sectionSummary + "\n" + buildQimenSummarySection(parsed, profile, lens, category, categoryText, methodNote) +
+			"\n\n可参考免费解读中的局势梳理要点，继续延伸记录与复盘。"
+	}
+
+	return strings.Join(sections, "\n\n"), nil
+}
+
+func buildQimenSummarySection(parsed parsedResultPayload, profile QuestionProfile, lens QimenLens, category, categoryText, methodNote string) string {
 	timeNote := ""
 	if parsed.TimeContext != nil {
 		if label := timeBucketLabel(strings.TrimSpace(parsed.TimeContext.TimeBucket)); label != "" {
 			timeNote = fmt.Sprintf("时段参考：%s。", label)
 		}
 	}
-
-	summary := QuestionSummary
-
-	risks := parsed.RiskObservations
-	if len(risks) == 0 {
-		risks = []string{
-			"过度依赖单一结论，可能忽略现实细节与变化。",
-			"在信息不完整时仓促行动，容易放大情绪波动。",
-		}
-	}
-
-	pacing := strings.TrimSpace(parsed.ActionPacing)
-	if pacing == "" {
-		pacing = "建议分步整理：先观察现状，再安排一件可执行的小事，最后记录感受与下一步。"
-	}
-
-	reflections := parsed.ReflectionQuestions
-	if len(reflections) == 0 {
-		reflections = []string{
-			"此刻我最需要整理的是情绪、信息还是行动？",
-			"如果把问题拆小，第一步可以是什么？",
-		}
-	}
-
-	suggestions := parsed.ActionSuggestions
-	if len(suggestions) == 0 {
-		suggestions = []string{
-			"安排一件今天能完成的小事，建立可控感。",
-			"把问题改写成「我想观察什么」而非「结果会怎样」。",
-		}
-	}
-
-	limits := calculationLimits
-	if parsed.CalculationMeta != nil && len(parsed.CalculationMeta.Limits) > 0 {
-		limits = parsed.CalculationMeta.Limits
-	}
-
-	profile := profileFromPayload(parsed.QuestionProfile, category)
-	lens := lensFromPayload(parsed.QimenLens, profile, category)
 	safeSummary := strings.TrimSpace(parsed.SafeQuestionSummary)
 	if safeSummary == "" {
 		safeSummary = BuildSafeQuestionSummary(profile)
 	}
-
-	methodSection := fmt.Sprintf(
-		"方法说明：%s\n问事分类：%s\n%s问事摘要：%s\n问事特征：%s\n关注主题：%s\n行动节奏倾向：%s\n规则限制：%s",
+	return strings.Join([]string{
+		fullReportDisclaimer,
 		methodNote,
-		categoryText,
-		timeNote,
-		summary,
-		safeSummary,
+		fmt.Sprintf("问事分类：%s。%s", categoryText, timeNote),
+		fmt.Sprintf("问事特征：%s", safeSummary),
+		fmt.Sprintf("问事摘要：%s", QuestionSummary),
+		parsed.SituationOverview,
+		categorySummaryHint(category, profile),
+	}, "\n")
+}
+
+func categorySummaryHint(category string, profile QuestionProfile) string {
+	switch category {
+	case "career":
+		return fmt.Sprintf("就事业/计划而言，当前更适合先整理推进顺序与资源协调，再围绕「%s」安排小动作。", profile.IntentType)
+	case "relationship":
+		return fmt.Sprintf("就人际/关系而言，当前更适合先梳理与「%s」相关的沟通节奏与边界。", profile.IntentType)
+	case "study":
+		return "就学习/成长而言，当前更适合先复盘方法与精力，再设定阶段目标。"
+	case "decision":
+		return "就决策/选择而言，当前更适合先补齐信息与选项约束，再小步试探。"
+	default:
+		return fmt.Sprintf("就综合问题而言，当前更适合先整理问题与风险，再安排与「%s」相关的小步行动。", profile.IntentType)
+	}
+}
+
+func buildQimenFocusSection(profile QuestionProfile, lens QimenLens, category string) string {
+	focusLine := fmt.Sprintf(
+		"关注主题：%s\n问事侧重：%s（%s，决策压力%s）\n风险倾向：%s",
 		lens.FocusTheme,
-		lens.PacingTheme,
-		strings.Join(limits, "；"),
+		profile.IntentType,
+		profile.TimeHorizon,
+		profile.DecisionPressure,
+		profile.RiskTone,
 	)
-
-	situationSection := parsed.SituationOverview + "\n\n" +
-		"可把上述局势理解为一面观察镜：重点不是给出确定结果，而是帮助你在当前阶段做更清晰的自我整理。"
-
-	riskSection := strings.Join(risks, "\n") + "\n\n" +
-		"以上风险观察来自简化规则下的通用提醒，请结合你的现实情境自行判断。"
-
-	pacingSection := pacing + "\n\n" +
-		"行动节奏建议保持温和、可执行，避免一次性做满所有决定。"
-
-	freeSnippet := strings.TrimSpace(freeContent)
-	observationNote := "可参考免费解读中的局势梳理与反思要点，继续延伸记录。"
-	if freeSnippet != "" {
-		observationNote = "可参考免费解读中的要点，继续延伸记录与复盘。"
+	switch category {
+	case "career":
+		focusLine += "\n本类问事重点：推进顺序、资源协调、执行边界。"
+	case "relationship":
+		focusLine += "\n本类问事重点：沟通节奏、关系边界、误解修复。"
+	case "study":
+		focusLine += "\n本类问事重点：复盘方法、专注节奏、阶段目标。"
+	case "decision":
+		focusLine += "\n本类问事重点：信息补齐、小步试探、备用方案。"
+	default:
+		focusLine += "\n本类问事重点：问题整理、风险收敛、小步行动。"
 	}
+	return focusLine
+}
 
-	sections := []string{
-		"【完整报告说明】\n" + fullReportDisclaimer,
-		"【1. 方法说明与简化边界】\n" + methodSection,
-		"【2. 局势梳理展开】\n" + situationSection,
-		"【3. 风险观察展开】\n" + riskSection,
-		"【4. 行动节奏与节奏建议】\n" + pacingSection,
-		"【5. 自我反思问题】\n" + strings.Join(reflections, "\n"),
-		"【6. 行动建议】\n" + strings.Join(suggestions, "\n"),
-		"【7. 观察与延伸】\n" + observationNote,
-		"【8. 免责声明】\n" + fullReportDisclaimer + "\n" + methodNote,
+func buildQimenSupportSection(profile QuestionProfile, lens QimenLens, category string) string {
+	lines := []string{
+		lens.SupportTheme + "。",
+		fmt.Sprintf("可借助「%s」相关已有资源，先明确最小可验证一步。", profile.IntentType),
 	}
-	return strings.Join(sections, "\n\n"), nil
+	switch category {
+	case "career":
+		lines = append(lines, "把目标拆成「本周一件可完成的小事」，先验证推进顺序是否合理。")
+	case "relationship":
+		lines = append(lines, "先记录一次互动感受，再决定是否调整沟通方式或边界。")
+	case "study":
+		lines = append(lines, "设定一段 25–40 分钟的专注块，并记录收获与卡点。")
+	case "decision":
+		lines = append(lines, "列出选项、约束与可接受的最坏情况，再选低成本试探。")
+	default:
+		lines = append(lines, "安排一件今天能完成的小事，建立可控感。")
+	}
+	return strings.Join(lines, "\n")
+}
+
+func buildQimenRiskSection(risks []string, profile QuestionProfile, lens QimenLens, category string) string {
+	items := append([]string{lens.CautionTheme + "。"}, risks...)
+	switch category {
+	case "career":
+		items = append(items, "执行分散、节奏过快时，可能一次承担过多线程。")
+	case "relationship":
+		items = append(items, "把一次互动放大成整体判断，可能增加误解。")
+	case "study":
+		items = append(items, "只比较结果而忽略方法，可能让学习节奏失衡。")
+	case "decision":
+		items = append(items, "在选项未写清前急于选择，可能遗漏关键约束。")
+	default:
+		items = append(items, "把简化规则当作确定答案，可能偏离自我反思初衷。")
+	}
+	if profile.DecisionPressure == "高" {
+		items = append(items, "犹豫与担心反复切换，可能让行动迟迟无法启动。")
+	}
+	if len(items) > 4 {
+		items = items[:4]
+	}
+	return strings.Join(items, "\n")
+}
+
+func buildQimenPacingSection(pacing string, profile QuestionProfile, lens QimenLens, category string) string {
+	if strings.TrimSpace(pacing) == "" {
+		pacing = lens.PacingTheme + "：先观察再行动。"
+	}
+	extra := categoryPacingHint(category, profile)
+	return pacing + "\n\n" + extra
+}
+
+func categoryPacingHint(category string, profile QuestionProfile) string {
+	switch category {
+	case "career":
+		return fmt.Sprintf("节奏提示：先整理现状与目标，再列出与「%s」相关的一件小动作，最后定期复盘。", profile.IntentType)
+	case "relationship":
+		return fmt.Sprintf("节奏提示：先记录感受，再明确一次与「%s」相关的沟通边界，最后观察变化。", profile.IntentType)
+	case "study":
+		return "节奏提示：先复盘状态，再设定可完成的学习块，最后记录收获。"
+	case "decision":
+		return "节奏提示：先写下选项与约束，再选一个小步验证，最后比较反馈。"
+	default:
+		return fmt.Sprintf("节奏提示：先观察，再安排与「%s」相关的一件小事。", profile.IntentType)
+	}
+}
+
+func buildQimenReflectionSection(questions []string, profile QuestionProfile, category string) string {
+	if len(questions) == 0 {
+		questions = []string{
+			"此刻我最需要整理的是情绪、信息还是行动？",
+			"如果把问题拆小，第一步可以是什么？",
+		}
+	}
+	extra := reflectionExtraForCategory(category, profile)
+	return strings.Join(append(questions, extra), "\n")
+}
+
+func reflectionExtraForCategory(category string, profile QuestionProfile) string {
+	switch category {
+	case "career":
+		return fmt.Sprintf("我真正想推进的「%s」核心目标是什么？", profile.IntentType)
+	case "relationship":
+		return "我期待的关系互动方式是什么？"
+	case "study":
+		return "当前学习方法是否匹配我的精力状态？"
+	case "decision":
+		return "我还缺哪一条信息，才能做更稳妥的比较？"
+	default:
+		return "我是否把简化解读当作确定结果，而忽视了现实验证？"
+	}
+}
+
+func buildQimenBoundarySection(methodNote string, meta *calculationMetaPayload) string {
+	limits := calculationLimits
+	if meta != nil && len(meta.Limits) > 0 {
+		limits = meta.Limits
+	}
+	return strings.Join([]string{
+		fullReportDisclaimer,
+		methodNote,
+		"本报告不构成现实决策依据，不做精准预测、强吉凶判断、改运化解，也不提供投资/医疗/法律/赌博/军事建议。",
+		"规则限制：" + strings.Join(limits, "；"),
+	}, "\n")
 }

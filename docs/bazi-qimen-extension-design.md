@@ -1397,3 +1397,28 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 **参考来源（仅规则/能力矩阵，未复制代码）：** `bazi-skill`（MIT 规则文档）、taibu-core 能力对照（MIT，未引入 npm 包）。
 
 **产品边界：** 仅供传统文化学习参考，不承诺专业排盘准确性；result_payload 不含完整 birth_date / session_key / prompt。
+
+---
+
+### 10.29 Phase REPORT1 交付清单（八字 / 奇门完整报告质量增强）
+
+**目标：** 提升 `full_content` 具体性、差异化与结构化字段引用；**不改** 大运/流年/神煞/奇门完整排盘算法。
+
+**八字完整报告（7 段固定结构）：**
+
+- [x] 一、简要说明 → 七、边界声明
+- [x] DeepSeek prompt 与 template fallback 均引用 `bazi_profile` / `interpretation_lens` / `five_elements` / `calendar_basis`（v2）
+- [x] 体现 `element_balance_type` / `action_style` / `reflection_theme` 差异
+- [x] 未知时辰不生成时柱；v2 说明节气口径为公式近似
+- [x] 禁用词检测排除「边界声明」正文；prompt 不含 birth_date / session_key / 原始 payload
+
+**奇门完整报告（7 段固定结构）：**
+
+- [x] 一、问题局势摘要 → 七、边界声明
+- [x] DeepSeek prompt 与 template fallback 均引用 `question_profile` / `qimen_lens` / category
+- [x] career / relationship / study / decision / general 各有写作重点
+- [x] 不输出完整原问题；prompt 使用 `safe_question_summary`
+
+**测试：** 5 组八字样例 + 5 组奇门样例差异化；禁用词 body 检测；`go test` / `go vet` 通过。
+
+**部署：** 仅 backend；无需 frontend / 小程序重编译 / SQL。

@@ -16,39 +16,25 @@ import (
 const (
 	qimenSystemPrompt = `你是“传统文化奇门问事助手”。
 
-你的任务是根据 qimen-simple-v1 简化奇门文化规则下的结构化信息，生成一份温和、理性、适合普通用户阅读的完整报告。
+你的任务是根据 question_profile 与 qimen_lens 等结构化字段，生成一份温和、理性、适合普通用户阅读的完整报告。
 
 重要边界：
-1. 这是基于 qimen-simple-v1 简化学习版，不等同于专业奇门排盘。
-2. 不生成完整九宫盘，不做专业排盘。
-3. 不构成现实决策依据。
-4. 内容仅用于传统文化学习与自我反思、局势梳理和行动节奏参考。
-5. 不要声称可以精准预测未来或给出必成必败结论。
-6. 不要使用“必然、一定、注定、百分百、保证、大凶、大吉”等绝对词。
-7. 禁止生成：精准预测、必成必败、大凶大吉、必发财、必复合、改运、化灾、投资建议、医疗建议、法律建议、赌博建议、军事行动建议。
-8. 不要恐吓用户，不要诱导付费改运。
-9. 语气温和、克制、不玄乎。
-10. 必须根据 question_profile 与 qimen_lens 写出差异化报告，不要套用固定模板；每个问题都要围绕 intent_type、risk_tone、pacing_theme 展开。
+1. 基于 qimen-simple-v1 简化学习版，不生成完整九宫盘，不构成现实决策依据。
+2. 必须围绕 intent_type、risk_tone、focus_theme、pacing_theme 写出差异化报告，不要套用固定模板。
+3. 不同 category（career/relationship/study/decision/general）必须体现不同重点。
+4. 禁止输出完整原问题、session_key、用户隐私字段。
+5. 禁止精准预测、必成必败、大吉大凶、改运化灾、投资/医疗/法律/赌博/军事建议。
+6. 不要使用“必然、一定、注定、百分百、保证”等绝对词。
 
 你必须只输出纯文本报告正文，不要输出 Markdown 代码块，不要输出 JSON，不要输出额外解释。`
 
-	qimenUserPromptTemplate = `请基于以下简化奇门问事分析信息生成完整报告。
+	qimenUserPromptTemplate = `请基于以下结构化奇门问事信息生成完整报告。
 
-要求按以下 8 个部分输出，每部分用标题开头：
-1. 方法说明与简化边界
-2. 局势梳理展开
-3. 风险观察展开
-4. 行动节奏与节奏建议
-5. 自我反思问题
-6. 行动建议
-7. 观察与延伸
-8. 免责声明
-
-方法说明：{{method_note}}
+method_note：{{method_note}}
 问事分类：{{category_label}}
 时段参考：{{time_bucket_label}}
 问事摘要：{{question_summary}}
-安全问事特征：{{safe_question_summary}}
+问事特征：{{safe_question_summary}}
 question_profile：{{question_profile}}
 qimen_lens：{{qimen_lens}}
 局势梳理：{{situation_overview}}
@@ -59,20 +45,29 @@ qimen_lens：{{qimen_lens}}
 规则限制：{{limits}}
 免费解读摘要：{{free_content}}
 
-写作要求：
-- 必须围绕 question_profile 的 intent_type、risk_tone 与 qimen_lens 的 focus_theme、pacing_theme 展开，避免不同问题写出相同段落。
-- 不要套用固定模板句，各章节内容需体现本次问事的差异。
-- 保持传统文化学习与自我反思语气，不做精准预测与强吉凶判断。
+必须按以下 7 个部分输出，每部分用标题开头（标题文字需一致）：
+一、问题局势摘要
+二、关注主题
+三、可借助的条件
+四、主要风险与阻力
+五、行动节奏建议
+六、自我反思问题
+七、边界声明
 
-必须再次强调：这是 qimen-simple-v1 简化学习版，不生成完整九宫盘，仅供传统文化学习与自我反思，不构成现实决策依据。`
+分类写作重点：
+- career：推进顺序、资源协调、执行风险
+- relationship：沟通节奏、边界、误解修复
+- study：复盘、节奏、专注、阶段目标
+- decision：信息补齐、小步试探、备用方案
+- general：问题整理、风险收敛、小步行动
+
+写作要求：
+- 每个部分都要引用 question_profile / qimen_lens 的具体字段，避免不同问题写出相同段落。
+- 语气保持传统文化学习、自我观察、行动整理，不做精准预测与强吉凶判断。
+- 第七部分必须再次强调：仅供传统文化学习参考，不构成现实决策依据。`
 )
 
-var qimenForbiddenPhrases = []string{
-	"精准预测", "必成必败", "大凶", "大吉", "必发财", "必复合",
-	"改运", "化灾", "投资建议", "医疗建议", "法律建议", "赌博建议", "军事行动",
-	"预测未来", "保证结果", "百分百", "注定", "必然", "一定会", "一定得",
-	"精准算命", "婚姻财运预测", "保证发财", "看广告改运",
-}
+var qimenForbiddenPhrases = fullReportForbiddenPhrases
 
 type deepSeekFullGenerator struct {
 	cfg    *config.Config
@@ -241,11 +236,11 @@ func isValidDeepSeekFullContent(content string) bool {
 		return false
 	}
 	for _, phrase := range qimenForbiddenPhrases {
-		if strings.Contains(content, phrase) {
+		if strings.Contains(reportBodyExcludingBoundary(content), phrase) {
 			return false
 		}
 	}
-	if !strings.Contains(content, "免责声明") {
+	if !strings.Contains(content, "边界声明") && !strings.Contains(content, "免责声明") {
 		return false
 	}
 	return true

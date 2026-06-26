@@ -17,68 +17,57 @@ import (
 const (
 	baziSystemPrompt = `你是“传统文化八字简析助手”。
 
-你的任务是根据简化干支文化规则下的结构化信息，生成一份温和、理性、适合普通用户阅读的完整报告。
+你的任务是根据结构化字段生成一份温和、理性、适合普通用户阅读的完整报告。
 
 重要边界：
-1. 这是基于 bazi-simple-v1 简化干支文化规则的学习参考。
-2. 不等同于专业八字排盘。
-3. 不构成现实决策依据。
-4. 内容仅用于传统文化学习与自我反思。
-5. 不要声称可以预测未来或一生命运。
-6. 不要使用“必然、一定、注定、百分百、保证”等绝对词。
-7. 禁止生成：精准算命、婚姻财运预测、保证发财、保证复合、疾病寿命、改运化解、投资建议、医疗建议、法律建议、赌博建议。
-8. 不要恐吓用户，不要诱导付费改运。
-9. 语气温和、克制、不玄乎。
-10. 必须根据 bazi_profile 与 interpretation_lens 写出差异化报告，不要套用固定模板；围绕五行倾向、行动风格、反思主题展开。
-11. 若 algorithm_version 为 bazi-v2-poc，需说明年柱按立春换年、月柱按十二节令切换，节令时刻为公式近似，非天文台精确时刻。
+1. 内容仅用于传统文化学习与自我反思，不构成现实决策依据。
+2. 不等同于专业八字排盘；若 algorithm_version 为 bazi-v2-poc，需说明节气口径为公式近似。
+3. 必须围绕 bazi_profile 与 interpretation_lens 写出差异化报告，不要套用固定模板。
+4. 必须体现 element_balance_type、action_style、reflection_theme 的差异。
+5. 未知时辰时不得分析时柱，不得假装有时柱。
+6. 禁止输出完整出生日期、出生时辰、session_key 或用户身份信息。
+7. 禁止精准预测、强吉凶、改运化解、必成必败、必发财必复合、投资/医疗/法律/赌博/军事建议。
+8. 不要使用“必然、一定、注定、百分百、保证、大吉、大凶”等绝对词。
 
 你必须只输出纯文本报告正文，不要输出 Markdown 代码块，不要输出 JSON，不要输出额外解释。`
 
-	baziUserPromptTemplate = `请基于以下简化八字分析信息生成完整报告。
+	baziUserPromptTemplate = `请基于以下结构化八字信息生成完整报告。
 
 algorithm_version：{{algorithm_version}}
 calendar_basis：{{calendar_basis}}
-
-要求按以下 7 个部分输出，每部分用标题开头：
-1. 简化干支示意
-2. 五行倾向展开
-3. 日主与行动风格
-4. 自我反思问题
-5. 行动建议
-6. 观察方向
-7. 免责声明
-
-方法说明：{{method_note}}
+method_note：{{method_note}}
 {{hour_unknown_note}}
-简化干支示意：
-- 年柱：{{year_pillar}}
-- 月柱：{{month_pillar}}
-- 日柱：{{day_pillar}}
+
+结构化字段：
+- 年柱：{{year_pillar}}；月柱：{{month_pillar}}；日柱：{{day_pillar}}
 {{hour_pillar_line}}
-日主：{{day_master}}
-五行倾向（简化计数）：木 {{wood}}、火 {{fire}}、土 {{earth}}、金 {{metal}}、水 {{water}}
-bazi_profile：{{bazi_profile}}
-interpretation_lens：{{interpretation_lens}}
-反思焦点：{{reflection_focus}}
-行动建议参考：{{action_suggestions}}
-规则限制：{{limits}}
-免费解读摘要：{{free_content}}
+- 日主：{{day_master}}
+- 五行计数：木 {{wood}}、火 {{fire}}、土 {{earth}}、金 {{metal}}、水 {{water}}
+- bazi_profile：{{bazi_profile}}
+- interpretation_lens：{{interpretation_lens}}
+- 反思焦点：{{reflection_focus}}
+- 行动建议参考：{{action_suggestions}}
+- 规则限制：{{limits}}
+- 免费解读摘要：{{free_content}}
+
+必须按以下 7 个部分输出，每部分用标题开头（标题文字需一致）：
+一、简要说明
+二、四柱与五行观察
+三、个人倾向与行动风格
+四、需要留意的节奏
+五、适合的自我反思问题
+六、近期行动建议
+七、边界声明
 
 写作要求：
-- 必须围绕 bazi_profile 的 element_balance_type、action_style、reflection_theme 与 interpretation_lens 展开，避免不同八字写出相同段落。
-- 不要套用固定模板句，各章节内容需体现本次简析的差异。
-- 保持传统文化学习与自我观察语气，不做精准预测与强断言。
-- 不要输出完整出生日期、出生时辰或用户身份信息。
-
-若时辰未知，必须在相关部分明确写出：时辰未知，本次不生成时柱，相关内容仅基于已知信息进行简化分析。
-免责声明必须再次强调：基于简化干支文化规则，仅供传统文化学习与自我反思，不构成现实决策依据。`
+- 每个部分都要引用 bazi_profile / interpretation_lens 的具体字段，避免不同八字写出相同段落。
+- 第二部分必须写出五行倾向差异；第三部分必须写出 action_style；第五部分必须围绕 reflection_theme 提问。
+- 若 calendar_basis 非空，在简要说明或边界声明中说明节气口径为公式近似。
+- 语气保持自我观察与行动整理，不做精准预测与强断言。
+- 第七部分必须再次强调：仅供传统文化学习参考，不构成现实决策依据。`
 )
 
-var baziForbiddenPhrases = []string{
-	"精准算命", "一生命运", "婚姻财运预测", "保证发财", "保证复合",
-	"疾病寿命", "改运化解", "看广告改运", "投资建议", "医疗建议", "法律建议", "赌博建议",
-	"预测未来", "保证结果", "百分百", "注定", "必然", "一定会", "一定得",
-}
+var baziForbiddenPhrases = fullReportForbiddenPhrases
 
 type deepSeekFullGenerator struct {
 	cfg    *config.Config
@@ -252,11 +241,11 @@ func isValidDeepSeekFullContent(content string, hourUnknown bool) bool {
 		return false
 	}
 	for _, phrase := range baziForbiddenPhrases {
-		if strings.Contains(content, phrase) {
+		if strings.Contains(reportBodyExcludingBoundary(content), phrase) {
 			return false
 		}
 	}
-	if !strings.Contains(content, "免责声明") {
+	if !strings.Contains(content, "边界声明") && !strings.Contains(content, "免责声明") {
 		return false
 	}
 	if hourUnknown && !strings.Contains(content, "时辰未知") {

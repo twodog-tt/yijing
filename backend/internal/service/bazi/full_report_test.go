@@ -49,7 +49,7 @@ func TestFullReportGeneratorUsesTemplateWhenDeepSeekDisabled(t *testing.T) {
 	if provider != model.AIProviderTemplateFallback {
 		t.Fatalf("expected template_fallback, got %q", provider)
 	}
-	if !strings.Contains(content, "【1. 简化干支示意】") {
+	if !strings.Contains(content, "【一、简要说明】") {
 		t.Fatalf("expected template sections, got %q", content)
 	}
 }
@@ -155,7 +155,7 @@ func TestFullReportGeneratorFallsBackWhenDeepSeekReturnsEmpty(t *testing.T) {
 	if provider != model.AIProviderTemplateFallback {
 		t.Fatalf("expected template_fallback, got %q", provider)
 	}
-	if !strings.Contains(content, "【1. 简化干支示意】") {
+	if !strings.Contains(content, "【一、简要说明】") {
 		t.Fatalf("expected template fallback content")
 	}
 }
@@ -186,7 +186,7 @@ func TestFullReportGeneratorFallsBackWhenDeepSeekReturnsForbiddenPhrase(t *testi
 	if provider != model.AIProviderTemplateFallback {
 		t.Fatalf("expected template_fallback, got %q", provider)
 	}
-	if !strings.Contains(content, "【1. 简化干支示意】") {
+	if !strings.Contains(content, "【一、简要说明】") {
 		t.Fatalf("expected template fallback content")
 	}
 }

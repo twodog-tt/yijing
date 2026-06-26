@@ -55,7 +55,7 @@ func TestFullReportGeneratorUsesTemplateWhenDeepSeekDisabled(t *testing.T) {
 	if provider != model.AIProviderTemplateFallback {
 		t.Fatalf("expected template_fallback, got %q", provider)
 	}
-	if !strings.Contains(content, "【2. 局势梳理展开】") {
+	if !strings.Contains(content, "【一、问题局势摘要】") {
 		t.Fatalf("expected template sections, got %q", content)
 	}
 }
@@ -197,7 +197,7 @@ func TestFullReportGeneratorFallsBackWhenDeepSeekReturnsEmpty(t *testing.T) {
 	if provider != model.AIProviderTemplateFallback {
 		t.Fatalf("expected template_fallback, got %q", provider)
 	}
-	if !strings.Contains(content, "【2. 局势梳理展开】") {
+	if !strings.Contains(content, "【一、问题局势摘要】") {
 		t.Fatalf("expected template fallback content")
 	}
 }
@@ -228,7 +228,7 @@ func TestFullReportGeneratorFallsBackWhenDeepSeekReturnsForbiddenPhrase(t *testi
 	if provider != model.AIProviderTemplateFallback {
 		t.Fatalf("expected template_fallback, got %q", provider)
 	}
-	if !strings.Contains(content, "【2. 局势梳理展开】") {
+	if !strings.Contains(content, "【一、问题局势摘要】") {
 		t.Fatalf("expected template fallback content")
 	}
 }
@@ -262,9 +262,10 @@ func TestBuildFullContentDoesNotContainForbiddenWords(t *testing.T) {
 	if err != nil {
 		t.Fatalf("BuildFullContent: %v", err)
 	}
-	for _, phrase := range []string{"精准预测", "必成必败", "改运", "投资建议"} {
-		if strings.Contains(content, phrase) {
-			t.Fatalf("template content must not contain %q", phrase)
+	body := reportBodyExcludingBoundary(content)
+	for _, phrase := range []string{"精准预测", "必成", "必败", "改运", "投资建议"} {
+		if strings.Contains(body, phrase) {
+			t.Fatalf("template content body must not contain %q", phrase)
 		}
 	}
 }
