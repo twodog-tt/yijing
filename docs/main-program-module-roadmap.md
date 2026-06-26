@@ -320,7 +320,7 @@ Tab: 今日 | 问事 | 扩展(八字/奇门) | 我的(历史/设置)
 | **Phase F6** | 奇门长图分享 | 解锁后 Canvas 长图 | Cursor ✅ |
 | **Phase F7** | 奇门差异化解读 | question_profile / qimen_lens、prompt 与 UI 展示 | Cursor ✅ |
 | **Phase ALG1** | 八字 v2 POC（后端） | 立春换年、节气月柱、`CalculateV2`、golden tests | Cursor ✅ |
-| **Phase ALG1.2** | 八字 v2 灰度接入 | 创建 API 可选 `algorithm_version`；默认 v1；内部可测 v2 | Cursor ✅ |
+| **Phase ALG1.2 / BAZI1.2** | 八字 v2 灰度接入 | 创建 API 可选 `algorithm_version`；默认 v1；内部可测 v2 | Cursor ✅ |
 | **Phase REPORT1** | 八字 / 奇门完整报告质量 | 7 段结构、DeepSeek + fallback 差异化、禁用词与隐私测试 | Cursor ✅ |
 | **Phase SHARE1** | 小程序长图分享优化 | 高价值摘要 + 行动要点，移除完整报告粘贴 | Cursor ✅ |
 | **Phase H1** | 统一历史记录页 | 问事 / 八字 / 奇门筛选、合并列表、删除（分析类） | Cursor ✅ |

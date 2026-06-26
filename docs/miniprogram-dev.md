@@ -1121,7 +1121,7 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 
 **仍明确不做：** 真太阳时、大运/流年/神煞；节令时刻不升级为天文历算。
 
-## 25.5 Phase ALG1.2：八字 v2 灰度接入（后端）
+## 25.5 Phase BAZI1.2（ALG1.2）：八字 v2 灰度接入（后端）
 
 **说明：** `POST /api/v1/analysis/bazi` 新增可选字段 `algorithm_version`；**默认 `bazi-simple-v1`**；内部测试可传 `bazi-v2-poc`。小程序 / Web **暂不暴露**算法选择 UI。
 
@@ -1145,6 +1145,8 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 - 其他值 → 400 参数错误，不 fallback
 
 **仍不做：** 真太阳时、大运/流年/神煞、前端算法切换、SQL 变更。
+
+**实现 commit：** `a083882`；线上 backend 已包含（随 `1463881` 部署验证通过）。
 
 ## 26. Phase UX1：八字 / 奇门轻量动效
 

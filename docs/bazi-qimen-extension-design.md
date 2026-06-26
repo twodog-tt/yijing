@@ -1467,3 +1467,23 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 - [x] 历史页问事起卦支持删除
 
 **部署：** 需部署 backend；小程序重新编译；无需 frontend / SQL。
+
+---
+
+### 10.32 Phase BAZI1.2 交付清单（八字 v2 灰度接入）
+
+**目标：** 后端创建八字分析时支持内部选择 `bazi-v2-poc`，默认仍为 `bazi-simple-v1`。
+
+- [x] `POST /api/v1/analysis/bazi` 可选 `algorithm_version`（`bazi-simple-v1` | `bazi-v2-poc`）
+- [x] 省略字段 → 默认 `bazi-simple-v1` / `Calculate()`
+- [x] `bazi-v2-poc` → `CalculateV2()` + 兼容 `result_payload`（含 `pillars_v2` / `calendar_basis`）
+- [x] 非法 `algorithm_version` → 400 参数错误，不 fallback
+- [x] `free_unlock` / DeepSeek / template fallback 均支持 v2
+- [x] 小程序 / Web **暂不暴露**算法选择 UI
+- [x] 不改 SQL / frontend / miniprogram / qimen
+
+**POC 边界：** 节气时刻为公式近似；真太阳时、大运、流年、神煞不在本阶段。
+
+**实现 commit：** `a083882`（`feat(bazi): support v2 algorithm selection for internal rollout`）
+
+**部署：** 随 backend 发布；无需 SQL / frontend / 小程序重编译。
