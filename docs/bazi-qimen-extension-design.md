@@ -1023,12 +1023,13 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 - [x] `DELETE /api/v1/analysis/{id}` 复用硬删除
 - [x] `qimen-simple-v1` 简化学习版：局势梳理 / 风险观察 / 行动节奏 / 自我反思 / 行动建议
 - [x] 风险拦截：静态关键词 + 复用 `sensitive.Service`（DB 敏感词）
-- [x] 奇门 unlock forbidden（403）
+- [x] F1 阶段奇门 unlock forbidden（F5 已开放 mock 解锁）
 
 **明确未做：**
 
 - [x] 小程序奇门页面（Phase F2 已完成，见 §10.14）
-- [ ] 奇门 unlock / DeepSeek 完整报告
+- [x] 奇门 DeepSeek 完整报告生成能力（Phase F4，unlock 未开放）
+- [x] 奇门 unlock mock 视频解锁（Phase F5）
 - [ ] 完整九宫盘 UI / 专业排盘
 - [ ] 军事、赌博、投资、医疗、法律具体建议
 
@@ -1045,14 +1046,157 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 - [x] 最近记录列表 + 详情跳转
 - [x] 详情页删除（确认后返回奇门页）
 - [x] 不展示完整原问题、session_key、原始 payload
-- [x] 不显示 unlock / 视频 / 长图 / DeepSeek
+- [x] 本阶段未含 unlock（Phase F5 已单独交付）
 
-**明确未做：**
+**明确未做（F2 当时）：**
 
-- [ ] 奇门 unlock / DeepSeek 完整报告
 - [ ] 完整九宫盘 UI / 专业排盘
-- [ ] 长图分享
+- [ ] 长图分享（Phase F6）
 
 ---
 
-*Phase F1 后端基础 API 已交付。Phase F2 小程序奇门页面已交付。后续可接入 unlock / 长图 / 高级 UI。*
+### 10.15 Phase F4 交付清单（奇门完整报告 + DeepSeek fallback，已完成）
+
+**已实现：**
+
+- [x] `qimen.FullReportGenerator`：DeepSeek 优先生成，失败 fallback 模板
+- [x] `ai_provider=deepseek` / `template_fallback` 记录
+- [x] Prompt 强制使用安全 `question_summary` 常量；`free_content` 超长截断
+- [x] 禁用词校验 + 空内容 fallback
+- [x] `analysis.Service.GenerateFullReport` 路由 qimen / bazi 生成器
+- [x] 八字 unlock / 六爻业务不受影响
+
+**明确未做：**
+
+- [ ] 奇门长图分享（Phase F6）
+
+---
+
+### 10.16 Phase F5 交付清单（奇门完整报告解锁，已完成）
+
+**后端：**
+
+- [x] `POST /api/v1/analysis/{id}/unlock` 支持 `module_type=qimen`
+- [x] 仅允许 `rewarded_video_mock`
+- [x] session 所有权 + SQL 条件更新
+- [x] 已解锁重复调用不重复生成
+
+**小程序：**
+
+- [x] `qimen-result` mock 视频解锁 + 完整报告展示
+
+**明确未做：**
+
+- [x] 奇门长图分享（Phase F6，见 §10.17）
+- [ ] 真实微信激励视频
+
+---
+
+### 10.17 Phase F6 交付清单（奇门结果长图分享，已完成）
+
+**已实现：**
+
+- [x] `qimen-share-card` 长图组件（Canvas 动态高度 + 超长截断）
+- [x] 解锁后「生成分享长图」
+- [x] `onShareAppMessage` 克制标题 + 仅 id 路径
+- [x] 长图不含完整原问题 / session_key / payload / 小程序码
+
+**明确未做（F6 当时）：**
+
+- [ ] Web 端同步（Phase W1，见 §10.18）
+
+---
+
+### 10.18 Phase W1 交付清单（Web 端八字/奇门同步，已完成）
+
+**Web 路由：**
+
+| 路由 | 说明 |
+|------|------|
+| `/bazi` | 八字表单 + 最近记录 |
+| `/qimen` | 奇门表单 + 最近记录 |
+| `/analysis/[id]` | 八字/奇门结果页（按 `module_type` 分支） |
+
+**已实现：**
+
+- [x] `frontend/lib/api.ts`：`createBaziAnalysis` / `createQimenAnalysis` / `getAnalysis` / `getAnalysisList` / `deleteAnalysis` / `unlockAnalysis`
+- [x] Analysis API 使用 `X-Session-Key` 请求头（非 URL query）
+- [x] Web 解锁使用 `rewarded_video_mock`（内测模拟弹窗，无真实广告）
+- [x] 八字：表单、免费解读、完整报告、删除记录
+- [x] 奇门：表单、免费解读、完整报告、删除记录
+- [x] 首页入口：八字简析 / 奇门问事
+- [x] 隐私：不展示出生日期/完整原问题/`input_payload`/`result_payload` 原文；列表 subtitle 使用算法版本或安全摘要常量
+
+**W1 自查修复：**
+
+- [x] 结果页加载前先 `createSession`，避免未注册 session 误报「记录不存在」
+- [x] 免费解读仅来自 view 层，移除 `record.free_content` 直出 fallback
+- [x] 解锁弹窗重开时清空错误；删除/解锁互斥禁用
+- [x] 表单页 `pageshow` 刷新最近记录（对齐小程序 `onShow`）
+
+**W1 二次自审修复：**
+
+- [x] `request()` 透传 `AbortError`，解锁超时显示正确文案（非「网络连接失败」）
+- [x] 统一 `ensureSession()`：列表/详情/解锁/删除前均注册 session
+- [x] `pageshow` 仅在 `event.persisted`（bfcache 恢复）时刷新，避免首屏重复请求
+- [x] 列表 subtitle 增加 `safeAnalysisListSubtitle` 防御层，屏蔽意外泄露的原问题
+- [x] 解锁进行中通过 `onLoadingChange` 禁用删除按钮
+- [x] 已解锁但 `full_content` 为空时提供「重新获取完整报告」（Web + 小程序）
+
+---
+
+### 10.19 跨阶段（F4–F6 + W1）二次自审
+
+**F4 奇门完整报告 + DeepSeek fallback**
+
+| 检查项 | 结论 |
+|--------|------|
+| DeepSeek → template fallback 链路 | 通过（`go test ./internal/service/qimen/...`） |
+| Prompt 强制 `QuestionSummary` 常量 | 通过 |
+| `free_content` 320 rune 截断 | 通过 |
+| 禁用词 / 空内容 fallback | 通过 |
+| 八字 unlock 不受影响 | 通过 |
+
+**F5 奇门完整报告解锁**
+
+| 检查项 | 结论 | 修复 |
+|--------|------|------|
+| `rewarded_video_mock` only | 通过 | — |
+| 重复 unlock 返回已有内容 | 通过 | — |
+| **已解锁但 `full_content` 为空** | 原仅 API 返回、未持久化，刷新后仍空 | **已修复**：`UpdateUnlockedFullContent` + 小程序/Web「重新获取」 |
+
+**F6 奇门长图分享**
+
+| 检查项 | 结论 |
+|--------|------|
+| 长图不含原问题 / session / payload / 小程序码 | 通过 |
+| 免费区用 `FREE_CONTENT_POSTER_NOTE` 非 raw `free_content` | 通过 |
+| 未解锁不可生成长图 | 通过 |
+| `fullContent` 为空时 block 生成 | 通过（F5 修复后更可恢复） |
+
+**W1 Web 八字/奇门**
+
+| 检查项 | 结论 |
+|--------|------|
+| 路由 `/bazi` `/qimen` `/analysis/[id]` | 通过 |
+| `X-Session-Key` header | 通过 |
+| 隐私字段不展示 | 通过 |
+| `npm run build` + W1 eslint | 通过 |
+
+**验证命令（均已通过）：**
+
+- `go test ./...`
+- `node --check`（qimen-result / analysis-result / qimen-share-card）
+- `npm run build`（frontend）
+
+---
+
+**明确未做（W1 范围外）：**
+
+- [ ] Web 长图分享（八字/奇门）
+- [ ] 历史页合并六爻 + 八字 + 奇门（可后续 W1.1）
+- [ ] 真实微信激励视频 / 登录 / 支付
+
+---
+
+*Phase W1 Web 端同步已交付。*

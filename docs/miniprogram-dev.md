@@ -1006,3 +1006,74 @@ node --check miniprogram/pages/qimen-result/qimen-result.js
 - [ ] 删除记录确认后返回奇门页
 - [ ] 敏感问题（如投资类）有友好提示
 - [ ] Console 不打印 question / session_key / payload
+
+## 23. Phase F4：奇门完整报告（后端）
+
+Phase F4 在后端实现奇门完整报告生成能力，DeepSeek 优先、模板 fallback；**不开放小程序 unlock 入口**（待 Phase F5）。
+
+### 23.1 服务位置
+
+| 组件 | 路径 |
+|---|---|
+| 完整报告生成器 | `backend/internal/service/qimen/full_report.go` |
+| 模板 fallback | `backend/internal/service/qimen/full_content.go` |
+| DeepSeek Prompt | `backend/internal/service/qimen/deepseek_full.go` |
+| 路由入口 | `analysis.Service.GenerateFullReport` |
+
+### 23.2 行为
+
+- DeepSeek 成功 → `ai_provider=deepseek`
+- DeepSeek 失败 / 空内容 / 禁用词 → `template_fallback`
+- 免费解读不受影响
+- 奇门 `POST /analysis/{id}/unlock` 仍返回 forbidden
+
+### 23.3 验收命令
+
+```bash
+cd backend && go test -count=1 ./internal/service/qimen/... ./internal/service/analysis/...
+```
+
+## 24. Phase F5：奇门完整报告解锁
+
+### 24.1 后端
+
+- `POST /analysis/{id}/unlock` 支持奇门（`module_type=2`）
+- 仅 `unlock_type=rewarded_video_mock`
+- Session：`X-Session-Key` header，不放 query
+
+### 24.2 小程序
+
+- `pages/qimen-result`：mock 激励视频 → unlock → 展示完整报告
+- 复用 `unlockAnalysis(id, { unlockType: 'rewarded_video_mock' })`
+
+### 24.3 语法检查
+
+```bash
+node --check miniprogram/pages/qimen-result/qimen-result.js
+node --check miniprogram/utils/api.js
+node --check miniprogram/utils/qimen.js
+node --check miniprogram/components/qimen-share-card/qimen-share-card.js
+```
+
+## 25. Phase F6：奇门结果长图分享
+
+解锁完整报告后，结果页支持「生成分享长图」与「分享给朋友」。
+
+### 25.1 组件
+
+| 组件 | 路径 |
+|---|---|
+| 奇门长图 | `components/qimen-share-card/qimen-share-card` |
+| 数据构建 | `utils/qimen.js` → `buildQimenLongPosterData` |
+
+### 25.2 长图内容
+
+包含：文易传统文化、奇门问事、qimen-simple-v1 说明、局势梳理、风险观察、行动节奏、反思问题、行动建议、免费解读、完整报告、免责声明。
+
+**不包含：** 完整原问题、session_key、payload、小程序码。
+
+### 25.3 分享给朋友
+
+- 标题：「一份传统文化视角的奇门问事简析」
+- 路径：`/pages/qimen-result/qimen-result?id={id}`
+- 加载失败回退奇门页入口
