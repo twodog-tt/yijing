@@ -1502,3 +1502,34 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 **实现 commit：** `a083882`（`feat(bazi): support v2 algorithm selection for internal rollout`）
 
 **部署：** 随 backend 发布；无需 SQL / frontend / 小程序重编译。
+
+---
+
+### 10.33 Phase ALG2 交付清单（奇门 v2 POC · 后端算法）
+
+**目标：** 在 **不复制 GitHub 源码、不引入 AGPL、不新增外部依赖** 的前提下，自研 Go 实现 `qimen-v2-poc` 最小九宫排盘 POC，与 `qimen-simple-v1` 并存。
+
+**范围（仅后端 POC）：**
+
+- [x] 结构化九宫盘 `palaces`（9 宫：名称 / 天盘地盘干 / 九星 / 八门 / 八神占位）
+- [x] `calendar_basis`：节令名称 + 公式近似口径说明
+- [x] `dun`：冬至后阳遁 / 夏至后阴遁简化口径 + POC 局数
+- [x] `xun` / `chief`：旬首、空亡、值符值使最小占位
+- [x] `method_note` / `limits`：明确学习观察边界，不作强预测
+- [ ] 专业完整起局 / 转盘算法（延后 **ALG2.1**）
+- [ ] API 灰度接入（延后 **ALG2.2**）
+- [ ] 大运 / 流年 / 神煞 / 应期 / 强吉凶（明确不做）
+
+**实现位置：**
+
+- `backend/internal/service/qimen/calculate_v2.go` — `CalculateV2()` + `ResultPayload()`（`algorithm_version=qimen-v2-poc`）
+- `backend/internal/service/qimen/calendar.go` — 节令近似、阴阳遁、局数 POC
+- `backend/internal/service/qimen/palace.go` — 九宫结构 builder
+- `backend/internal/service/qimen/algorithm_version.go` — 版本常量与 limits
+- `qimen-simple-v1` 的 `Calculate()` **未改默认行为**；Create API **默认仍走 v1**
+
+**默认策略：** 线上 `POST /analysis/qimen` **不接 v2**；仅供后端测试与后续 ALG2.2 灰度评估。
+
+**POC 边界：** 节令时刻复用八字 calendar 公式近似；阴阳遁 / 局数为稳定可测 POC 规则，非专业奇门排盘。
+
+**产品边界：** 仅供传统文化学习与结构化观察；result_payload 不含完整原问题 / session_key / prompt。

@@ -1148,6 +1148,21 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 
 **实现 commit：** `a083882`；线上 backend 已包含（随 `1463881` 部署验证通过）。
 
+## 25.6 Phase ALG2：奇门 v2 POC（后端，未改小程序）
+
+**说明：** ALG2 仅在 `backend/internal/service/qimen/` 增加 `qimen-v2-poc` 九宫排盘 POC 与测试；**不接线上 API、不改小程序 / Web、不部署**。
+
+**v2 增强点：** 结构化九宫盘 payload；节令 / 阴阳遁 / 局数 / 旬首 / 值符值使 POC 占位；不做大运 / 流年 / 神煞 / 应期 / 强吉凶。
+
+**验收（后端）：**
+
+- [x] `go test ./internal/service/qimen/...` 通过（含 v2 golden + 合规 + v1 回归）
+- [x] `CalculateV2` 返回 `algorithm_version=qimen-v2-poc`，`palaces` 数量 9
+- [x] 节令 / 阴阳遁 / 局数为 POC 近似口径，limits 明确「不提供精准预测 / 不构成现实决策依据」
+- [x] `qimen-simple-v1` 现有测试未被破坏
+
+**仍不做：** API 灰度（ALG2.2）、专业完整起局校准（ALG2.1）、frontend / miniprogram 展示、SQL 变更。
+
 ## 26. Phase UX1：八字 / 奇门轻量动效
 
 Phase UX1 在小程序与 Web 八字、奇门页面增加贴合传统文化场景的轻量 UI 动效，提升氛围与完成感。**仅改 UI 动效，不改后端、数据库、部署。**
