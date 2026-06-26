@@ -12,7 +12,7 @@
 
   <view wx:if="{{!loading && !error && !items.length}}" class="empty-state">
     <text class="empty-title">当前还没有起卦记录</text>
-    <text class="empty-description">完成一次问事或今日一卦后，记录会显示在这里。</text>
+    <text class="empty-description">完成一次问事、八字简析、奇门问事或今日一卦后，相关记录会显示在这里（卦象）或各模块表单的「最近记录」中。</text>
     <navigator class="nav-link nav-link--primary empty-action" url="/pages/ask/ask">开始一次问事 →</navigator>
   </view>
 

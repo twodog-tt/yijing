@@ -3,6 +3,8 @@ const {
   limitPosterText,
   getQimenCategoryHighlight,
 } = require("./long-poster-canvas");
+
+const MODULE_QIMEN_TYPE = 2;
 const MODULE_QIMEN_LABEL = "奇门问事";
 const QUESTION_SUMMARY = "用户问题已用于本次局势梳理";
 const ALGORITHM_QIMEN_SIMPLE_V1 = "qimen-simple-v1";

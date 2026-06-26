@@ -23,7 +23,7 @@ function mapSubmitError(error) {
   if (isBusinessError(error, 40001)) {
     return "会话已失效，请重新进入页面。";
   }
-  if (isBusinessError(error, 40001)) {
+  if (isBusinessError(error, 40002)) {
     return "请检查出生日期、时辰与免责声明后重试。";
   }
   return error.message || "提交失败，请稍后重试。";
