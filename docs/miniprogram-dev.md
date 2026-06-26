@@ -1557,6 +1557,46 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 
 **下一步：** RELEASE-QA；BAZI1.3。
 
+## 25.22 Phase MINIAPP-LOCAL-QA：微信开发者工具 / 真机预览验收
+
+**说明：** 在 QIMEN-V2-VIEW-DEVTOOLS-QA 代码层预检基础上，完成**真实** DevTools 编译 / 预览 / 真机验收；**不改** backend / Web / SQL。
+
+**Git 起点：** `main` @ `38bef14`；小程序代码基线 `ccba5f8`。
+
+**开工前复验（2026-06-27）：**
+
+- [x] 测试记录仍可加载：prof id=102、poc id=104、v1 id=103（`GET /analysis/{id}` code=0）
+- [x] miniprogram JS `node --check` 通过
+- [x] 视图层条件与分享/长图逻辑与 §25.21 一致
+
+**DevTools 操作步骤（人工）：**
+
+1. 导入 `miniprogram/`，API 基址 `http://123.57.48.214/api/v1`
+2. 详情 → 本地设置：关闭合法域名校验
+3. Storage 设置 `yijing_session_key` → 重新编译 → 跳转结果页
+4. 普通 v1：从 `/pages/qimen/qimen` 创建（不传 `algorithm_version`）
+5. 真机预览：至少验证 professional 九宫渲染与长图相册保存一次
+
+**验收清单（DevTools / 真机，需人工勾选）：**
+
+| 项 | prof 102 | poc 104 | v1 入口 |
+|----|----------|---------|---------|
+| 结果页打开 | ☐ | ☐ | ☐ |
+| professional 区块（仅 prof） | ☐ | ☐ 应无 | ☐ 应无 |
+| 九宫格 / 中五宫 / 值符标签 | ☐ | — | — |
+| 解锁完整报告 | ☐ | ☐ | ☐ |
+| 分享卡片 | ☐ | ☐ | ☐ |
+| 长图导出 / 相册 | ☐ | ☐ | ☐ |
+| 历史页跳转 / 删除 | ☐ | ☐ | ☐ |
+
+**自动化代理说明：** Cursor 环境无法运行微信开发者工具或真机预览；本阶段由维护者在本地 DevTools 勾选上表后，可将 ☐ 更新为 ✅ 并视为 MINIAPP-LOCAL-QA 闭环。
+
+**本阶段结论（当前）：** 测试数据与代码就绪；**真实 UI 渲染尚未在 DevTools 闭环**；无 miniprogram 小修。
+
+**部署：** 无需 backend / frontend / SQL。
+
+**下一步：** 本地 DevTools 勾选 → RELEASE-QA。
+
 ## 26. Phase UX1：八字 / 奇门轻量动效
 
 Phase UX1 在小程序与 Web 八字、奇门页面增加贴合传统文化场景的轻量 UI 动效，提升氛围与完成感。**仅改 UI 动效，不改后端、数据库、部署。**

@@ -2003,3 +2003,23 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 **下一步：** RELEASE-QA；BAZI1.3。
 
 ---
+
+### 10.49 Phase MINIAPP-LOCAL-QA 交付清单（DevTools / 真机预览）
+
+**目标：** 真实微信开发者工具与真机预览验收 professional 九宫 UI；**不改** backend / Web / SQL。
+
+**已就绪：**
+
+- [x] 测试记录 id=102/103/104 可加载
+- [x] 视图层 / 分享 / 长图逻辑预检通过（§25.21）
+
+**待本地 DevTools / 真机确认：**
+
+- [ ] 九宫真实渲染、中五宫 `—`、值符标签
+- [ ] 分享卡片、长图相册、历史跳转
+
+**说明：** 自动化环境无法替代 DevTools；需维护者本地勾选验收清单。
+
+**下一步：** RELEASE-QA。
+
+---
