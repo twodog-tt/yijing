@@ -1745,3 +1745,39 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 **默认策略：** 线上仍 `qimen-simple-v1`；`qimen-v2-poc` 内部灰度不变；professional preview 仅供后端测试。
 
 ---
+
+### 10.39 Phase ALG2.4B 交付清单（奇门 v2 professional 拆补 / 三元局数第一版）
+
+**目标：** 为 `CalculateProfessionalPreview` 增加第一版拆补局数（`chai_bu`）、三元（`upper`/`middle`/`lower`），**不接 API、不部署**。
+
+**本阶段完成：**
+
+- [x] `ProfessionalJuResult` 局数结果结构
+- [x] `ResolveProfessionalYuan` — **方案 A**：节令交节后日序 0–4 upper / 5–9 middle / 10+ lower
+- [x] `ResolveChaiBuJu` — 十二节起局映射表 + 三元偏移；阳遁顺行、阴遁逆行；`ju` 1–9
+- [x] `ResolveZhiRunJuPending` — 置闰法结构预留（`method=zhi_run_pending`，未接入 preview）
+- [x] `CalculateProfessionalPreview` 写入 `dun.ju` / `dun.method=chai_bu` / `dun.yuan`
+- [x] fixtures 断言：ju 1–9、yuan 三元、category 不影响局数、夏至/冬至前后 dun.type 与 ju 方向
+
+**十二节起局映射（第一版近似，非完整二十四节气）：**
+
+| 节 | 起局 | 节 | 起局 |
+|----|------|-----|------|
+| 小寒 | 阳2 | 小暑 | 阴8 |
+| 立春 | 阳8 | 立秋 | 阴2 |
+| 惊蛰 | 阳1 | 白露 | 阴9 |
+| 清明 | 阳3 | 寒露 | 阴7 |
+| 立夏 | 阳4 | 立冬 | 阴6 |
+| 芒种 | 阳5 | 大雪 | 阴5 |
+
+**仍不做（ALG2.4B）：**
+
+- [ ] API 接入 `qimen-v2-professional`
+- [ ] 置闰法完整实现（`zhi_run` 仅 pending）
+- [ ] 二十四节气完整映射（延后 **ALG2.4C**）
+- [ ] 转盘飞布 / 值符落宫 / 天禽寄宫（**ALG2.5**）
+- [ ] frontend / miniprogram / SQL / deploy
+
+**下一步：** ALG2.4C 二十四节气映射增强；ALG2.5 转盘飞布；QIMEN-V2-VIEW。
+
+---

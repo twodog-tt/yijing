@@ -82,8 +82,31 @@ func TestCalculateProfessionalPreviewChiefAndPalacesPending(t *testing.T) {
 	if len(result.Palaces) != 0 {
 		t.Fatalf("palaces should be empty pending slice, got %d", len(result.Palaces))
 	}
-	if result.Dun.Ju != 0 {
-		t.Fatalf("ju should remain pending (0), got %d", result.Dun.Ju)
+	if result.Dun.Ju < 1 || result.Dun.Ju > 9 {
+		t.Fatalf("ju should be 1-9, got %d", result.Dun.Ju)
+	}
+	if result.Dun.Method != qimen.DunMethodChaiBu {
+		t.Fatalf("method=%q want chai_bu", result.Dun.Method)
+	}
+}
+
+func TestCalculateProfessionalPreviewJuIndependentOfCategory(t *testing.T) {
+	when := time.Date(2024, 8, 7, 15, 0, 0, 0, clock.Location())
+	var firstJu float64
+	var firstYuan string
+	for i, cat := range []string{"general", "career", "relationship", "decision"} {
+		result, err := qimen.CalculateProfessionalPreview(qimen.CalculateInputProfessional{Category: cat, Now: when})
+		if err != nil {
+			t.Fatalf("category %q: %v", cat, err)
+		}
+		if i == 0 {
+			firstJu = float64(result.Dun.Ju)
+			firstYuan = result.Dun.Yuan
+			continue
+		}
+		if float64(result.Dun.Ju) != firstJu || result.Dun.Yuan != firstYuan {
+			t.Fatalf("category %q changed ju/yuan: ju=%d yuan=%q (want ju=%v yuan=%q)", cat, result.Dun.Ju, result.Dun.Yuan, firstJu, firstYuan)
+		}
 	}
 }
 
@@ -100,7 +123,7 @@ func TestCalculateProfessionalPreviewDoesNotAffectPOC(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CalculateProfessionalPreview: %v", err)
 	}
-	if pro.Dun.Method != qimen.DunMethodSolarTermBoundary {
+	if pro.Dun.Method != qimen.DunMethodChaiBu {
 		t.Fatalf("professional method=%q", pro.Dun.Method)
 	}
 }
@@ -119,8 +142,20 @@ func assertProfessionalPreviewPayload(t *testing.T, obj map[string]any, when tim
 	if dun["type"] != "yang" && dun["type"] != "yin" {
 		t.Fatalf("dun.type=%v", dun["type"])
 	}
-	if dun["method"] != qimen.DunMethodSolarTermBoundary {
+	if dun["method"] != qimen.DunMethodChaiBu {
 		t.Fatalf("dun.method=%v", dun["method"])
+	}
+	ju, ok := dun["ju"].(float64)
+	if !ok || ju < 1 || ju > 9 {
+		t.Fatalf("dun.ju=%v want 1-9", dun["ju"])
+	}
+	yuan, _ := dun["yuan"].(string)
+	if yuan != qimen.DunYuanUpper && yuan != qimen.DunYuanMiddle && yuan != qimen.DunYuanLower {
+		t.Fatalf("dun.yuan=%v", dun["yuan"])
+	}
+	note, _ := dun["note"].(string)
+	if note == "" || !strings.Contains(note, "第一版") {
+		t.Fatalf("dun.note should mention first version approximation: %q", note)
 	}
 
 	gz := obj["ganzhi"].(map[string]any)

@@ -43,6 +43,8 @@ func CalculateProfessionalPreview(input CalculateInputProfessional) (*Calculatio
 	basis := ResolveProfessionalCalendarBasis(now, provider)
 	dun := ResolveProfessionalDun(now, provider)
 	ganzhi := ResolveProfessionalGanZhi(now)
+	juResult := ResolveChaiBuJu(now, dun, basis, ganzhi)
+	applyJuToDun(&dun, juResult)
 	xun := ResolveXunFromGanZhi(ganzhi.Day, ganzhi.Hour)
 
 	result := &CalculationResultV2Professional{

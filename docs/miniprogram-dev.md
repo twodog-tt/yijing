@@ -1305,6 +1305,27 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 - [x] `go test ./internal/service/qimen/...` 通过（含 preview + 边界 + POC 回归）
 - [x] `CalculateV2` / `qimen-simple-v1` 未破坏
 
+## 25.12 Phase ALG2.4B：奇门 v2 professional 拆补 / 三元局数第一版（后端，不接 API）
+
+**说明：** 在 ALG2.4A preview 基础上增加第一版拆补局数：`ResolveProfessionalYuan`（方案 A 节内日序）、`ResolveChaiBuJu`（十二节映射 + 阳顺阴逆）、`ResolveZhiRunJuPending`（置闰预留）。**不接** API；**不改**小程序 / Web；**不部署**。
+
+**preview dun 字段：**
+
+- `ju`：1–9（`chai_bu` 计算，非 hash）
+- `yuan`：`upper` / `middle` / `lower`
+- `method`：`chai_bu`
+- `note`：标明第一版十二节近似
+
+**置闰法：** `ResolveZhiRunJuPending()` 返回 `method=zhi_run_pending`，未接入 preview 默认路径。
+
+**仍不做：** API 接入、完整置闰、二十四节气完整映射（ALG2.4C）、转盘（ALG2.5）、frontend / miniprogram / SQL / deploy。
+
+**验收（后端）：**
+
+- [x] 10 组 fixtures preview：`dun.ju` 1–9、`dun.yuan` 三元、`dun.method=chai_bu`
+- [x] 同时间不同 category，ju/yuan 一致
+- [x] `qimen-v2-poc` / `qimen-simple-v1` 回归未破坏
+
 ## 26. Phase UX1：八字 / 奇门轻量动效
 
 Phase UX1 在小程序与 Web 八字、奇门页面增加贴合传统文化场景的轻量 UI 动效，提升氛围与完成感。**仅改 UI 动效，不改后端、数据库、部署。**
