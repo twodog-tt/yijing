@@ -147,3 +147,68 @@ export interface AIStats {
   avg_duration_ms: number;
   latest_created_at?: string;
 }
+
+export const ModuleTypeBazi = 1;
+export const ModuleTypeQimen = 2;
+
+export type AnalysisModule = "bazi" | "qimen";
+
+export interface AnalysisRecord {
+  id: number;
+  module_type: number;
+  algorithm_version: string;
+  category_id?: number | null;
+  question?: string | null;
+  input_payload?: unknown;
+  result_payload?: unknown;
+  free_content?: string | null;
+  full_content?: string | null;
+  unlock_status: number;
+  unlock_type?: string | null;
+  ai_provider?: string | null;
+  generation_status: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AnalysisListItem {
+  id: number;
+  module_type: number;
+  algorithm_version: string;
+  category_id?: number | null;
+  question?: string | null;
+  unlock_status: number;
+  generation_status: number;
+  created_at: string;
+}
+
+export interface PaginatedAnalysisList {
+  items: AnalysisListItem[];
+  page: number;
+  page_size: number;
+  total: number;
+}
+
+export interface CreateBaziAnalysisPayload {
+  session_key: string;
+  birth_date: string;
+  birth_hour_unknown: boolean;
+  birth_hour_branch?: string;
+  confirm_disclaimer: boolean;
+}
+
+export interface CreateQimenAnalysisPayload {
+  session_key: string;
+  question: string;
+  category: string;
+  confirm_disclaimer: boolean;
+}
+
+export interface AnalysisUnlockResult {
+  id: number;
+  unlock_status: number;
+  unlock_type: string;
+  full_content: string;
+  generation_status: number;
+  ai_provider: string;
+}

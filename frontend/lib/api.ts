@@ -1,14 +1,20 @@
 import type {
   AIHealthInfo,
   AIStats,
+  AnalysisModule,
+  AnalysisRecord,
+  AnalysisUnlockResult,
   Category,
+  CreateBaziAnalysisPayload,
   CreateDivinationPayload,
+  CreateQimenAnalysisPayload,
   DailyFortuneTodayResult,
   Divination,
   FreeInterpretation,
   FullInterpretationResponse,
   FullReport,
   PaginatedAILogs,
+  PaginatedAnalysisList,
   PaginatedDivinations,
   SessionResult,
   UnlockResult,
@@ -16,6 +22,20 @@ import type {
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080/api/v1";
+
+const SESSION_HEADER = "X-Session-Key";
+const ANALYSIS_UNLOCK_TIMEOUT_MS = 90_000;
+
+function sessionHeaders(sessionKey: string): HeadersInit {
+  return { [SESSION_HEADER]: sessionKey };
+}
+
+function requireAnalysisId(id: number): number {
+  if (!Number.isInteger(id) || id <= 0) {
+    throw new ApiError(40000, "记录 ID 无效");
+  }
+  return id;
+}
 
 export class ApiError extends Error {
   code: number;
@@ -54,7 +74,10 @@ async function requestDebug<T>(path: string, options?: RequestInit): Promise<T> 
         ...options?.headers,
       },
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw err;
+    }
     throw new ApiError(50000, "网络连接失败，请确认后端服务已启动。");
   }
 
@@ -87,7 +110,10 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
         ...options?.headers,
       },
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw err;
+    }
     throw new ApiError(50000, "网络连接失败，请确认后端服务已启动。");
   }
 
@@ -110,6 +136,10 @@ export function createSession(sessionKey: string): Promise<SessionResult> {
     method: "POST",
     body: JSON.stringify({ session_key: sessionKey }),
   });
+}
+
+export function ensureSession(sessionKey: string): Promise<SessionResult> {
+  return createSession(sessionKey);
 }
 
 export function getCategories(): Promise<Category[]> {
@@ -219,4 +249,108 @@ export function getAIHealth(): Promise<AIHealthInfo> {
 
 export function getAIStats(): Promise<AIStats> {
   return requestDebug<AIStats>("/debug/ai-stats");
+}
+
+async function requestWithSession<T>(
+  path: string,
+  sessionKey: string,
+  options?: RequestInit
+): Promise<T> {
+  return request<T>(path, {
+    ...options,
+    headers: {
+      ...sessionHeaders(sessionKey),
+      ...options?.headers,
+    },
+  });
+}
+
+export function createBaziAnalysis(
+  payload: CreateBaziAnalysisPayload
+): Promise<AnalysisRecord> {
+  return request<AnalysisRecord>("/analysis/bazi", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    headers: sessionHeaders(payload.session_key),
+  });
+}
+
+export function createQimenAnalysis(
+  payload: CreateQimenAnalysisPayload
+): Promise<AnalysisRecord> {
+  return request<AnalysisRecord>("/analysis/qimen", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    headers: sessionHeaders(payload.session_key),
+  });
+}
+
+export function getAnalysis(
+  id: number,
+  sessionKey: string
+): Promise<AnalysisRecord> {
+  const normalizedId = requireAnalysisId(id);
+  return requestWithSession<AnalysisRecord>(
+    `/analysis/${normalizedId}`,
+    sessionKey
+  );
+}
+
+export function getAnalysisList(
+  sessionKey: string,
+  module: AnalysisModule,
+  page = 1,
+  pageSize = 20
+): Promise<PaginatedAnalysisList> {
+  const qs = new URLSearchParams({
+    module,
+    page: String(page),
+    page_size: String(pageSize),
+  });
+  return requestWithSession<PaginatedAnalysisList>(
+    `/analysis?${qs}`,
+    sessionKey
+  );
+}
+
+export function deleteAnalysis(
+  id: number,
+  sessionKey: string
+): Promise<void> {
+  const normalizedId = requireAnalysisId(id);
+  return requestWithSession<void>(
+    `/analysis/${normalizedId}`,
+    sessionKey,
+    { method: "DELETE" }
+  );
+}
+
+export function unlockAnalysis(
+  id: number,
+  sessionKey: string,
+  unlockType: "rewarded_video_mock" = "rewarded_video_mock"
+): Promise<AnalysisUnlockResult> {
+  const normalizedId = requireAnalysisId(id);
+  const controller = new AbortController();
+  const timer = setTimeout(
+    () => controller.abort(),
+    ANALYSIS_UNLOCK_TIMEOUT_MS
+  );
+
+  return requestWithSession<AnalysisUnlockResult>(
+    `/analysis/${normalizedId}/unlock`,
+    sessionKey,
+    {
+      method: "POST",
+      body: JSON.stringify({ unlock_type: unlockType }),
+      signal: controller.signal,
+    }
+  )
+    .catch((err) => {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        throw new ApiError(50000, "解锁请求超时，请稍后重试。");
+      }
+      throw err;
+    })
+    .finally(() => clearTimeout(timer));
 }
