@@ -36,6 +36,62 @@
   animation: none;
 }
 
+.card--professional {
+  background: linear-gradient(180deg, #1c1917 0%, #292524 100%);
+  border: 1rpx solid rgba(252, 211, 77, 0.28);
+  box-shadow: 0 12rpx 32rpx rgba(28, 25, 23, 0.18);
+}
+
+.section-title--gold {
+  color: #fde68a;
+}
+
+.pro-note {
+  display: block;
+  margin-top: 12rpx;
+  color: #d6d3d1;
+  font-size: 24rpx;
+  line-height: 1.7;
+}
+
+.pro-section {
+  margin-top: 24rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid rgba(252, 211, 77, 0.14);
+}
+
+.pro-section--boundary {
+  padding-bottom: 4rpx;
+}
+
+.pro-section__title {
+  display: block;
+  color: #fcd34d;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.pro-kv-list {
+  margin-top: 12rpx;
+}
+
+.pro-kv {
+  display: block;
+  margin-top: 10rpx;
+  color: #e7e5e4;
+  font-size: 22rpx;
+  line-height: 1.6;
+}
+
+.pro-kv--muted {
+  color: #a8a29e;
+  font-size: 20rpx;
+}
+
+.pro-limit-list {
+  margin-top: 8rpx;
+}
+
 .full-card--reveal {
   opacity: 0;
   transform: translateY(16rpx);

@@ -332,6 +332,7 @@ Tab: 今日 | 问事 | 扩展(八字/奇门) | 我的(历史/设置)
 | **Phase ALG2.5** | 奇门 v2 九宫落盘第一版 | 地盘/天盘干、九星八门八神、值符值使、9 宫 preview（不接 API） | Cursor ✅ |
 | **Phase ALG2.5B** | 奇门 v2 落盘口径校准 | layout_version、天禽寄宫配置、chief/palace 一致性测试（不接 API） | Cursor ✅ |
 | **Phase ALG2.6** | 奇门 v2 professional API 灰度 | 创建 API 可选 qimen-v2-professional；默认 v1；内部灰度（仅 backend 部署） | Cursor ✅ |
+| **Phase QIMEN-V2-VIEW** | 小程序 professional 九宫展示 | 结果页条件展示 professional 九宫；无算法选择 UI | Cursor ✅ |
 | **Phase REPORT1** | 八字 / 奇门完整报告质量 | 7 段结构、DeepSeek + fallback 差异化、禁用词与隐私测试 | Cursor ✅ |
 | **Phase SHARE1** | 小程序长图分享优化 | 高价值摘要 + 行动要点，移除完整报告粘贴 | Cursor ✅ |
 | **Phase SHARE2** | 问事起卦长图摘要化 | 卦象长图摘要 + 行动提醒，不贴完整解析 | Cursor ✅ |

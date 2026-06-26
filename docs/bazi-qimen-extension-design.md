@@ -1893,6 +1893,28 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 - [ ] SQL / frontend 部署
 - [ ] 声称最终权威专业排盘
 
-**下一步：** QIMEN-V2-VIEW；ALG2.7 professional 报告质量增强；BAZI1.3。
+**下一步：** QIMEN-V2-VIEW-QA；ALG2.7 professional 报告质量增强；BAZI1.3。
+
+---
+
+### 10.44 Phase QIMEN-V2-VIEW 交付清单（小程序 professional 九宫展示）
+
+**目标：** 小程序奇门结果页在 professional 记录上条件展示九宫与排盘口径；**不改** backend / Web / SQL。
+
+**本阶段完成：**
+
+- [x] `buildQimenView` 识别 `qimen-v2-professional` + 9 宫 `palaces`
+- [x] 新增 `qimen-palace-grid` 组件（洛书序 3×3）
+- [x] 结果页展示 layout_version / 节令 / 阴阳遁 / 局数 / 三元 / 值符值使 / 九宫
+- [x] 边界说明（第一版 / 置闰 pending / 寄宫 pending）
+- [x] 长图增加一句 professional 轻量摘要（不含完整九宫）
+
+**仍不做（QIMEN-V2-VIEW）：**
+
+- [ ] 普通用户 algorithm_version 选择 UI
+- [ ] 默认创建 professional
+- [ ] backend / frontend / SQL 变更
+
+**下一步：** QIMEN-V2-VIEW-QA；ALG2.7；BAZI1.3。
 
 ---

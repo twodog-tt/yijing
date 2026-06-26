@@ -25,6 +25,9 @@ function estimateRawLongPosterHeight(data) {
   let height = 300;
   height += estimateParagraphHeight(QIMEN_INTRO_NOTE, 22, 30);
   height += estimateParagraphHeight(data.methodNote, 22, 30);
+  if (data.professionalPosterNote) {
+    height += estimateParagraphHeight(data.professionalPosterNote, 22, 28);
+  }
   height += 72;
   height += 100;
   height += 100;
@@ -80,6 +83,14 @@ function layoutLongPoster(ctx, data, canvasHeight) {
     color: "#78716c",
   });
   y += 12;
+  if (data.professionalPosterNote) {
+    y = drawWrappedParagraph(ctx, normalizeText(data.professionalPosterNote), PADDING_X, y, {
+      lineHeight: 22,
+      font: "13px sans-serif",
+      color: "#92400e",
+    });
+    y += 8;
+  }
 
   const metaParts = [
     data.categoryLabel ? `分类 · ${normalizeText(data.categoryLabel)}` : "",

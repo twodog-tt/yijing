@@ -1,0 +1,75 @@
+.palace-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10rpx;
+  margin-top: 20rpx;
+}
+
+.palace-grid__cell {
+  min-height: 168rpx;
+  padding: 12rpx 10rpx;
+  border-radius: 14rpx;
+  border: 1rpx solid rgba(252, 211, 77, 0.22);
+  background: rgba(28, 25, 23, 0.72);
+  box-sizing: border-box;
+}
+
+.palace-grid__cell--center {
+  border-color: rgba(252, 211, 77, 0.45);
+  background: rgba(41, 37, 36, 0.92);
+}
+
+.palace-grid__cell--chief {
+  box-shadow: inset 0 0 0 1rpx rgba(252, 211, 77, 0.35);
+}
+
+.palace-grid__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6rpx;
+}
+
+.palace-grid__name {
+  color: #fde68a;
+  font-size: 20rpx;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.palace-grid__role {
+  flex-shrink: 0;
+  padding: 2rpx 8rpx;
+  border-radius: 999rpx;
+  background: rgba(252, 211, 77, 0.16);
+  color: #fcd34d;
+  font-size: 18rpx;
+  line-height: 1.2;
+}
+
+.palace-grid__stems {
+  display: flex;
+  justify-content: space-between;
+  gap: 4rpx;
+  margin-top: 8rpx;
+}
+
+.palace-grid__stem {
+  color: #d6d3d1;
+  font-size: 18rpx;
+  line-height: 1.3;
+}
+
+.palace-grid__meta {
+  margin-top: 8rpx;
+}
+
+.palace-grid__line {
+  display: block;
+  color: #e7e5e4;
+  font-size: 18rpx;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

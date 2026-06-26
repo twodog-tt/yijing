@@ -1395,6 +1395,27 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 - [x] free_unlock 返回 full_content（引用九宫 / 第一版说明）
 - [x] 八字 / v1 / POC 回归正常
 
+## 25.17 Phase QIMEN-V2-VIEW：小程序 professional 九宫展示
+
+**说明：** 奇门结果页在 `result_payload.algorithm_version=qimen-v2-professional` 且 `palaces.length=9` 时，条件展示排盘口径与九宫结构。**不**暴露算法选择 UI；**不改** backend / Web / SQL。
+
+**展示条件：**
+
+- `algorithm_version === qimen-v2-professional`
+- `palaces` 为长度 9 的数组
+
+**仍不做：**
+
+- [ ] 普通用户算法选择器
+- [ ] 默认创建 professional
+- [ ] 长图绘制完整九宫
+
+**内部测试：**
+
+- 小程序普通入口仍默认 `qimen-simple-v1`
+- professional 记录仅通过内部 `algorithm_version` 参数创建
+- 详情页「有 palaces 就展示」，不是面向用户的算法开关
+
 ## 26. Phase UX1：八字 / 奇门轻量动效
 
 Phase UX1 在小程序与 Web 八字、奇门页面增加贴合传统文化场景的轻量 UI 动效，提升氛围与完成感。**仅改 UI 动效，不改后端、数据库、部署。**

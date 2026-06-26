@@ -1,0 +1,21 @@
+<view class="palace-grid" wx:if="{{palaces.length === 9}}">
+  <view
+    class="palace-grid__cell {{item.layoutRole === 'center' ? 'palace-grid__cell--center' : ''}} {{item.layoutRole === 'chief' ? 'palace-grid__cell--chief' : ''}}"
+    wx:for="{{palaces}}"
+    wx:key="index"
+  >
+    <view class="palace-grid__head">
+      <text class="palace-grid__name">{{item.name}}</text>
+      <text wx:if="{{item.layoutRoleLabel}}" class="palace-grid__role">{{item.layoutRoleLabel}}</text>
+    </view>
+    <view class="palace-grid__stems">
+      <text class="palace-grid__stem">天 {{item.heavenPlateStem}}</text>
+      <text class="palace-grid__stem">地 {{item.earthPlateStem}}</text>
+    </view>
+    <view class="palace-grid__meta">
+      <text class="palace-grid__line">{{item.star}}</text>
+      <text class="palace-grid__line">{{item.door}}</text>
+      <text class="palace-grid__line">{{item.deity}}</text>
+    </view>
+  </view>
+</view>

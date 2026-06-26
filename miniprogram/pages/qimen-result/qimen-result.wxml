@@ -37,6 +37,41 @@
       </view>
     </section-reveal>
 
+    <section-reveal wx:if="{{view.isProfessionalQimen && view.professional}}" active="{{resultReady}}" delay="100">
+      <view class="card card--professional">
+        <text class="section-title section-title--gold">专业排盘预览</text>
+        <text class="pro-note">{{view.professional.previewNote}}</text>
+
+        <view class="pro-section">
+          <text class="pro-section__title">排盘口径</text>
+          <view class="pro-kv-list">
+            <text class="pro-kv">layout · {{view.professional.layoutVersion || "—"}}</text>
+            <text class="pro-kv">节令 · {{view.professional.calendarBasisView.solarTerm}}</text>
+            <text class="pro-kv">{{view.professional.dunView.typeLabel}} · 第{{view.professional.dunView.ju}}局 · {{view.professional.dunView.yuanLabel}}</text>
+            <text wx:if="{{view.professional.dunView.method}}" class="pro-kv">口径 · {{view.professional.dunView.method}}</text>
+            <text class="pro-kv">四柱 · {{view.professional.ganzhiView.display}}</text>
+            <text class="pro-kv">值符 · {{view.professional.chiefView.zhiFu}}（{{view.professional.chiefView.zhiFuPalace || "—"}}）</text>
+            <text class="pro-kv">值使 · {{view.professional.chiefView.zhiShi}}（{{view.professional.chiefView.zhiShiPalace || "—"}}）</text>
+          </view>
+        </view>
+
+        <view class="pro-section">
+          <text class="pro-section__title">九宫结构</text>
+          <qimen-palace-grid palaces="{{view.professional.palaceGrid}}"></qimen-palace-grid>
+        </view>
+
+        <view class="pro-section pro-section--boundary">
+          <text class="pro-section__title">边界说明</text>
+          <view class="pro-kv-list">
+            <text class="pro-kv" wx:for="{{view.professional.boundaryNotes}}" wx:key="*this">· {{item}}</text>
+          </view>
+          <view wx:if="{{view.professional.professionalLimits.length}}" class="pro-limit-list">
+            <text class="pro-kv pro-kv--muted" wx:for="{{view.professional.professionalLimits}}" wx:key="*this">· {{item}}</text>
+          </view>
+        </view>
+      </view>
+    </section-reveal>
+
     <section-reveal wx:if="{{view.qimenLens.focusTheme || view.qimenLens.pacingTheme || view.qimenLens.cautionTheme}}" active="{{resultReady}}" delay="120">
       <view class="card card--lens">
         <text class="section-title">关注主题</text>
