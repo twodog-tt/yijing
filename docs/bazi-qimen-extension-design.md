@@ -1448,3 +1448,19 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 **隐私与合规：** 不含 birth_date / 完整原问题 / session_key / payload；过滤强预测/改运/投资医疗法律等禁用词。
 
 **部署：** 仅小程序重新编译；无需 backend / frontend / SQL。
+
+---
+
+### 10.31 Phase H1 交付清单（统一历史记录页）
+
+**目标：** 小程序「历史记录」页升级为问事 / 八字 / 奇门统一入口。
+
+- [x] 顶部筛选：全部 / 问事起卦 / 八字简析 / 奇门问事
+- [x] 并发加载三类记录，按 `created_at` 倒序合并
+- [x] 点击跳转 `result` / `analysis-result` / `qimen-result`
+- [x] 八字 / 奇门支持 DELETE `/api/v1/analysis/{id}` 删除
+- [x] 问事记录暂无 DELETE API，历史页不提供删除按钮
+- [x] 分类型空状态文案
+- [x] 列表不展示出生日期 / 出生时辰 / 完整原问题 / session_key / payload
+
+**部署：** 仅小程序重新编译；无需 backend / frontend / SQL。

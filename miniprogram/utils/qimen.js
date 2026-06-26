@@ -3,6 +3,7 @@ const {
   limitPosterText,
   getQimenCategoryHighlight,
 } = require("./long-poster-canvas");
+const { formatDateTime } = require("./date");
 
 const MODULE_QIMEN_TYPE = 2;
 const MODULE_QIMEN_LABEL = "奇门问事";
@@ -168,6 +169,24 @@ function buildQimenLongPosterData(recordId, view, fullContent) {
   };
 }
 
+function buildQimenHistoryListItem(item) {
+  if (!item || !item.id) return null;
+
+  return {
+    key: `qimen-${item.id}`,
+    recordType: "qimen",
+    id: item.id,
+    typeLabel: MODULE_QIMEN_LABEL,
+    title: "奇门问事记录",
+    summary: "关注主题 · 行动节奏与需留意整理",
+    statusText: Number(item.unlock_status) === 1 ? "已查看完整报告" : "已生成",
+    created_at: item.created_at || "",
+    createdAtDisplay: formatDateTime(item.created_at) || "—",
+    detailUrl: `/pages/qimen-result/qimen-result?id=${item.id}`,
+    canDelete: true,
+  };
+}
+
 module.exports = {
   ALGORITHM_QIMEN_SIMPLE_V1,
   MAX_QUESTION_LENGTH,
@@ -179,6 +198,7 @@ module.exports = {
   QIMEN_CATEGORIES,
   QUESTION_SUMMARY,
   buildQimenView,
+  buildQimenHistoryListItem,
   buildQimenLongPosterData,
   getCategoryLabel,
   isQimenRecord,

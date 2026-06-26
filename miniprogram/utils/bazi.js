@@ -21,9 +21,11 @@ const ELEMENT_LABELS = Object.freeze({
   water: "水",
 });
 
+const MODULE_BAZI_TYPE = 1;
 const MODULE_BAZI_LABEL = "八字简析";
 
 const { pickPosterActionPoints, limitPosterText } = require("./long-poster-canvas");
+const { formatDateTime } = require("./date");
 
 function parseJSONField(raw) {
   if (!raw) return {};
@@ -186,12 +188,32 @@ function buildBaziLongPosterData(recordId, view, fullContent) {
   };
 }
 
+function buildBaziHistoryListItem(item) {
+  if (!item || !item.id) return null;
+
+  return {
+    key: `bazi-${item.id}`,
+    recordType: "bazi",
+    id: item.id,
+    typeLabel: MODULE_BAZI_LABEL,
+    title: "八字简析记录",
+    summary: "解读视角 · 五行倾向与行动整理",
+    statusText: Number(item.unlock_status) === 1 ? "已查看完整报告" : "已生成",
+    created_at: item.created_at || "",
+    createdAtDisplay: formatDateTime(item.created_at) || "—",
+    detailUrl: `/pages/analysis-result/analysis-result?id=${item.id}`,
+    canDelete: true,
+  };
+}
+
 module.exports = {
   ELEMENT_LABELS,
   HOUR_BRANCHES,
   MODULE_BAZI_LABEL,
+  MODULE_BAZI_TYPE,
   buildAnalysisView,
   buildBaziCardData,
+  buildBaziHistoryListItem,
   buildBaziLongPosterData,
   parseJSONField,
 };
