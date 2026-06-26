@@ -21,11 +21,12 @@ const (
 重要边界：
 1. 基于 qimen-simple-v1 简化学习版，不生成完整九宫盘，不构成现实决策依据。
 2. 若 algorithm_version 为 qimen-v2-poc，可引用 calendar_basis / dun / xun / chief / palaces 做结构化观察，但仍不等同于专业奇门排盘，不构成现实决策依据。
-3. 必须围绕 intent_type、risk_tone、focus_theme、pacing_theme 写出差异化报告，不要套用固定模板。
-4. 不同 category（career/relationship/study/decision/general）必须体现不同重点。
-5. 禁止输出完整原问题、session_key、用户隐私字段。
-6. 禁止精准预测、必成必败、大吉大凶、改运化灾、投资/医疗/法律/赌博/军事建议。
-7. 不要使用“必然、一定、注定、百分百、保证”等绝对词。
+3. 若 algorithm_version 为 qimen-v2-professional，可引用 calendar_basis / ganzhi / dun / xun / chief / palaces / layout_version 做结构化观察，但仍为第一版 professional 落盘，不等同于最终权威排盘，不构成现实决策依据。
+4. 必须围绕 intent_type、risk_tone、focus_theme、pacing_theme 写出差异化报告，不要套用固定模板。
+5. 不同 category（career/relationship/study/decision/general）必须体现不同重点。
+6. 禁止输出完整原问题、session_key、用户隐私字段。
+7. 禁止精准预测、必成必败、大吉大凶、改运化灾、投资/医疗/法律/赌博/军事建议。
+8. 不要使用“必然、一定、注定、百分百、保证”等绝对词。
 
 你必须只输出纯文本报告正文，不要输出 Markdown 代码块，不要输出 JSON，不要输出额外解释。`
 
@@ -109,6 +110,50 @@ focus_palaces_summary：{{focus_palaces_summary}}
 - 禁止输出完整原问题、session_key、payload 原始 JSON。
 - 不做精准预测、强吉凶、改运化解、投资/医疗/法律/赌博/军事建议。
 - 第九部分必须再次强调：仅供传统文化学习参考，不构成现实决策依据。`
+
+	qimenUserPromptTemplateProfessional = `请基于以下结构化奇门问事信息生成完整报告（qimen-v2-professional）。
+
+algorithm_version：{{algorithm_version}}
+layout_version：{{layout_version}}
+method_note：{{method_note}}
+问事分类：{{category_label}}
+时段参考：{{time_bucket_label}}
+问事特征：{{safe_question_summary}}
+question_profile：{{question_profile}}
+qimen_lens：{{qimen_lens}}
+calendar_basis：{{calendar_basis}}
+ganzhi：{{ganzhi}}
+dun：{{dun}}
+xun：{{xun}}
+chief：{{chief}}
+palaces_summary：{{palaces_summary}}
+focus_palaces_summary：{{focus_palaces_summary}}
+局势梳理：{{situation_overview}}
+风险观察：{{risk_observations}}
+行动节奏：{{action_pacing}}
+自我反思问题：{{reflection_questions}}
+规则限制：{{limits}}
+免费解读摘要：{{free_content}}
+
+必须按以下 9 个部分输出，每部分用标题开头（标题文字需一致）：
+一、局势摘要
+二、排盘口径说明
+三、九宫结构观察
+四、重点宫位提示
+五、可借助的条件
+六、需要留意的阻力
+七、行动节奏建议
+八、自我反思问题
+九、边界声明
+
+写作要求：
+- 必须明确 qimen-v2-professional 仍是第一版落盘，置闰法、寄宫流派校准仍未完成，不等同于最终权威排盘。
+- 必须引用 layout_version 与 palaces_summary / focus_palaces_summary 中 2–3 个宫位信息，不要把 JSON 原样贴出。
+- 必须引用 ganzhi / dun / chief 中至少 2 类字段。
+- 不同 category 必须体现不同重点（career/relationship/study/decision/general）。
+- 禁止输出完整原问题、session_key、payload 原始 JSON。
+- 不做精准预测、强吉凶、改运化解、投资/医疗/法律/赌博/军事建议。
+- 第九部分必须再次强调：仅供传统文化学习参考，不构成现实决策依据。`
 )
 
 var qimenForbiddenPhrases = fullReportForbiddenPhrases
@@ -179,6 +224,7 @@ func buildQimenUserPrompt(input *fullReportPromptInput) string {
 
 	replacer := strings.NewReplacer(
 		"{{algorithm_version}}", nonEmpty(input.AlgorithmVersion, "qimen-simple-v1"),
+		"{{layout_version}}", nonEmpty(input.LayoutVersion, ProfessionalLayoutVersionV1),
 		"{{method_note}}", input.MethodNote,
 		"{{category_label}}", input.CategoryLabel,
 		"{{time_bucket_label}}", timeBucketLabel,
@@ -187,6 +233,7 @@ func buildQimenUserPrompt(input *fullReportPromptInput) string {
 		"{{question_profile}}", formatQuestionProfileForPrompt(input.QuestionProfile),
 		"{{qimen_lens}}", formatQimenLensForPrompt(input.QimenLens),
 		"{{calendar_basis}}", formatCalendarBasisForPrompt(input.CalendarBasis),
+		"{{ganzhi}}", formatGanzhiForPrompt(input.Ganzhi),
 		"{{dun}}", formatDunForPrompt(input.Dun),
 		"{{xun}}", formatXunForPrompt(input.Xun),
 		"{{chief}}", formatChiefForPrompt(input.Chief),
@@ -200,10 +247,14 @@ func buildQimenUserPrompt(input *fullReportPromptInput) string {
 		"{{limits}}", limits,
 		"{{free_content}}", nonEmpty(input.FreeContent, "（无）"),
 	)
-	if input.AlgorithmVersion == AlgorithmVersionQimenV2POC {
+	switch input.AlgorithmVersion {
+	case AlgorithmVersionQimenV2Professional:
+		return replacer.Replace(qimenUserPromptTemplateProfessional)
+	case AlgorithmVersionQimenV2POC:
 		return replacer.Replace(qimenUserPromptTemplateV2)
+	default:
+		return replacer.Replace(qimenUserPromptTemplateV1)
 	}
-	return replacer.Replace(qimenUserPromptTemplateV1)
 }
 
 type chatRequest struct {

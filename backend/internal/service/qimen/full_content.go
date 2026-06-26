@@ -13,6 +13,7 @@ const (
 
 type parsedResultPayload struct {
 	AlgorithmVersion    string                  `json:"algorithm_version"`
+	LayoutVersion       string                  `json:"layout_version"`
 	MethodNote          string                  `json:"method_note"`
 	Category            string                  `json:"category"`
 	TimeContext         *timeContextPayload     `json:"time_context"`
@@ -25,10 +26,12 @@ type parsedResultPayload struct {
 	CalculationMeta     *calculationMetaPayload `json:"calculation_meta"`
 	SafeQuestionSummary string                  `json:"safe_question_summary"`
 	CalendarBasis       *CalendarBasis          `json:"calendar_basis"`
+	Ganzhi              *ProfessionalGanzhi     `json:"ganzhi"`
 	Dun                 *Dun                    `json:"dun"`
 	Xun                 *Xun                    `json:"xun"`
 	Chief               *Chief                  `json:"chief"`
 	Palaces             []Palace                `json:"palaces"`
+	Limits              []string                `json:"limits"`
 }
 
 const (
@@ -62,6 +65,9 @@ func BuildFullContent(resultPayload json.RawMessage, freeContent string) (string
 	categoryText := categoryLabel(category)
 	disclaimer := fullReportDisclaimerFor(parsed.AlgorithmVersion)
 
+	if parsed.AlgorithmVersion == AlgorithmVersionQimenV2Professional {
+		return buildQimenProfessionalFallbackFullContent(parsed, profile, lens, category, categoryText, methodNote, disclaimer, freeContent), nil
+	}
 	if parsed.AlgorithmVersion == AlgorithmVersionQimenV2POC {
 		return buildQimenV2FallbackFullContent(parsed, profile, lens, category, categoryText, methodNote, disclaimer, freeContent), nil
 	}
@@ -85,10 +91,14 @@ func BuildFullContent(resultPayload json.RawMessage, freeContent string) (string
 }
 
 func fullReportDisclaimerFor(algorithmVersion string) string {
-	if algorithmVersion == AlgorithmVersionQimenV2POC {
+	switch algorithmVersion {
+	case AlgorithmVersionQimenV2POC:
 		return fullReportDisclaimerV2
+	case AlgorithmVersionQimenV2Professional:
+		return fullReportDisclaimerProfessional
+	default:
+		return fullReportDisclaimerV1
 	}
-	return fullReportDisclaimerV1
 }
 
 func buildQimenSummarySection(parsed parsedResultPayload, profile QuestionProfile, lens QimenLens, category, categoryText, methodNote, disclaimer string) string {
@@ -257,6 +267,9 @@ func buildQimenBoundarySection(methodNote string, meta *calculationMetaPayload, 
 	}
 	if algorithmVersion == AlgorithmVersionQimenV2POC && len(palaces) > 0 {
 		lines = append(lines, fmt.Sprintf("九宫结构为 POC 近似排盘（共 %d 宫），仅供结构化观察。", len(palaces)))
+	}
+	if algorithmVersion == AlgorithmVersionQimenV2Professional && len(palaces) > 0 {
+		lines = append(lines, fmt.Sprintf("九宫落盘为 professional 第一版（共 %d 宫），置闰法、寄宫流派校准仍未完成。", len(palaces)))
 	}
 	return strings.Join(lines, "\n")
 }

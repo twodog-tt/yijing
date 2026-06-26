@@ -22,13 +22,16 @@ func TestResolveAlgorithmVersionAcceptsExplicitVersions(t *testing.T) {
 	for _, raw := range []string{
 		model.AlgorithmVersionQimenSimpleV1,
 		qimen.AlgorithmVersionQimenV2POC,
+		qimen.AlgorithmVersionQimenV2Professional,
 		"  " + qimen.AlgorithmVersionQimenV2POC + "  ",
 	} {
 		version, err := qimen.ResolveAlgorithmVersion(raw)
 		if err != nil {
 			t.Fatalf("ResolveAlgorithmVersion(%q): %v", raw, err)
 		}
-		if version != model.AlgorithmVersionQimenSimpleV1 && version != qimen.AlgorithmVersionQimenV2POC {
+		switch version {
+		case model.AlgorithmVersionQimenSimpleV1, qimen.AlgorithmVersionQimenV2POC, qimen.AlgorithmVersionQimenV2Professional:
+		default:
 			t.Fatalf("unexpected version %q", version)
 		}
 	}

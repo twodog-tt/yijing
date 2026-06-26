@@ -158,7 +158,7 @@ func (h *AnalysisHandler) CreateQimen(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, qimen.ErrSessionKeyTooLong):
 			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "session_key exceeds max length")
 		case errors.Is(err, qimen.ErrInvalidAlgorithmVersion):
-			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "invalid params: algorithm_version must be qimen-simple-v1 or qimen-v2-poc")
+			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "invalid params: algorithm_version must be qimen-simple-v1, qimen-v2-poc, or qimen-v2-professional")
 		case errors.Is(err, qimen.ErrSensitiveBlocked):
 			response.Error(w, http.StatusBadRequest, response.CodeSensitiveBlock,
 				"这个问题不适合用奇门简化解读。你可以换成更偏向自我反思、局势整理或行动节奏的问题。")

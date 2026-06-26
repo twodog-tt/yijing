@@ -34,6 +34,7 @@ func TestValidateAlgorithmVersionAllowed(t *testing.T) {
 		{ModuleTypeBazi, AlgorithmVersionBaziV2POC},
 		{ModuleTypeQimen, AlgorithmVersionQimenSimpleV1},
 		{ModuleTypeQimen, AlgorithmVersionQimenV2POC},
+		{ModuleTypeQimen, AlgorithmVersionQimenV2Professional},
 	}
 	for _, tc := range cases {
 		if err := ValidateAlgorithmVersion(tc.moduleType, tc.version); err != nil {

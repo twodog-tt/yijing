@@ -1172,8 +1172,97 @@ func TestCreateQimenRejectsInvalidAlgorithmVersion(t *testing.T) {
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d body=%s", rec.Code, rec.Body.String())
 	}
-	if !strings.Contains(rec.Body.String(), "algorithm_version must be qimen-simple-v1 or qimen-v2-poc") {
+	if !strings.Contains(rec.Body.String(), "algorithm_version must be qimen-simple-v1, qimen-v2-poc, or qimen-v2-professional") {
 		t.Fatalf("unexpected body: %s", rec.Body.String())
+	}
+}
+
+func TestCreateQimenUsesProfessionalAlgorithmVersion(t *testing.T) {
+	h, _ := newTestAnalysisHandler(t)
+	body := bytes.NewBufferString(`{"session_key":"sess-a","question":"我最近适合推进这个计划吗？","category":"career","confirm_disclaimer":true,"algorithm_version":"qimen-v2-professional"}`)
+	rec := httptest.NewRecorder()
+	h.CreateQimen(rec, httptest.NewRequest(http.MethodPost, "/api/v1/analysis/qimen", body))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", rec.Code, rec.Body.String())
+	}
+	var resp struct {
+		Data struct {
+			AlgorithmVersion string          `json:"algorithm_version"`
+			ResultPayload    json.RawMessage `json:"result_payload"`
+			FreeContent      string          `json:"free_content"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.Data.AlgorithmVersion != qimen.AlgorithmVersionQimenV2Professional {
+		t.Fatalf("algorithm_version=%q", resp.Data.AlgorithmVersion)
+	}
+	raw := string(resp.Data.ResultPayload)
+	for _, want := range []string{
+		`"algorithm_version":"qimen-v2-professional"`,
+		`"palaces"`,
+		`"layout_version"`,
+		`"ganzhi"`,
+	} {
+		if !strings.Contains(raw, want) {
+			t.Fatalf("result_payload missing %q: %s", want, raw)
+		}
+	}
+	if strings.Contains(raw, `"zhi_fu":"professional_pending"`) {
+		t.Fatalf("chief should not be pending")
+	}
+	for _, forbidden := range []string{"session_key", "prompt", "input_payload"} {
+		if strings.Contains(raw, forbidden) {
+			t.Fatalf("result_payload must not contain %q", forbidden)
+		}
+	}
+	if !strings.Contains(resp.Data.FreeContent, "qimen-v2-professional") {
+		t.Fatalf("free_content missing professional marker")
+	}
+}
+
+func TestUnlockQimenProfessionalFreeUnlockSuccess(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	sessions.sessions["sess-a"] = &model.Session{ID: 10, SessionKey: "sess-a"}
+	body := bytes.NewBufferString(`{"session_key":"sess-a","question":"我最近适合推进这个计划吗？","category":"career","confirm_disclaimer":true,"algorithm_version":"qimen-v2-professional"}`)
+	createRec := httptest.NewRecorder()
+	h.CreateQimen(createRec, httptest.NewRequest(http.MethodPost, "/api/v1/analysis/qimen", body))
+	if createRec.Code != http.StatusOK {
+		t.Fatalf("create professional qimen failed: %s", createRec.Body.String())
+	}
+	var createResp struct {
+		Data struct {
+			ID int64 `json:"id"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(createRec.Body.Bytes(), &createResp); err != nil {
+		t.Fatalf("decode create: %v", err)
+	}
+
+	rec := unlockAnalysisRequest(t, h, createResp.Data.ID, "sess-a", `{"unlock_type":"free_unlock"}`)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200 for professional qimen unlock, got %d body=%s", rec.Code, rec.Body.String())
+	}
+	var resp struct {
+		Data struct {
+			FullContent string `json:"full_content"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode unlock: %v", err)
+	}
+	if strings.TrimSpace(resp.Data.FullContent) == "" {
+		t.Fatalf("expected full_content")
+	}
+	if !strings.Contains(resp.Data.FullContent, "九宫") && !strings.Contains(resp.Data.FullContent, "宫位") {
+		t.Fatalf("expected professional palace observation in full_content")
+	}
+	if !strings.Contains(resp.Data.FullContent, "professional") && !strings.Contains(resp.Data.FullContent, "第一版") {
+		t.Fatalf("expected professional first-version note in full_content")
+	}
+	if strings.Contains(rec.Body.String(), "session_key") || strings.Contains(rec.Body.String(), "prompt") {
+		t.Fatalf("unlock response must not expose session_key or prompt")
 	}
 }
 

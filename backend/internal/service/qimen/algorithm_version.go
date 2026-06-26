@@ -17,7 +17,7 @@ func ResolveAlgorithmVersion(raw string) (string, error) {
 		return model.AlgorithmVersionQimenSimpleV1, nil
 	}
 	switch version {
-	case model.AlgorithmVersionQimenSimpleV1, AlgorithmVersionQimenV2POC:
+	case model.AlgorithmVersionQimenSimpleV1, AlgorithmVersionQimenV2POC, AlgorithmVersionQimenV2Professional:
 		return version, nil
 	default:
 		return "", ErrInvalidAlgorithmVersion

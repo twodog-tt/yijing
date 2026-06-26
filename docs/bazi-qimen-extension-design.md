@@ -1873,3 +1873,26 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 **下一步：** ALG2.6 API 灰度；QIMEN-V2-VIEW；ALG2.5C 寄宫流派实现。
 
 ---
+
+### 10.43 Phase ALG2.6 交付清单（奇门 v2 professional API 内部灰度）
+
+**目标：** 创建 API 支持 `algorithm_version=qimen-v2-professional`；默认仍为 `qimen-simple-v1`；`qimen-v2-poc` 保留；**仅 backend 部署**。
+
+**本阶段完成：**
+
+- [x] `ResolveAlgorithmVersion` 接受 `qimen-v2-professional`
+- [x] `Create` 走 `CalculateProfessionalPreview` + `BuildProfessionalAPIResultPayload`
+- [x] result_payload 含 9 宫、chief、layout_version、ganzhi 及 v1 兼容字段
+- [x] `free_unlock` fallback 9 段 professional 报告
+- [x] DeepSeek prompt 支持 professional 字段（layout_version / ganzhi / palaces_summary）
+- [x] handler / service / model 测试覆盖
+
+**仍不做（ALG2.6）：**
+
+- [ ] 小程序 / Web 暴露算法选择
+- [ ] SQL / frontend 部署
+- [ ] 声称最终权威专业排盘
+
+**下一步：** QIMEN-V2-VIEW；ALG2.7 professional 报告质量增强；BAZI1.3。
+
+---

@@ -7,9 +7,11 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/wangxintong/yijing/backend/internal/config"
 	"github.com/wangxintong/yijing/backend/internal/model"
+	"github.com/wangxintong/yijing/backend/internal/pkg/clock"
 )
 
 func sampleResultPayload(category string) json.RawMessage {
@@ -347,6 +349,35 @@ func TestBuildFullReportPromptInputIncludesV2Fields(t *testing.T) {
 	}
 	prompt := buildQimenUserPrompt(input)
 	for _, want := range []string{"calendar_basis", "palaces_summary", "focus_palaces_summary", "qimen-v2-poc"} {
+		if !strings.Contains(prompt, want) {
+			t.Fatalf("prompt missing %q", want)
+		}
+	}
+}
+
+func TestBuildFullReportPromptInputIncludesProfessionalFields(t *testing.T) {
+	when := time.Date(2024, 3, 20, 9, 0, 0, 0, clock.Location())
+	v1, err := Calculate("test question here", "career", when)
+	if err != nil {
+		t.Fatalf("Calculate: %v", err)
+	}
+	pro, err := CalculateProfessionalPreview(CalculateInputProfessional{Category: "career", Now: when})
+	if err != nil {
+		t.Fatalf("preview: %v", err)
+	}
+	raw, err := BuildProfessionalAPIResultPayload(v1, pro)
+	if err != nil {
+		t.Fatalf("payload: %v", err)
+	}
+	input, err := buildFullReportPromptInput(raw, "免费解读")
+	if err != nil {
+		t.Fatalf("buildFullReportPromptInput professional: %v", err)
+	}
+	if input.AlgorithmVersion != AlgorithmVersionQimenV2Professional {
+		t.Fatalf("algorithm_version=%q", input.AlgorithmVersion)
+	}
+	prompt := buildQimenUserPrompt(input)
+	for _, want := range []string{"layout_version", "ganzhi", "palaces_summary", "qimen-v2-professional"} {
 		if !strings.Contains(prompt, want) {
 			t.Fatalf("prompt missing %q", want)
 		}

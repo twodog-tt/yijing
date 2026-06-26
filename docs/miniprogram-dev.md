@@ -1378,6 +1378,23 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 - [x] 同输入重复输出一致；category 不影响排盘
 - [x] POC / qimen-simple-v1 不受影响
 
+## 25.16 Phase ALG2.6：奇门 v2 professional API 内部灰度（backend 部署）
+
+**说明：** 创建 API 支持 `algorithm_version=qimen-v2-professional`（内部传参）；默认仍为 `qimen-simple-v1`；`qimen-v2-poc` 保留。**不改**小程序 / Web；**不执行** SQL。
+
+**API 规则：**
+
+- 空 / 缺省 → `qimen-simple-v1`
+- `qimen-v2-poc` → 现有 POC
+- `qimen-v2-professional` → professional preview + v1 兼容字段
+- 其他值 → HTTP 400
+
+**验收（后端 + curl）：**
+
+- [x] professional payload 含 palaces=9、chief、layout_version
+- [x] free_unlock 返回 full_content（引用九宫 / 第一版说明）
+- [x] 八字 / v1 / POC 回归正常
+
 ## 26. Phase UX1：八字 / 奇门轻量动效
 
 Phase UX1 在小程序与 Web 八字、奇门页面增加贴合传统文化场景的轻量 UI 动效，提升氛围与完成感。**仅改 UI 动效，不改后端、数据库、部署。**

@@ -33,6 +33,7 @@ type lensPayload struct {
 
 type fullReportPromptInput struct {
 	AlgorithmVersion    string
+	LayoutVersion       string
 	MethodNote          string
 	QuestionSummary     string
 	SafeQuestionSummary string
@@ -50,6 +51,7 @@ type fullReportPromptInput struct {
 	Limits              []string
 	FreeContent         string
 	CalendarBasis       CalendarBasis
+	Ganzhi              ProfessionalGanzhi
 	Dun                 Dun
 	Xun                 Xun
 	Chief               Chief
@@ -61,6 +63,7 @@ type fullReportPromptInput struct {
 func buildFullReportPromptInput(resultPayload json.RawMessage, freeContent string) (*fullReportPromptInput, error) {
 	var parsed struct {
 		AlgorithmVersion    string                  `json:"algorithm_version"`
+		LayoutVersion       string                  `json:"layout_version"`
 		MethodNote          string                  `json:"method_note"`
 		QuestionSummary     string                  `json:"question_summary"`
 		SafeQuestionSummary string                  `json:"safe_question_summary"`
@@ -73,8 +76,10 @@ func buildFullReportPromptInput(resultPayload json.RawMessage, freeContent strin
 		ActionPacing        string                  `json:"action_pacing"`
 		ReflectionQuestions []string                `json:"reflection_questions"`
 		ActionSuggestions   []string                `json:"action_suggestions"`
+		Limits              []string                `json:"limits"`
 		CalculationMeta     *calculationMetaPayload `json:"calculation_meta"`
 		CalendarBasis       *CalendarBasis          `json:"calendar_basis"`
+		Ganzhi              *ProfessionalGanzhi     `json:"ganzhi"`
 		Dun                 *Dun                    `json:"dun"`
 		Xun                 *Xun                    `json:"xun"`
 		Chief               *Chief                  `json:"chief"`
@@ -104,6 +109,7 @@ func buildFullReportPromptInput(resultPayload json.RawMessage, freeContent strin
 
 	input := &fullReportPromptInput{
 		AlgorithmVersion:    strings.TrimSpace(parsed.AlgorithmVersion),
+		LayoutVersion:       strings.TrimSpace(parsed.LayoutVersion),
 		MethodNote:          strings.TrimSpace(parsed.MethodNote),
 		QuestionSummary:     summary,
 		SafeQuestionSummary: safeSummary,
@@ -123,6 +129,9 @@ func buildFullReportPromptInput(resultPayload json.RawMessage, freeContent strin
 	if parsed.CalendarBasis != nil {
 		input.CalendarBasis = *parsed.CalendarBasis
 	}
+	if parsed.Ganzhi != nil {
+		input.Ganzhi = *parsed.Ganzhi
+	}
 	if parsed.Dun != nil {
 		input.Dun = *parsed.Dun
 	}
@@ -140,6 +149,9 @@ func buildFullReportPromptInput(resultPayload json.RawMessage, freeContent strin
 	}
 	if parsed.CalculationMeta != nil {
 		input.Limits = append([]string{}, parsed.CalculationMeta.Limits...)
+	}
+	if len(input.Limits) == 0 && len(parsed.Limits) > 0 {
+		input.Limits = append([]string{}, parsed.Limits...)
 	}
 	if input.MethodNote == "" {
 		input.MethodNote = MethodNote
@@ -230,6 +242,13 @@ func formatQimenLensForPrompt(lens QimenLens) string {
 		"caution_theme=" + lens.CautionTheme,
 		"pacing_theme=" + lens.PacingTheme,
 	}, "；")
+}
+
+func formatGanzhiForPrompt(gz ProfessionalGanzhi) string {
+	if gz.Year == "" && gz.Month == "" && gz.Day == "" && gz.Hour == "" {
+		return "（无）"
+	}
+	return fmt.Sprintf("year=%s; month=%s; day=%s; hour=%s", gz.Year, gz.Month, gz.Day, gz.Hour)
 }
 
 func formatCalendarBasisForPrompt(basis CalendarBasis) string {

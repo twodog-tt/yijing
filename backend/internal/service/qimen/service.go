@@ -132,6 +132,23 @@ func (s *Service) Create(ctx context.Context, input CreateParams) (*model.Analys
 		if err != nil {
 			return nil, err
 		}
+	case AlgorithmVersionQimenV2Professional:
+		proCalc, calcErr := CalculateProfessionalPreview(CalculateInputProfessional{
+			Category: category,
+			Now:      now,
+		})
+		if calcErr != nil {
+			return nil, calcErr
+		}
+		merged := MergeV1InterpretationWithProfessional(v1Calc, proCalc)
+		freeContent = BuildFreeContentForVersion(merged, algorithmVersion)
+		if strings.TrimSpace(freeContent) == "" {
+			return nil, fmt.Errorf("%w: free_content generation failed", ErrInvalidParams)
+		}
+		resultPayload, err = BuildProfessionalAPIResultPayload(v1Calc, proCalc)
+		if err != nil {
+			return nil, err
+		}
 	default:
 		freeContent = BuildFreeContent(v1Calc)
 		if strings.TrimSpace(freeContent) == "" {

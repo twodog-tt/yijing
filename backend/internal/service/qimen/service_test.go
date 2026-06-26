@@ -289,6 +289,47 @@ func TestCreateUsesV2AlgorithmVersion(t *testing.T) {
 	}
 }
 
+func TestCreateUsesProfessionalAlgorithmVersion(t *testing.T) {
+	analysisRepo := &mockAnalysisRepo{}
+	svc := qimen.NewServiceWithRepos(&mockSessionRepo{
+		upsertFn: func(_ context.Context, _, _ string) (*model.Session, error) {
+			return &model.Session{ID: 10}, nil
+		},
+	}, analysisRepo, nil)
+
+	params := validCreateParams()
+	params.AlgorithmVersion = qimen.AlgorithmVersionQimenV2Professional
+	_, err := svc.Create(context.Background(), params)
+	if err != nil {
+		t.Fatalf("Create professional: %v", err)
+	}
+	if analysisRepo.lastCreateParams.AlgorithmVersion != qimen.AlgorithmVersionQimenV2Professional {
+		t.Fatalf("algorithm_version=%q", analysisRepo.lastCreateParams.AlgorithmVersion)
+	}
+
+	var result map[string]any
+	if err := json.Unmarshal(analysisRepo.lastCreateParams.ResultPayload, &result); err != nil {
+		t.Fatalf("result payload: %v", err)
+	}
+	if result["algorithm_version"] != qimen.AlgorithmVersionQimenV2Professional {
+		t.Fatalf("result algorithm_version=%v", result["algorithm_version"])
+	}
+	if result["layout_version"] != qimen.ProfessionalLayoutVersionV1 {
+		t.Fatalf("layout_version=%v", result["layout_version"])
+	}
+	palaces, ok := result["palaces"].([]any)
+	if !ok || len(palaces) != 9 {
+		t.Fatalf("palaces len=%d", len(palaces))
+	}
+	chief, ok := result["chief"].(map[string]any)
+	if !ok || chief["zhi_fu"] == "professional_pending" || chief["zhi_fu"] == "" {
+		t.Fatalf("chief=%v", result["chief"])
+	}
+	if !strings.Contains(analysisRepo.lastCreateParams.FreeContent, "qimen-v2-professional") {
+		t.Fatalf("expected professional disclaimer in free_content")
+	}
+}
+
 func TestCreateExplicitV1AlgorithmVersion(t *testing.T) {
 	analysisRepo := &mockAnalysisRepo{}
 	svc := qimen.NewServiceWithRepos(&mockSessionRepo{

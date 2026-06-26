@@ -17,8 +17,11 @@ func BuildFreeContentForVersion(calc CalculationResult, algorithmVersion string)
 
 func buildFreeContent(calc CalculationResult, algorithmVersion string) string {
 	disclaimer := freeDisclaimerV1
-	if algorithmVersion == AlgorithmVersionQimenV2POC {
+	switch algorithmVersion {
+	case AlgorithmVersionQimenV2POC:
 		disclaimer = freeDisclaimerV2
+	case AlgorithmVersionQimenV2Professional:
+		disclaimer = freeDisclaimerProfessional
 	}
 	lensSection := buildLensSection(calc.QimenLens, calc.QuestionProfile)
 	sections := []string{
