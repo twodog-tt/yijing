@@ -30,6 +30,12 @@
       </view>
     </section-reveal>
 
+    <section-reveal wx:if="{{view.isBaziV2 && view.baziV2}}" active="{{resultReady}}" delay="100">
+      <view class="card card--bazi-v2">
+        <bazi-v2-panel v2="{{view.baziV2}}"></bazi-v2-panel>
+      </view>
+    </section-reveal>
+
     <section-reveal active="{{resultReady}}" delay="160">
       <view class="card">
         <text class="section-title">简化干支示意</text>

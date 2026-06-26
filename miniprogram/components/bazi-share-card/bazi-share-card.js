@@ -23,6 +23,9 @@ const BAZI_METHOD_INTRO =
 function estimateRawLongPosterHeight(data) {
   let height = 320;
   height += estimateParagraphHeight(data.methodNote, 22, 30);
+  if (data.v2PosterNote) {
+    height += estimateParagraphHeight(data.v2PosterNote, 22, 28);
+  }
   height += data.hourUnknown ? 132 : 156;
   height += 120;
   height += 120;
@@ -75,7 +78,16 @@ function layoutLongPoster(ctx, data, canvasHeight) {
     font: "14px sans-serif",
     color: "#78716c",
   });
-  y += 16;
+  y += 12;
+  if (data.v2PosterNote) {
+    y = drawWrappedParagraph(ctx, normalizeText(data.v2PosterNote), PADDING_X, y, {
+      lineHeight: 22,
+      font: "13px sans-serif",
+      color: "#92400e",
+    });
+    y += 8;
+  }
+  y += 4;
 
   const pillarLines = [
     `年柱 · ${normalizeText(data.pillars?.year || "—")}`,

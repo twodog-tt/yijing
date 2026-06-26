@@ -28,6 +28,12 @@
   animation: none;
 }
 
+.card--bazi-v2 {
+  background: linear-gradient(180deg, #1c1917 0%, #292524 100%);
+  border: 1rpx solid rgba(252, 211, 77, 0.28);
+  box-shadow: 0 12rpx 32rpx rgba(28, 25, 23, 0.18);
+}
+
 .element-row--wood .element-label,
 .element-row--fire .element-label,
 .element-row--earth .element-label,

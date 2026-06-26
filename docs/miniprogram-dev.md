@@ -1597,6 +1597,34 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 
 **下一步：** 本地 DevTools 勾选 → RELEASE-QA。
 
+## 25.23 Phase BAZI1.3：小程序八字 v2 内部记录展示增强
+
+**说明：** 八字结果页在 `algorithm_version=bazi-v2-poc` 时条件展示 v2 口径区块（节气 / 四柱 v2 / 五行结构）。**不**暴露算法选择 UI；**不改** backend / Web / SQL。
+
+**展示条件：** `result_payload.algorithm_version === 'bazi-v2-poc'`
+
+**本阶段完成：**
+
+- [x] `buildBaziV2View` / `bazi-v2-panel` 组件
+- [x] 结果页条件展示 v2 区块（不影响 v1 布局）
+- [x] 未知时辰不展示时柱（显示「未知时辰，未生成时柱」）
+- [x] 长图增加一句 v2 轻量摘要（不含完整出生信息）
+- [x] 普通创建仍默认 `bazi-simple-v1`
+
+**测试记录（ECS）：**
+
+| 类型 | id | session |
+|------|-----|---------|
+| bazi-v2-poc | 105 | `bazi-v2-view-test` |
+| bazi-simple-v1 | 106 | `bazi-v1-view-test` |
+| bazi-v2-poc（未知时辰） | 107 | `bazi-v2-unknown-test` |
+
+**DevTools 验收：** 需重新编译；Storage 写入 session 后打开 `/pages/analysis-result/analysis-result?id=<id>`
+
+**部署：** 无需 backend / frontend / SQL。
+
+**下一步：** BAZI1.3-QA；RELEASE-QA。
+
 ## 26. Phase UX1：八字 / 奇门轻量动效
 
 Phase UX1 在小程序与 Web 八字、奇门页面增加贴合传统文化场景的轻量 UI 动效，提升氛围与完成感。**仅改 UI 动效，不改后端、数据库、部署。**

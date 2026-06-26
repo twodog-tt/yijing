@@ -23,6 +23,34 @@ const ELEMENT_LABELS = Object.freeze({
 
 const MODULE_BAZI_TYPE = 1;
 const MODULE_BAZI_LABEL = "八字简析";
+const ALGORITHM_BAZI_SIMPLE_V1 = "bazi-simple-v1";
+const ALGORITHM_BAZI_V2_POC = "bazi-v2-poc";
+
+const BAZI_V2_PREVIEW_NOTE =
+  "八字 v2 POC 第一版 · 立春换年与节气月柱内部灰度 · 传统文化学习参考 · 结构化观察 · 不构成现实决策依据";
+
+const BAZI_V2_POSTER_NOTE =
+  "本记录采用八字 v2 内部口径，详情页可查看节气与四柱结构说明。";
+
+const BAZI_V2_BOUNDARY_NOTES = Object.freeze([
+  "当前仍为 bazi-v2-poc，不等同于最终权威专业排盘",
+  "真太阳时未实现",
+  "节气时刻仍为公式近似",
+  "建议结合现实情况判断",
+  "不构成现实决策依据",
+]);
+
+const YEAR_BOUNDARY_LABELS = Object.freeze({
+  lichun: "立春换年",
+});
+
+const MONTH_BOUNDARY_LABELS = Object.freeze({
+  solar_terms_jie: "十二节令月柱",
+});
+
+const DAY_PILLAR_BASIS_LABELS = Object.freeze({
+  fixed_epoch_v1: "v1 固定基准日",
+});
 
 const { pickPosterActionPoints, limitPosterText } = require("./long-poster-canvas");
 const { formatDateTime } = require("./date");
@@ -38,19 +66,93 @@ function parseJSONField(raw) {
   }
 }
 
+function normalizeTextField(value, fallback = "") {
+  const text = String(value == null ? "" : value).trim();
+  return text || fallback;
+}
+
+function buildFiveElementsView(raw) {
+  const elements = raw && typeof raw === "object" ? raw : {};
+  return {
+    wood: Number(elements.wood) || 0,
+    fire: Number(elements.fire) || 0,
+    earth: Number(elements.earth) || 0,
+    metal: Number(elements.metal) || 0,
+    water: Number(elements.water) || 0,
+  };
+}
+
+function buildCalendarBasisView(raw) {
+  const basis = raw && typeof raw === "object" ? raw : {};
+  const yearKey = normalizeTextField(basis.year_boundary);
+  const monthKey = normalizeTextField(basis.month_boundary);
+  const dayKey = normalizeTextField(basis.day_pillar_basis);
+  return {
+    yearBoundaryLabel: YEAR_BOUNDARY_LABELS[yearKey] || yearKey || "—",
+    monthBoundaryLabel: MONTH_BOUNDARY_LABELS[monthKey] || monthKey || "—",
+    dayPillarBasisLabel: DAY_PILLAR_BASIS_LABELS[dayKey] || dayKey || "—",
+    trueSolarTimeLabel:
+      basis.true_solar_time === true
+        ? "已启用"
+        : basis.true_solar_time === false
+          ? "未实现"
+          : "—",
+    note: normalizeTextField(basis.note),
+  };
+}
+
+function buildPillarsV2View(pillarsV2, pillarsFallback) {
+  const v2 = pillarsV2 && typeof pillarsV2 === "object" ? pillarsV2 : {};
+  const fallback = pillarsFallback && typeof pillarsFallback === "object" ? pillarsFallback : {};
+  const hour = normalizeTextField(v2.hour || fallback.hour);
+  return {
+    year: normalizeTextField(v2.year || fallback.year, "—"),
+    month: normalizeTextField(v2.month || fallback.month, "—"),
+    day: normalizeTextField(v2.day || fallback.day, "—"),
+    hour,
+    hourUnknown: !hour,
+  };
+}
+
+function buildBaziV2View(result) {
+  if (normalizeTextField(result?.algorithm_version) !== ALGORITHM_BAZI_V2_POC) {
+    return null;
+  }
+
+  const limits = Array.isArray(result?.calculation_meta?.limits)
+    ? result.calculation_meta.limits.map((item) => normalizeTextField(item)).filter(Boolean)
+    : Array.isArray(result?.limits)
+      ? result.limits.map((item) => normalizeTextField(item)).filter(Boolean)
+      : [];
+
+  return {
+    isBaziV2: true,
+    algorithmVersion: ALGORITHM_BAZI_V2_POC,
+    previewNote: BAZI_V2_PREVIEW_NOTE,
+    calendarBasisView: buildCalendarBasisView(result.calendar_basis),
+    pillarsV2View: buildPillarsV2View(result.pillars_v2, result.pillars),
+    fiveElementsView: buildFiveElementsView(result.five_elements),
+    compatibilityNote: normalizeTextField(result.compatibility_note),
+    boundaryNotes: BAZI_V2_BOUNDARY_NOTES.slice(),
+    limits,
+  };
+}
+
 function buildAnalysisView(record) {
   const result = parseJSONField(record?.result_payload);
   const pillars = result.pillars || {};
   const elements = result.five_elements || {};
-  const hourUnknown = !pillars.hour;
+  const hourUnknown = !normalizeTextField(pillars.hour);
   const suggestions = Array.isArray(result.action_suggestions)
     ? result.action_suggestions
     : [];
   const profile = result.bazi_profile || {};
   const lens = result.interpretation_lens || {};
+  const baziV2 = buildBaziV2View(result);
 
   return {
-    algorithmVersion: result.algorithm_version || record?.algorithm_version || "bazi-simple-v1",
+    algorithmVersion:
+      result.algorithm_version || record?.algorithm_version || ALGORITHM_BAZI_SIMPLE_V1,
     methodNote:
       result.method_note ||
       "本功能采用简化干支文化规则，不等同于专业八字排盘。",
@@ -62,13 +164,7 @@ function buildAnalysisView(record) {
     },
     hourUnknown,
     dayMaster: result.day_master || "—",
-    elements: {
-      wood: Number(elements.wood) || 0,
-      fire: Number(elements.fire) || 0,
-      earth: Number(elements.earth) || 0,
-      metal: Number(elements.metal) || 0,
-      water: Number(elements.water) || 0,
-    },
+    elements: buildFiveElementsView(elements),
     baziProfile: {
       dayMasterObservation: profile.day_master_observation || "",
       seasonTendency: profile.season_tendency || "",
@@ -85,6 +181,8 @@ function buildAnalysisView(record) {
     reflectionFocus: result.reflection_focus || "",
     actionSuggestions: suggestions,
     freeContent: record?.free_content || "",
+    isBaziV2: !!(baziV2 && baziV2.isBaziV2),
+    baziV2: baziV2 || null,
   };
 }
 
@@ -169,6 +267,7 @@ function buildBaziLongPosterData(recordId, view, fullContent) {
     id: String(recordId),
     methodNote:
       view.methodNote || "本功能采用简化干支文化规则，不等同于专业八字排盘。",
+    v2PosterNote: view.isBaziV2 ? BAZI_V2_POSTER_NOTE : "",
     pillars,
     hourUnknown,
     dayMaster: view.dayMaster || "—",
@@ -207,6 +306,9 @@ function buildBaziHistoryListItem(item) {
 }
 
 module.exports = {
+  ALGORITHM_BAZI_SIMPLE_V1,
+  ALGORITHM_BAZI_V2_POC,
+  BAZI_V2_POSTER_NOTE,
   ELEMENT_LABELS,
   HOUR_BRANCHES,
   MODULE_BAZI_LABEL,
@@ -215,5 +317,6 @@ module.exports = {
   buildBaziCardData,
   buildBaziHistoryListItem,
   buildBaziLongPosterData,
+  buildBaziV2View,
   parseJSONField,
 };

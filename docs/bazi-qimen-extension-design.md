@@ -2023,3 +2023,21 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 **下一步：** RELEASE-QA。
 
 ---
+
+### 10.50 Phase BAZI1.3 交付清单（小程序八字 v2 内部记录展示）
+
+**目标：** 小程序八字结果页在 `bazi-v2-poc` 记录上条件展示节气口径 / 四柱 v2 / 五行结构；**不改** backend / Web / SQL。
+
+**本阶段完成：**
+
+- [x] `buildBaziV2View` 识别 `bazi-v2-poc`
+- [x] 新增 `bazi-v2-panel` 组件（四柱 v2、calendar_basis、五行、边界说明）
+- [x] 长图增加一句 v2 轻量摘要
+- [x] 未知时辰不展示时柱
+- [x] v1 布局与创建默认路径不变
+
+**仍不做：** 算法选择 UI；默认创建 v2；backend / SQL 变更。
+
+**下一步：** BAZI1.3-QA；RELEASE-QA。
+
+---
