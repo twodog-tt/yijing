@@ -13,7 +13,7 @@ const (
 	DunYuanPending                = "upper_middle_lower_pending"
 	DunMethodSolarTermBoundary    = "solar_term_boundary"
 
-	MethodNoteV2Professional = "奇门 v2 专业口径（ALG2.4A–C），含二十四节气第一版拆补局数；仅供传统文化学习与结构化观察，不等同于线下大师排盘，不构成现实决策依据。"
+	MethodNoteV2Professional = "奇门 v2 专业口径（ALG2.4A–C / ALG2.5），含二十四节气拆补与九宫落盘第一版；仅供传统文化学习与结构化观察，不等同于线下大师排盘，不构成现实决策依据。"
 )
 
 // CalculationLimitsV2Professional returns limits for the professional target payload (design only).
@@ -25,8 +25,8 @@ var calculationLimitsV2Professional = []string{
 	"当前不提供精准预测",
 	"当前不提供应期断言",
 	"当前不构成现实决策依据",
-	"拆补局数为 ALG2.4C 二十四节气第一版映射（pending_verification），置闰法尚未实现",
-	"转盘飞布、值符落宫与天禽寄宫尚未实现（professional_pending）",
+	"九宫落盘为 ALG2.5 第一版转盘排布（pending_verification），天禽暂保留中五宫",
+	"置闰法尚未实现",
 }
 
 // ProfessionalGapAudit documents qimen-v2-poc vs qimen-v2-professional target gaps.
@@ -63,22 +63,22 @@ var ProfessionalGapAudits = []ProfessionalGapAudit{
 	{
 		Dimension: "值符/值使", CurrentPOC: "按局数宫位取星/门占位",
 		TargetPro: "旬首、转盘后星门落宫规则",
-		Status: "gap", Implementation: "ALG2.5",
+		Status: "partial", Implementation: "ALG2.5",
 	},
 	{
 		Dimension: "九星/八门/八神", CurrentPOC: "固定名表 + hash 轮转",
 		TargetPro: "转盘 / 飞布规则，随遁局变化",
-		Status: "gap", Implementation: "ALG2.5",
+		Status: "partial", Implementation: "ALG2.5",
 	},
 	{
 		Dimension: "天盘干/地盘干", CurrentPOC: "十天干表取模轮转",
 		TargetPro: "按局数、遁法、旬首排布",
-		Status: "gap", Implementation: "ALG2.5",
+		Status: "partial", Implementation: "ALG2.5",
 	},
 	{
 		Dimension: "天禽寄宫", CurrentPOC: "中五宫门为 —，未专业寄宫",
 		TargetPro: "明确寄坤二 / 寄艮八等流派口径并文档化",
-		Status: "gap", Implementation: "ALG2.5",
+		Status: "partial", Implementation: "ALG2.5",
 	},
 }
 

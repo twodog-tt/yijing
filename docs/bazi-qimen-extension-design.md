@@ -1810,6 +1810,40 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 - [ ] 转盘飞布 / 值符落宫 / 天禽寄宫（**ALG2.5**）
 - [ ] frontend / miniprogram / SQL / deploy
 
-**下一步：** ALG2.5 转盘飞布；ALG2.4D 置闰法；QIMEN-V2-VIEW。
+**下一步：** ALG2.5B 寄宫/飞布校准；ALG2.6 professional API 灰度；QIMEN-V2-VIEW。
+
+---
+
+### 10.41 Phase ALG2.5 交付清单（奇门 v2 professional 九宫落盘第一版）
+
+**目标：** 实现 professional preview 九宫落盘、值符值使、地盘/天盘干、九星八门八神第一版；**不接 API、不部署**。
+
+**本阶段完成：**
+
+- [x] `BuildProfessionalEarthPlateStems` — 戊己庚辛壬癸丁丙乙，阳顺阴逆
+- [x] `BuildProfessionalStars` / `BuildProfessionalDoors` / `BuildProfessionalDeities`
+- [x] `BuildProfessionalHeavenPlateStems` — 相对值符落宫旋转
+- [x] `ResolveProfessionalChief` — 旬首+局数映射落宫
+- [x] `BuildProfessionalPalaces` — 9 宫完整字段 + `layout_role`
+- [x] 天禽暂保留中五宫（`layout_role=center`），中五宫门为 `—`
+- [x] `CalculateProfessionalPreview` palaces 不再为空
+
+**第一版口径（pending_verification）：**
+
+| 模块 | 说明 |
+|------|------|
+| 地盘干 | ju 起宫，阳遁顺布 / 阴遁逆布 |
+| 九星/八门/八神 | ju + 阴阳遁转盘 |
+| 值符值使 | xun_shou 索引 + ju 映射落宫 |
+| 天禽 | 中五宫固定，寄宫流派延后 ALG2.5B |
+
+**仍不做（ALG2.5）：**
+
+- [ ] API 接入 `qimen-v2-professional`
+- [ ] 置闰法完整实现
+- [ ] 寄宫流派校准（ALG2.5B）
+- [ ] frontend / miniprogram / SQL / deploy
+
+**下一步：** ALG2.5B 寄宫校准；ALG2.6 API 灰度；QIMEN-V2-VIEW。
 
 ---

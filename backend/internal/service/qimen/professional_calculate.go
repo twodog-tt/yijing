@@ -7,11 +7,6 @@ import (
 	"github.com/wangxintong/yijing/backend/internal/pkg/clock"
 )
 
-const (
-	chiefStatusProfessionalPending  = "professional_pending"
-	palaceStatusProfessionalPending = "professional_pending"
-)
-
 // CalculateInputProfessional is input for professional preview (not wired to Create API).
 type CalculateInputProfessional struct {
 	Category string
@@ -46,6 +41,8 @@ func CalculateProfessionalPreview(input CalculateInputProfessional) (*Calculatio
 	juResult := ResolveChaiBuJu(now, dun, basis, ganzhi)
 	applyJuToDun(&dun, juResult)
 	xun := ResolveXunFromGanZhi(ganzhi.Day, ganzhi.Hour)
+	chief := ResolveProfessionalChief(juResult, xun, dun)
+	palaces := BuildProfessionalPalaces(juResult, dun, xun, chief)
 
 	result := &CalculationResultV2Professional{
 		Category:      category,
@@ -53,15 +50,10 @@ func CalculateProfessionalPreview(input CalculateInputProfessional) (*Calculatio
 		Dun:           dun,
 		Ganzhi:        ganzhi,
 		Xun:           xun,
-		Chief: ProfessionalChief{
-			ZhiFu:        chiefStatusProfessionalPending,
-			ZhiShi:       chiefStatusProfessionalPending,
-			ZhiFuPalace:  chiefStatusProfessionalPending,
-			ZhiShiPalace: chiefStatusProfessionalPending,
-		},
-		Palaces:    nil,
-		MethodNote: MethodNoteV2Professional,
-		Limits:     CalculationLimitsV2Professional(),
+		Chief:         chief,
+		Palaces:       palaces,
+		MethodNote:    MethodNoteV2Professional,
+		Limits:        CalculationLimitsV2Professional(),
 	}
 	return result, nil
 }

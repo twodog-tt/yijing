@@ -1342,6 +1342,23 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 - [x] 11 组边界 fixtures preview 通过
 - [x] category 不影响 ju；POC/v1 回归正常
 
+## 25.14 Phase ALG2.5：奇门 v2 professional 九宫落盘第一版（后端，不接 API）
+
+**说明：** 实现 `BuildProfessionalPalaces`、`ResolveProfessionalChief` 等第一版转盘排布；preview 输出 9 宫 + 值符值使。**不接** API；**不部署**。
+
+**preview 变化：**
+
+- `chief` 不再 `professional_pending`
+- `palaces` 长度 9，含 earth/heaven/star/door/deity/layout_role
+- 天禽保留中五宫，中五宫门为 `—`
+
+**仍不做：** API 接入、置闰法、寄宫流派校准（ALG2.5B）、frontend / miniprogram / SQL / deploy。
+
+**验收（后端）：**
+
+- [x] 6 组边界 fixtures 九宫字段完整
+- [x] category 不影响排盘；POC/v1 回归正常
+
 ## 26. Phase UX1：八字 / 奇门轻量动效
 
 Phase UX1 在小程序与 Web 八字、奇门页面增加贴合传统文化场景的轻量 UI 动效，提升氛围与完成感。**仅改 UI 动效，不改后端、数据库、部署。**

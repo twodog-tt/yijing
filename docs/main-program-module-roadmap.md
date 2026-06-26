@@ -329,6 +329,7 @@ Tab: 今日 | 问事 | 扩展(八字/奇门) | 我的(历史/设置)
 | **Phase ALG2.4A** | 奇门 v2 professional 基础层 | 节气 provider、阴阳遁绑定、干支旬首、preview 计算（不接 API） | Cursor ✅ |
 | **Phase ALG2.4B** | 奇门 v2 professional 局数第一版 | 拆补法 chai_bu、三元 upper/middle/lower、置闰 pending（不接 API） | Cursor ✅ |
 | **Phase ALG2.4C** | 奇门 v2 二十四节气映射 | 24-term provider、current term、twenty_four_terms_chai_bu_v1（不接 API） | Cursor ✅ |
+| **Phase ALG2.5** | 奇门 v2 九宫落盘第一版 | 地盘/天盘干、九星八门八神、值符值使、9 宫 preview（不接 API） | Cursor ✅ |
 | **Phase REPORT1** | 八字 / 奇门完整报告质量 | 7 段结构、DeepSeek + fallback 差异化、禁用词与隐私测试 | Cursor ✅ |
 | **Phase SHARE1** | 小程序长图分享优化 | 高价值摘要 + 行动要点，移除完整报告粘贴 | Cursor ✅ |
 | **Phase SHARE2** | 问事起卦长图摘要化 | 卦象长图摘要 + 行动提醒，不贴完整解析 | Cursor ✅ |
