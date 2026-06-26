@@ -1570,4 +1570,37 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 
 **哪些后续需专业校准（ALG2.3+）：** 节气交节精确时刻、拆补/置闰局数、符头旬首、转盘九星八门八神飞布、天禽寄宫、真太阳时、时家/日家流派选择。
 
-**默认策略：** 仍不接 `POST /analysis/qimen`；`qimen-simple-v1` 不变。
+**默认策略：** ALG2.1 阶段仅后端 POC；**ALG2.2 起** Create API 支持内部可选 `qimen-v2-poc`（默认仍为 v1）。
+
+**ALG2.2（已完成）：** `POST /api/v1/analysis/qimen` 支持可选 `algorithm_version`（`qimen-simple-v1` | `qimen-v2-poc`）；默认 v1；非法值返回 400；v2 result_payload 合并 v1 解读字段 + 九宫结构；free_unlock / DeepSeek / template fallback 均支持 v2；小程序 / Web **暂不暴露**算法选择 UI。
+
+---
+
+### 10.35 Phase ALG2.2 交付清单（奇门 v2 API 灰度接入）
+
+**目标：** 参照 BAZI1.2，后端创建奇门分析时支持内部选择 `qimen-v2-poc`，默认仍为 `qimen-simple-v1`。
+
+- [x] `POST /api/v1/analysis/qimen` 可选 `algorithm_version`（`qimen-simple-v1` | `qimen-v2-poc`）
+- [x] 省略字段 → 默认 `qimen-simple-v1` / `Calculate()`
+- [x] `qimen-v2-poc` → `CalculateV2()` + `BuildV2APIResultPayload()`（含 v1 解读字段 + 9 宫）
+- [x] 非法 `algorithm_version` → 400 参数错误，不 fallback
+- [x] `free_unlock` / DeepSeek prompt / template fallback 均支持 v2 payload
+- [x] 小程序 / Web **暂不暴露**算法选择 UI
+- [x] 不改 SQL / frontend / miniprogram
+
+**请求示例（内部测试）：**
+
+```json
+{
+  "question": "我最近适合推进这个项目吗？",
+  "category": "career",
+  "confirm_disclaimer": true,
+  "algorithm_version": "qimen-v2-poc"
+}
+```
+
+**POC 边界：** v2 仍为 POC 近似排盘，非专业完整起局；专业校准延后 **ALG2.3**。
+
+**部署：** 仅 backend；无需 SQL / frontend / 小程序重编译。
+
+---

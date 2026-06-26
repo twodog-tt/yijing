@@ -1,5 +1,29 @@
 package qimen
 
+import (
+	"fmt"
+	"strings"
+
+	"github.com/wangxintong/yijing/backend/internal/model"
+)
+
+var ErrInvalidAlgorithmVersion = fmt.Errorf("%w: invalid algorithm_version", ErrInvalidParams)
+
+// ResolveAlgorithmVersion maps create input to a supported qimen algorithm version.
+// Empty input defaults to qimen-simple-v1.
+func ResolveAlgorithmVersion(raw string) (string, error) {
+	version := strings.TrimSpace(raw)
+	if version == "" {
+		return model.AlgorithmVersionQimenSimpleV1, nil
+	}
+	switch version {
+	case model.AlgorithmVersionQimenSimpleV1, AlgorithmVersionQimenV2POC:
+		return version, nil
+	default:
+		return "", ErrInvalidAlgorithmVersion
+	}
+}
+
 const (
 	AlgorithmVersionQimenV2POC = "qimen-v2-poc"
 	MethodNoteV2                 = "奇门 v2 POC，仅供传统文化学习与结构化观察，不等同于专业奇门排盘。"

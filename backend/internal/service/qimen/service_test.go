@@ -255,6 +255,73 @@ func TestCreateRejectsStrongPredictionKeywords(t *testing.T) {
 	}
 }
 
+func TestCreateUsesV2AlgorithmVersion(t *testing.T) {
+	analysisRepo := &mockAnalysisRepo{}
+	svc := qimen.NewServiceWithRepos(&mockSessionRepo{
+		upsertFn: func(_ context.Context, _, _ string) (*model.Session, error) {
+			return &model.Session{ID: 10}, nil
+		},
+	}, analysisRepo, nil)
+
+	params := validCreateParams()
+	params.AlgorithmVersion = qimen.AlgorithmVersionQimenV2POC
+	_, err := svc.Create(context.Background(), params)
+	if err != nil {
+		t.Fatalf("Create v2: %v", err)
+	}
+	if analysisRepo.lastCreateParams.AlgorithmVersion != qimen.AlgorithmVersionQimenV2POC {
+		t.Fatalf("algorithm_version=%q", analysisRepo.lastCreateParams.AlgorithmVersion)
+	}
+
+	var result map[string]any
+	if err := json.Unmarshal(analysisRepo.lastCreateParams.ResultPayload, &result); err != nil {
+		t.Fatalf("result payload: %v", err)
+	}
+	if result["algorithm_version"] != qimen.AlgorithmVersionQimenV2POC {
+		t.Fatalf("result algorithm_version=%v", result["algorithm_version"])
+	}
+	palaces, ok := result["palaces"].([]any)
+	if !ok || len(palaces) != 9 {
+		t.Fatalf("palaces len=%d", len(palaces))
+	}
+	if !strings.Contains(analysisRepo.lastCreateParams.FreeContent, "qimen-v2-poc") {
+		t.Fatalf("expected v2 disclaimer in free_content")
+	}
+}
+
+func TestCreateExplicitV1AlgorithmVersion(t *testing.T) {
+	analysisRepo := &mockAnalysisRepo{}
+	svc := qimen.NewServiceWithRepos(&mockSessionRepo{
+		upsertFn: func(_ context.Context, _, _ string) (*model.Session, error) {
+			return &model.Session{ID: 10}, nil
+		},
+	}, analysisRepo, nil)
+
+	params := validCreateParams()
+	params.AlgorithmVersion = model.AlgorithmVersionQimenSimpleV1
+	_, err := svc.Create(context.Background(), params)
+	if err != nil {
+		t.Fatalf("Create v1 explicit: %v", err)
+	}
+	if analysisRepo.lastCreateParams.AlgorithmVersion != model.AlgorithmVersionQimenSimpleV1 {
+		t.Fatalf("algorithm_version=%q", analysisRepo.lastCreateParams.AlgorithmVersion)
+	}
+}
+
+func TestCreateRejectsInvalidAlgorithmVersion(t *testing.T) {
+	repo := &mockAnalysisRepo{}
+	svc := qimen.NewServiceWithRepos(&mockSessionRepo{}, repo, nil)
+	params := validCreateParams()
+	params.AlgorithmVersion = "qimen-v3"
+	_, err := svc.Create(context.Background(), params)
+	if !errors.Is(err, qimen.ErrInvalidAlgorithmVersion) {
+		t.Fatalf("expected ErrInvalidAlgorithmVersion, got %v", err)
+	}
+	if repo.createCalls != 0 {
+		t.Fatalf("must not insert")
+	}
+}
+
 func TestSanitizeListItem(t *testing.T) {
 	question := "我最近适合推进这个计划吗？"
 	item := model.AnalysisListItem{

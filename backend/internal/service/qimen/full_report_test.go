@@ -281,6 +281,75 @@ func validDeepSeekReport() string {
 	return string(raw)
 }
 
+func sampleV2ResultPayload(category string) json.RawMessage {
+	raw := sampleResultPayload(category)
+	var obj map[string]any
+	if err := json.Unmarshal(raw, &obj); err != nil {
+		panic(err)
+	}
+	palaces := make([]Palace, 9)
+	for i := range palaces {
+		palaces[i] = Palace{
+			Index:           i + 1,
+			Name:            palaceNames[i],
+			EarthPlateStem:  "戊",
+			HeavenPlateStem: "甲",
+			Star:            palaceStars[i],
+			Door:            palaceDoors[i],
+			Deity:           palaceDeities[i],
+			Summary:         palaceSummaryPOC,
+		}
+	}
+	obj["algorithm_version"] = AlgorithmVersionQimenV2POC
+	obj["method_note"] = MethodNoteV2
+	obj["calendar_basis"] = CalendarBasis{
+		SolarTerm:  "惊蛰",
+		JieqiBasis: "formula_approximation",
+		TimeBasis:  "local_time",
+		Note:       calendarNotePOC,
+	}
+	obj["dun"] = Dun{Type: "yang", Ju: 2, Source: "poc_formula"}
+	obj["xun"] = Xun{XunShou: "甲子", EmptyBranches: []string{"戌", "亥"}}
+	obj["chief"] = Chief{ZhiFu: "天冲", ZhiShi: "生门"}
+	obj["palaces"] = palaces
+	obj["limits"] = calculationLimitsV2
+	obj["calculation_meta"] = map[string]any{"limits": calculationLimitsV2}
+	out, err := json.Marshal(obj)
+	if err != nil {
+		panic(err)
+	}
+	return out
+}
+
+func TestBuildFullContentSupportsV2Payload(t *testing.T) {
+	content, err := BuildFullContent(sampleV2ResultPayload("career"), "免费解读")
+	if err != nil {
+		t.Fatalf("BuildFullContent v2: %v", err)
+	}
+	if !strings.Contains(content, fullReportDisclaimerV2) {
+		t.Fatalf("expected v2 disclaimer in full content")
+	}
+	if !strings.Contains(content, "九宫结构为 POC 近似排盘") {
+		t.Fatalf("expected v2 palace note in boundary")
+	}
+}
+
+func TestBuildFullReportPromptInputIncludesV2Fields(t *testing.T) {
+	input, err := buildFullReportPromptInput(sampleV2ResultPayload("career"), "免费解读")
+	if err != nil {
+		t.Fatalf("buildFullReportPromptInput v2: %v", err)
+	}
+	if input.AlgorithmVersion != AlgorithmVersionQimenV2POC {
+		t.Fatalf("algorithm_version=%q", input.AlgorithmVersion)
+	}
+	prompt := buildQimenUserPrompt(input)
+	for _, want := range []string{"calendar_basis", "palaces", "qimen-v2-poc"} {
+		if !strings.Contains(prompt, want) {
+			t.Fatalf("prompt missing %q", want)
+		}
+	}
+}
+
 func newDeepSeekTestServer(t *testing.T, responseBody string) *httptest.Server {
 	t.Helper()
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

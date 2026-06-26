@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/wangxintong/yijing/backend/internal/model"
 )
 
 type timeContextPayload struct {
@@ -30,6 +32,7 @@ type lensPayload struct {
 }
 
 type fullReportPromptInput struct {
+	AlgorithmVersion    string
 	MethodNote          string
 	QuestionSummary     string
 	SafeQuestionSummary string
@@ -46,10 +49,16 @@ type fullReportPromptInput struct {
 	ActionSuggestions   []string
 	Limits              []string
 	FreeContent         string
+	CalendarBasis       CalendarBasis
+	Dun                 Dun
+	Xun                 Xun
+	Chief               Chief
+	Palaces             []Palace
 }
 
 func buildFullReportPromptInput(resultPayload json.RawMessage, freeContent string) (*fullReportPromptInput, error) {
 	var parsed struct {
+		AlgorithmVersion    string                  `json:"algorithm_version"`
 		MethodNote          string                  `json:"method_note"`
 		QuestionSummary     string                  `json:"question_summary"`
 		SafeQuestionSummary string                  `json:"safe_question_summary"`
@@ -63,6 +72,11 @@ func buildFullReportPromptInput(resultPayload json.RawMessage, freeContent strin
 		ReflectionQuestions []string                `json:"reflection_questions"`
 		ActionSuggestions   []string                `json:"action_suggestions"`
 		CalculationMeta     *calculationMetaPayload `json:"calculation_meta"`
+		CalendarBasis       *CalendarBasis          `json:"calendar_basis"`
+		Dun                 *Dun                    `json:"dun"`
+		Xun                 *Xun                    `json:"xun"`
+		Chief               *Chief                  `json:"chief"`
+		Palaces             []Palace                `json:"palaces"`
 	}
 	if err := json.Unmarshal(resultPayload, &parsed); err != nil {
 		return nil, fmt.Errorf("invalid result_payload")
@@ -87,6 +101,7 @@ func buildFullReportPromptInput(resultPayload json.RawMessage, freeContent strin
 	}
 
 	input := &fullReportPromptInput{
+		AlgorithmVersion:    strings.TrimSpace(parsed.AlgorithmVersion),
 		MethodNote:          strings.TrimSpace(parsed.MethodNote),
 		QuestionSummary:     summary,
 		SafeQuestionSummary: safeSummary,
@@ -103,11 +118,29 @@ func buildFullReportPromptInput(resultPayload json.RawMessage, freeContent strin
 		ActionSuggestions:   append([]string{}, parsed.ActionSuggestions...),
 		FreeContent:         summarizeFreeContentForPrompt(freeContent),
 	}
+	if parsed.CalendarBasis != nil {
+		input.CalendarBasis = *parsed.CalendarBasis
+	}
+	if parsed.Dun != nil {
+		input.Dun = *parsed.Dun
+	}
+	if parsed.Xun != nil {
+		input.Xun = *parsed.Xun
+	}
+	if parsed.Chief != nil {
+		input.Chief = *parsed.Chief
+	}
+	if len(parsed.Palaces) > 0 {
+		input.Palaces = append([]Palace(nil), parsed.Palaces...)
+	}
 	if parsed.CalculationMeta != nil {
 		input.Limits = append([]string{}, parsed.CalculationMeta.Limits...)
 	}
 	if input.MethodNote == "" {
 		input.MethodNote = MethodNote
+	}
+	if input.AlgorithmVersion == "" {
+		input.AlgorithmVersion = model.AlgorithmVersionQimenSimpleV1
 	}
 	if len(input.Limits) == 0 {
 		input.Limits = append([]string{}, calculationLimits...)
@@ -192,6 +225,52 @@ func formatQimenLensForPrompt(lens QimenLens) string {
 		"caution_theme=" + lens.CautionTheme,
 		"pacing_theme=" + lens.PacingTheme,
 	}, "；")
+}
+
+func formatCalendarBasisForPrompt(basis CalendarBasis) string {
+	if strings.TrimSpace(basis.SolarTerm) == "" {
+		return "（无）"
+	}
+	return strings.Join([]string{
+		"solar_term=" + basis.SolarTerm,
+		"jieqi_basis=" + basis.JieqiBasis,
+		"time_basis=" + basis.TimeBasis,
+	}, "；")
+}
+
+func formatDunForPrompt(dun Dun) string {
+	if dun.Ju == 0 && dun.Type == "" {
+		return "（无）"
+	}
+	return fmt.Sprintf("type=%s; ju=%d; source=%s", dun.Type, dun.Ju, dun.Source)
+}
+
+func formatXunForPrompt(xun Xun) string {
+	if xun.XunShou == "" {
+		return "（无）"
+	}
+	return fmt.Sprintf("xun_shou=%s; empty=%s", xun.XunShou, strings.Join(xun.EmptyBranches, ""))
+}
+
+func formatChiefForPrompt(chief Chief) string {
+	if chief.ZhiFu == "" && chief.ZhiShi == "" {
+		return "（无）"
+	}
+	return fmt.Sprintf("zhi_fu=%s; zhi_shi=%s", chief.ZhiFu, chief.ZhiShi)
+}
+
+func formatPalacesForPrompt(palaces []Palace) string {
+	if len(palaces) == 0 {
+		return "（无）"
+	}
+	lines := make([]string, 0, len(palaces))
+	for _, p := range palaces {
+		lines = append(lines, fmt.Sprintf(
+			"%s: star=%s door=%s deity=%s earth=%s heaven=%s",
+			p.Name, p.Star, p.Door, p.Deity, p.EarthPlateStem, p.HeavenPlateStem,
+		))
+	}
+	return strings.Join(lines, "；")
 }
 
 func categoryLabel(category string) string {

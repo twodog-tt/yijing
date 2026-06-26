@@ -2,9 +2,24 @@ package qimen
 
 import "strings"
 
-const freeDisclaimer = "本解读基于 qimen-simple-v1 简化规则，仅供传统文化学习与自我反思参考，不等同于专业奇门排盘，不构成现实决策依据。"
+const (
+	freeDisclaimerV1 = "本解读基于 qimen-simple-v1 简化规则，仅供传统文化学习与自我反思参考，不等同于专业奇门排盘，不构成现实决策依据。"
+	freeDisclaimerV2 = "本解读基于 qimen-v2-poc 九宫结构 POC，仅供传统文化学习与结构化观察，不等同于专业奇门排盘，不构成现实决策依据。"
+)
 
 func BuildFreeContent(calc CalculationResult) string {
+	return buildFreeContent(calc, "")
+}
+
+func BuildFreeContentForVersion(calc CalculationResult, algorithmVersion string) string {
+	return buildFreeContent(calc, algorithmVersion)
+}
+
+func buildFreeContent(calc CalculationResult, algorithmVersion string) string {
+	disclaimer := freeDisclaimerV1
+	if algorithmVersion == AlgorithmVersionQimenV2POC {
+		disclaimer = freeDisclaimerV2
+	}
 	lensSection := buildLensSection(calc.QimenLens, calc.QuestionProfile)
 	sections := []string{
 		lensSection,
@@ -13,7 +28,7 @@ func BuildFreeContent(calc CalculationResult) string {
 		"【行动节奏】\n" + calc.ActionPacing,
 		"【自我反思问题】\n" + formatBulletLines(calc.ReflectionQuestions),
 		"【行动建议】\n" + formatBulletLines(calc.ActionSuggestions),
-		"【免责声明】\n" + freeDisclaimer,
+		"【免责声明】\n" + disclaimer,
 	}
 	return strings.Join(sections, "\n\n")
 }

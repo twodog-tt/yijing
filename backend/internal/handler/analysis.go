@@ -109,6 +109,7 @@ type createQimenRequest struct {
 	Question          string `json:"question"`
 	Category          string `json:"category"`
 	ConfirmDisclaimer bool   `json:"confirm_disclaimer"`
+	AlgorithmVersion  string `json:"algorithm_version"`
 }
 
 func (h *AnalysisHandler) CreateQimen(w http.ResponseWriter, r *http.Request) {
@@ -147,6 +148,7 @@ func (h *AnalysisHandler) CreateQimen(w http.ResponseWriter, r *http.Request) {
 		Question:          req.Question,
 		Category:          req.Category,
 		ConfirmDisclaimer: req.ConfirmDisclaimer,
+		AlgorithmVersion:  req.AlgorithmVersion,
 		ClientInfo:        r.UserAgent(),
 	})
 	if err != nil {
@@ -155,6 +157,8 @@ func (h *AnalysisHandler) CreateQimen(w http.ResponseWriter, r *http.Request) {
 			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "session_key is required")
 		case errors.Is(err, qimen.ErrSessionKeyTooLong):
 			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "session_key exceeds max length")
+		case errors.Is(err, qimen.ErrInvalidAlgorithmVersion):
+			response.Error(w, http.StatusBadRequest, response.CodeBadRequest, "invalid params: algorithm_version must be qimen-simple-v1 or qimen-v2-poc")
 		case errors.Is(err, qimen.ErrSensitiveBlocked):
 			response.Error(w, http.StatusBadRequest, response.CodeSensitiveBlock,
 				"这个问题不适合用奇门简化解读。你可以换成更偏向自我反思、局势整理或行动节奏的问题。")

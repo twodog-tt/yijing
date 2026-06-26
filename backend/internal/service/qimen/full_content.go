@@ -6,9 +6,13 @@ import (
 	"strings"
 )
 
-const fullReportDisclaimer = "本报告基于 qimen-simple-v1 简化奇门文化规则生成，仅用于传统文化学习与自我反思，不等同于专业奇门排盘，不生成完整九宫盘，不构成现实决策依据。"
+const (
+	fullReportDisclaimerV1 = "本报告基于 qimen-simple-v1 简化奇门文化规则生成，仅用于传统文化学习与自我反思，不等同于专业奇门排盘，不生成完整九宫盘，不构成现实决策依据。"
+	fullReportDisclaimerV2 = "本报告基于 qimen-v2-poc 九宫结构 POC 生成，仅用于传统文化学习与结构化观察，不等同于专业奇门排盘，不构成现实决策依据。"
+)
 
 type parsedResultPayload struct {
+	AlgorithmVersion    string                  `json:"algorithm_version"`
 	MethodNote          string                  `json:"method_note"`
 	Category            string                  `json:"category"`
 	TimeContext         *timeContextPayload     `json:"time_context"`
@@ -20,6 +24,11 @@ type parsedResultPayload struct {
 	ReflectionQuestions []string                `json:"reflection_questions"`
 	CalculationMeta     *calculationMetaPayload `json:"calculation_meta"`
 	SafeQuestionSummary string                  `json:"safe_question_summary"`
+	CalendarBasis       *CalendarBasis          `json:"calendar_basis"`
+	Dun                 *Dun                    `json:"dun"`
+	Xun                 *Xun                    `json:"xun"`
+	Chief               *Chief                  `json:"chief"`
+	Palaces             []Palace                `json:"palaces"`
 }
 
 const (
@@ -51,26 +60,34 @@ func BuildFullContent(resultPayload json.RawMessage, freeContent string) (string
 	profile := profileFromPayload(parsed.QuestionProfile, category)
 	lens := lensFromPayload(parsed.QimenLens, profile, category)
 	categoryText := categoryLabel(category)
+	disclaimer := fullReportDisclaimerFor(parsed.AlgorithmVersion)
 
 	sections := []string{
-		sectionSummary + "\n" + buildQimenSummarySection(parsed, profile, lens, category, categoryText, methodNote),
+		sectionSummary + "\n" + buildQimenSummarySection(parsed, profile, lens, category, categoryText, methodNote, disclaimer),
 		sectionFocus + "\n" + buildQimenFocusSection(profile, lens, category),
 		sectionSupport + "\n" + buildQimenSupportSection(profile, lens, category),
 		sectionRisks + "\n" + buildQimenRiskSection(parsed.RiskObservations, profile, lens, category),
 		sectionPacing + "\n" + buildQimenPacingSection(parsed.ActionPacing, profile, lens, category),
 		sectionReflection + "\n" + buildQimenReflectionSection(parsed.ReflectionQuestions, profile, category),
-		sectionBoundary + "\n" + buildQimenBoundarySection(methodNote, parsed.CalculationMeta),
+		sectionBoundary + "\n" + buildQimenBoundarySection(methodNote, parsed.CalculationMeta, parsed.AlgorithmVersion, parsed.Palaces),
 	}
 
 	if snippet := strings.TrimSpace(freeContent); snippet != "" {
-		sections[0] = sectionSummary + "\n" + buildQimenSummarySection(parsed, profile, lens, category, categoryText, methodNote) +
+		sections[0] = sectionSummary + "\n" + buildQimenSummarySection(parsed, profile, lens, category, categoryText, methodNote, disclaimer) +
 			"\n\n可参考免费解读中的局势梳理要点，继续延伸记录与复盘。"
 	}
 
 	return strings.Join(sections, "\n\n"), nil
 }
 
-func buildQimenSummarySection(parsed parsedResultPayload, profile QuestionProfile, lens QimenLens, category, categoryText, methodNote string) string {
+func fullReportDisclaimerFor(algorithmVersion string) string {
+	if algorithmVersion == AlgorithmVersionQimenV2POC {
+		return fullReportDisclaimerV2
+	}
+	return fullReportDisclaimerV1
+}
+
+func buildQimenSummarySection(parsed parsedResultPayload, profile QuestionProfile, lens QimenLens, category, categoryText, methodNote, disclaimer string) string {
 	timeNote := ""
 	if parsed.TimeContext != nil {
 		if label := timeBucketLabel(strings.TrimSpace(parsed.TimeContext.TimeBucket)); label != "" {
@@ -82,7 +99,7 @@ func buildQimenSummarySection(parsed parsedResultPayload, profile QuestionProfil
 		safeSummary = BuildSafeQuestionSummary(profile)
 	}
 	return strings.Join([]string{
-		fullReportDisclaimer,
+		disclaimer,
 		methodNote,
 		fmt.Sprintf("问事分类：%s。%s", categoryText, timeNote),
 		fmt.Sprintf("问事特征：%s", safeSummary),
@@ -223,15 +240,19 @@ func reflectionExtraForCategory(category string, profile QuestionProfile) string
 	}
 }
 
-func buildQimenBoundarySection(methodNote string, meta *calculationMetaPayload) string {
+func buildQimenBoundarySection(methodNote string, meta *calculationMetaPayload, algorithmVersion string, palaces []Palace) string {
 	limits := calculationLimits
 	if meta != nil && len(meta.Limits) > 0 {
 		limits = meta.Limits
 	}
-	return strings.Join([]string{
-		fullReportDisclaimer,
+	lines := []string{
+		fullReportDisclaimerFor(algorithmVersion),
 		methodNote,
 		"本报告不构成现实决策依据，不做精准预测、强吉凶判断、改运化解，也不提供投资/医疗/法律/赌博/军事建议。",
 		"规则限制：" + strings.Join(limits, "；"),
-	}, "\n")
+	}
+	if algorithmVersion == AlgorithmVersionQimenV2POC && len(palaces) > 0 {
+		lines = append(lines, fmt.Sprintf("九宫结构为 POC 近似排盘（共 %d 宫），仅供结构化观察。", len(palaces)))
+	}
+	return strings.Join(lines, "\n")
 }

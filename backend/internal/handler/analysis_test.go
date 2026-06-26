@@ -1105,6 +1105,116 @@ func TestCreateQimenSuccess(t *testing.T) {
 	}
 }
 
+func TestCreateQimenUsesV2AlgorithmVersion(t *testing.T) {
+	h, _ := newTestAnalysisHandler(t)
+	body := bytes.NewBufferString(`{"session_key":"sess-a","question":"我最近适合推进这个计划吗？","category":"career","confirm_disclaimer":true,"algorithm_version":"qimen-v2-poc"}`)
+	rec := httptest.NewRecorder()
+	h.CreateQimen(rec, httptest.NewRequest(http.MethodPost, "/api/v1/analysis/qimen", body))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", rec.Code, rec.Body.String())
+	}
+	var resp struct {
+		Data struct {
+			AlgorithmVersion string          `json:"algorithm_version"`
+			ResultPayload    json.RawMessage `json:"result_payload"`
+			FreeContent      string          `json:"free_content"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.Data.AlgorithmVersion != qimen.AlgorithmVersionQimenV2POC {
+		t.Fatalf("algorithm_version=%q", resp.Data.AlgorithmVersion)
+	}
+	raw := string(resp.Data.ResultPayload)
+	if !strings.Contains(raw, `"algorithm_version":"qimen-v2-poc"`) {
+		t.Fatalf("result_payload missing v2 marker: %s", raw)
+	}
+	if !strings.Contains(raw, `"palaces"`) {
+		t.Fatalf("result_payload missing palaces: %s", raw)
+	}
+	for _, forbidden := range []string{"session_key", "prompt", "input_payload"} {
+		if strings.Contains(raw, forbidden) {
+			t.Fatalf("result_payload must not contain %q", forbidden)
+		}
+	}
+	if strings.Contains(rec.Body.String(), "session_key") {
+		t.Fatalf("response must not contain session_key")
+	}
+}
+
+func TestCreateQimenExplicitV1AlgorithmVersion(t *testing.T) {
+	h, _ := newTestAnalysisHandler(t)
+	body := bytes.NewBufferString(`{"session_key":"sess-a","question":"我最近适合推进这个计划吗？","category":"career","confirm_disclaimer":true,"algorithm_version":"qimen-simple-v1"}`)
+	rec := httptest.NewRecorder()
+	h.CreateQimen(rec, httptest.NewRequest(http.MethodPost, "/api/v1/analysis/qimen", body))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", rec.Code, rec.Body.String())
+	}
+	var resp struct {
+		Data struct {
+			AlgorithmVersion string `json:"algorithm_version"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.Data.AlgorithmVersion != model.AlgorithmVersionQimenSimpleV1 {
+		t.Fatalf("algorithm_version=%q", resp.Data.AlgorithmVersion)
+	}
+}
+
+func TestCreateQimenRejectsInvalidAlgorithmVersion(t *testing.T) {
+	h, _ := newTestAnalysisHandler(t)
+	body := bytes.NewBufferString(`{"session_key":"sess-a","question":"我最近适合推进这个计划吗？","category":"career","confirm_disclaimer":true,"algorithm_version":"qimen-v3"}`)
+	rec := httptest.NewRecorder()
+	h.CreateQimen(rec, httptest.NewRequest(http.MethodPost, "/api/v1/analysis/qimen", body))
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d body=%s", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "algorithm_version must be qimen-simple-v1 or qimen-v2-poc") {
+		t.Fatalf("unexpected body: %s", rec.Body.String())
+	}
+}
+
+func TestUnlockQimenV2FreeUnlockSuccess(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	sessions.sessions["sess-a"] = &model.Session{ID: 10, SessionKey: "sess-a"}
+	body := bytes.NewBufferString(`{"session_key":"sess-a","question":"我最近适合推进这个计划吗？","category":"career","confirm_disclaimer":true,"algorithm_version":"qimen-v2-poc"}`)
+	createRec := httptest.NewRecorder()
+	h.CreateQimen(createRec, httptest.NewRequest(http.MethodPost, "/api/v1/analysis/qimen", body))
+	if createRec.Code != http.StatusOK {
+		t.Fatalf("create v2 qimen failed: %s", createRec.Body.String())
+	}
+	var createResp struct {
+		Data struct {
+			ID int64 `json:"id"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(createRec.Body.Bytes(), &createResp); err != nil {
+		t.Fatalf("decode create: %v", err)
+	}
+
+	rec := unlockAnalysisRequest(t, h, createResp.Data.ID, "sess-a", `{"unlock_type":"free_unlock"}`)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200 for v2 qimen unlock, got %d body=%s", rec.Code, rec.Body.String())
+	}
+	var resp struct {
+		Data struct {
+			FullContent string `json:"full_content"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode unlock: %v", err)
+	}
+	if strings.TrimSpace(resp.Data.FullContent) == "" {
+		t.Fatalf("expected full_content")
+	}
+	if strings.Contains(rec.Body.String(), "session_key") || strings.Contains(rec.Body.String(), "prompt") {
+		t.Fatalf("unlock response must not expose session_key or prompt")
+	}
+}
+
 func TestCreateQimenRejectsMissingDisclaimer(t *testing.T) {
 	h, _ := newTestAnalysisHandler(t)
 	body := bytes.NewBufferString(`{"session_key":"sess-a","question":"我最近适合推进这个计划吗？","category":"career"}`)

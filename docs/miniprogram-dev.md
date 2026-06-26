@@ -1196,7 +1196,39 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 - [x] 10 组 golden + 冬至/夏至边界 + 九宫结构 + 合规
 - [x] `qimen-simple-v1` 回归未破坏
 
-**仍不做：** ALG2.2 API 灰度、ALG2.3 专业排盘、frontend / miniprogram、SQL 变更。
+**仍不做：** ALG2.3 专业排盘、frontend / miniprogram 展示、SQL 变更。
+
+## 25.8 Phase ALG2.2（QIMEN1.2）：奇门 v2 灰度接入（后端）
+
+**说明：** `POST /api/v1/analysis/qimen` 新增可选字段 `algorithm_version`；**默认 `qimen-simple-v1`**；内部测试可传 `qimen-v2-poc`。小程序 / Web **暂不暴露**算法选择 UI。
+
+**请求示例（内部测试）：**
+
+```json
+{
+  "question": "我最近适合推进这个项目吗？",
+  "category": "career",
+  "confirm_disclaimer": true,
+  "algorithm_version": "qimen-v2-poc"
+}
+```
+
+**规则：**
+
+- 省略 `algorithm_version` → `qimen-simple-v1`
+- `qimen-simple-v1` → `Calculate()`
+- `qimen-v2-poc` → `CalculateV2()` + 兼容 `result_payload`（含 v1 解读字段 + 9 宫 `palaces`）
+- 其他值 → 400 参数错误，不 fallback
+
+**仍不做：** 专业完整起局（ALG2.3）、前端算法切换、SQL 变更、小程序 / Web 修改。
+
+**验收（后端）：**
+
+- [x] `go test ./internal/handler/... ./internal/service/qimen/...` 通过
+- [x] v2 创建 / free_unlock / full_content fallback 正常
+- [x] 八字创建 / 解锁回归未破坏
+
+**部署：** 仅 backend；无需 SQL / frontend / 小程序重编译。
 
 ## 26. Phase UX1：八字 / 奇门轻量动效
 

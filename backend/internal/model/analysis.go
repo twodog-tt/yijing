@@ -28,6 +28,7 @@ const (
 	AlgorithmVersionBaziSimpleV1  = "bazi-simple-v1"
 	AlgorithmVersionBaziV2POC     = "bazi-v2-poc"
 	AlgorithmVersionQimenSimpleV1 = "qimen-simple-v1"
+	AlgorithmVersionQimenV2POC    = "qimen-v2-poc"
 
 	MaxAnalysisPayloadBytes = 65536
 
@@ -62,7 +63,7 @@ func ValidateAlgorithmVersion(moduleType int, version string) error {
 			return nil
 		}
 	case ModuleTypeQimen:
-		if version == AlgorithmVersionQimenSimpleV1 {
+		if version == AlgorithmVersionQimenSimpleV1 || version == AlgorithmVersionQimenV2POC {
 			return nil
 		}
 	default:

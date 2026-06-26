@@ -56,6 +56,7 @@ type CreateParams struct {
 	Question          string
 	Category          string
 	ConfirmDisclaimer bool
+	AlgorithmVersion  string
 	ClientInfo        string
 }
 
@@ -97,21 +98,52 @@ func (s *Service) Create(ctx context.Context, input CreateParams) (*model.Analys
 		return nil, ErrSensitiveBlocked
 	}
 
-	calc, err := Calculate(question, category, clock.Now())
+	algorithmVersion, err := ResolveAlgorithmVersion(input.AlgorithmVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	now := clock.Now()
+	v1Calc, err := Calculate(question, category, now)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrInvalidParams, err)
 	}
 
-	freeContent := BuildFreeContent(calc)
-	if strings.TrimSpace(freeContent) == "" {
-		return nil, fmt.Errorf("%w: free_content generation failed", ErrInvalidParams)
+	var (
+		freeContent   string
+		resultPayload []byte
+	)
+
+	switch algorithmVersion {
+	case AlgorithmVersionQimenV2POC:
+		v2Calc, calcErr := CalculateV2(CalculateInputV2{
+			Category: category,
+			Now:      now,
+		})
+		if calcErr != nil {
+			return nil, calcErr
+		}
+		merged := MergeV1InterpretationWithV2(v1Calc, v2Calc)
+		freeContent = BuildFreeContentForVersion(merged, algorithmVersion)
+		if strings.TrimSpace(freeContent) == "" {
+			return nil, fmt.Errorf("%w: free_content generation failed", ErrInvalidParams)
+		}
+		resultPayload, err = BuildV2APIResultPayload(v1Calc, v2Calc)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		freeContent = BuildFreeContent(v1Calc)
+		if strings.TrimSpace(freeContent) == "" {
+			return nil, fmt.Errorf("%w: free_content generation failed", ErrInvalidParams)
+		}
+		resultPayload, err = v1Calc.ResultPayload()
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	inputPayload, err := calc.InputPayload()
-	if err != nil {
-		return nil, err
-	}
-	resultPayload, err := calc.ResultPayload()
+	inputPayload, err := v1Calc.InputPayload()
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +158,7 @@ func (s *Service) Create(ctx context.Context, input CreateParams) (*model.Analys
 		CreateAnalysisParams: repository.CreateAnalysisParams{
 			SessionID:        session.ID,
 			ModuleType:       model.ModuleTypeQimen,
-			AlgorithmVersion: model.AlgorithmVersionQimenSimpleV1,
+			AlgorithmVersion: algorithmVersion,
 			Question:         &questionCopy,
 			InputPayload:     inputPayload,
 			ResultPayload:    resultPayload,

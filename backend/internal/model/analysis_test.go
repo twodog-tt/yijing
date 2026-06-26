@@ -33,6 +33,7 @@ func TestValidateAlgorithmVersionAllowed(t *testing.T) {
 		{ModuleTypeBazi, "  " + AlgorithmVersionBaziSimpleV1 + "  "},
 		{ModuleTypeBazi, AlgorithmVersionBaziV2POC},
 		{ModuleTypeQimen, AlgorithmVersionQimenSimpleV1},
+		{ModuleTypeQimen, AlgorithmVersionQimenV2POC},
 	}
 	for _, tc := range cases {
 		if err := ValidateAlgorithmVersion(tc.moduleType, tc.version); err != nil {
@@ -51,6 +52,7 @@ func TestValidateAlgorithmVersionRejected(t *testing.T) {
 		{ModuleTypeBazi, "unknown-v1"},
 		{ModuleTypeBazi, AlgorithmVersionQimenSimpleV1},
 		{ModuleTypeQimen, AlgorithmVersionBaziSimpleV1},
+		{ModuleTypeQimen, "qimen-v3"},
 		{ModuleTypeQimen, ""},
 		{99, AlgorithmVersionBaziSimpleV1},
 	}

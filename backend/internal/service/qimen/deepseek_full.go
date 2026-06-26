@@ -20,16 +20,18 @@ const (
 
 重要边界：
 1. 基于 qimen-simple-v1 简化学习版，不生成完整九宫盘，不构成现实决策依据。
-2. 必须围绕 intent_type、risk_tone、focus_theme、pacing_theme 写出差异化报告，不要套用固定模板。
-3. 不同 category（career/relationship/study/decision/general）必须体现不同重点。
-4. 禁止输出完整原问题、session_key、用户隐私字段。
-5. 禁止精准预测、必成必败、大吉大凶、改运化灾、投资/医疗/法律/赌博/军事建议。
-6. 不要使用“必然、一定、注定、百分百、保证”等绝对词。
+2. 若 algorithm_version 为 qimen-v2-poc，可引用 calendar_basis / dun / xun / chief / palaces 做结构化观察，但仍不等同于专业奇门排盘，不构成现实决策依据。
+3. 必须围绕 intent_type、risk_tone、focus_theme、pacing_theme 写出差异化报告，不要套用固定模板。
+4. 不同 category（career/relationship/study/decision/general）必须体现不同重点。
+5. 禁止输出完整原问题、session_key、用户隐私字段。
+6. 禁止精准预测、必成必败、大吉大凶、改运化灾、投资/医疗/法律/赌博/军事建议。
+7. 不要使用“必然、一定、注定、百分百、保证”等绝对词。
 
 你必须只输出纯文本报告正文，不要输出 Markdown 代码块，不要输出 JSON，不要输出额外解释。`
 
 	qimenUserPromptTemplate = `请基于以下结构化奇门问事信息生成完整报告。
 
+algorithm_version：{{algorithm_version}}
 method_note：{{method_note}}
 问事分类：{{category_label}}
 时段参考：{{time_bucket_label}}
@@ -37,6 +39,11 @@ method_note：{{method_note}}
 问事特征：{{safe_question_summary}}
 question_profile：{{question_profile}}
 qimen_lens：{{qimen_lens}}
+calendar_basis：{{calendar_basis}}
+dun：{{dun}}
+xun：{{xun}}
+chief：{{chief}}
+palaces：{{palaces}}
 局势梳理：{{situation_overview}}
 风险观察：{{risk_observations}}
 行动节奏：{{action_pacing}}
@@ -134,6 +141,7 @@ func buildQimenUserPrompt(input *fullReportPromptInput) string {
 	}
 
 	replacer := strings.NewReplacer(
+		"{{algorithm_version}}", nonEmpty(input.AlgorithmVersion, "qimen-simple-v1"),
 		"{{method_note}}", input.MethodNote,
 		"{{category_label}}", input.CategoryLabel,
 		"{{time_bucket_label}}", timeBucketLabel,
@@ -141,6 +149,11 @@ func buildQimenUserPrompt(input *fullReportPromptInput) string {
 		"{{safe_question_summary}}", nonEmpty(input.SafeQuestionSummary, "（无）"),
 		"{{question_profile}}", formatQuestionProfileForPrompt(input.QuestionProfile),
 		"{{qimen_lens}}", formatQimenLensForPrompt(input.QimenLens),
+		"{{calendar_basis}}", formatCalendarBasisForPrompt(input.CalendarBasis),
+		"{{dun}}", formatDunForPrompt(input.Dun),
+		"{{xun}}", formatXunForPrompt(input.Xun),
+		"{{chief}}", formatChiefForPrompt(input.Chief),
+		"{{palaces}}", formatPalacesForPrompt(input.Palaces),
 		"{{situation_overview}}", input.SituationOverview,
 		"{{risk_observations}}", risks,
 		"{{action_pacing}}", nonEmpty(input.ActionPacing, "（无）"),
