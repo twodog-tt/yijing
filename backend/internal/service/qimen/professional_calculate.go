@@ -41,8 +41,8 @@ func CalculateProfessionalPreview(input CalculateInputProfessional) (*Calculatio
 	juResult := ResolveChaiBuJu(now, dun, basis, ganzhi)
 	applyJuToDun(&dun, juResult)
 	xun := ResolveXunFromGanZhi(ganzhi.Day, ganzhi.Hour)
-	chief := ResolveProfessionalChief(juResult, xun, dun)
-	palaces := BuildProfessionalPalaces(juResult, dun, xun, chief)
+	layoutCfg := DefaultProfessionalLayoutConfig()
+	chief, palaces := BuildProfessionalLayout(juResult, dun, xun, &layoutCfg)
 
 	result := &CalculationResultV2Professional{
 		Category:      category,
@@ -52,6 +52,8 @@ func CalculateProfessionalPreview(input CalculateInputProfessional) (*Calculatio
 		Xun:           xun,
 		Chief:         chief,
 		Palaces:       palaces,
+		LayoutVersion: layoutCfg.Version,
+		LayoutBasis:   layoutCfg.Basis,
 		MethodNote:    MethodNoteV2Professional,
 		Limits:        CalculationLimitsV2Professional(),
 	}
@@ -68,6 +70,8 @@ func (c CalculationResultV2Professional) ResultPayload() (json.RawMessage, error
 		"xun":               c.Xun,
 		"chief":             c.Chief,
 		"palaces":           c.Palaces,
+		"layout_version":    c.LayoutVersion,
+		"layout_basis":      c.LayoutBasis,
 		"method_note":       c.MethodNote,
 		"limits":            c.Limits,
 		"category":          c.Category,

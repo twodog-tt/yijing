@@ -1844,6 +1844,32 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 - [ ] 寄宫流派校准（ALG2.5B）
 - [ ] frontend / miniprogram / SQL / deploy
 
-**下一步：** ALG2.5B 寄宫校准；ALG2.6 API 灰度；QIMEN-V2-VIEW。
+**下一步：** ALG2.6 professional API 灰度；QIMEN-V2-VIEW；ALG2.5C 坤二/艮八寄宫流派实现。
+
+---
+
+### 10.42 Phase ALG2.5B 交付清单（奇门 v2 professional 落盘口径校准）
+
+**目标：** 落盘口径版本化、天禽寄宫策略可配置（默认不变）、chief/palace 一致性测试增强；**不接 API、不部署**。
+
+**本阶段完成：**
+
+- [x] `ProfessionalLayoutVersionV1` = `professional_layout_v1_center_tianqin`
+- [x] `ProfessionalLayoutConfig` + `TianQinPlacementMode`（`center` / `kun2_pending` / `gen8_pending`）
+- [x] preview payload 输出 `layout_version` / `layout_basis`
+- [x] `method_note` / `limits` 说明 ALG2.5B 第一版落盘口径
+- [x] 默认天禽留中五宫；坤二/艮八寄宫仅结构预留
+- [x] `BuildProfessionalLayout` + `ValidateChiefPalaceConsistency` / `ValidateProfessionalPalaceIntegrity`
+- [x] 值符落中五时值使 fallback 坤二宫门
+- [x] 6 组 fixtures + 稳定性 / category 独立 / POC/v1 回归测试
+
+**仍不做（ALG2.5B）：**
+
+- [ ] API 接入 `qimen-v2-professional`
+- [ ] 坤二/艮八寄宫流派正式实现（ALG2.5C）
+- [ ] frontend / miniprogram / SQL / deploy
+- [ ] 声称最终权威专业排盘
+
+**下一步：** ALG2.6 API 灰度；QIMEN-V2-VIEW；ALG2.5C 寄宫流派实现。
 
 ---

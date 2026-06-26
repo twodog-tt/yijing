@@ -1359,6 +1359,25 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 - [x] 6 组边界 fixtures 九宫字段完整
 - [x] category 不影响排盘；POC/v1 回归正常
 
+## 25.15 Phase ALG2.5B：奇门 v2 professional 落盘口径校准（后端，不接 API）
+
+**说明：** 对 ALG2.5 九宫落盘做显式版本化（`layout_version=professional_layout_v1_center_tianqin`），抽象天禽寄宫策略（默认 `center`，坤二/艮八仅预留），增强 chief/palace 一致性与九宫完整性测试。**不接** API；**不部署**；**不是**最终权威专业排盘。
+
+**preview 变化：**
+
+- 新增 `layout_version` / `layout_basis`
+- `method_note` / `limits` 标注 ALG2.5B 第一版落盘口径
+- `TianQinPlacementMode`：`center`（默认）/ `kun2_pending` / `gen8_pending`（未启用）
+- 值符落中五时值使 fallback 坤二宫门
+
+**仍不做：** API 接入、坤二/艮八寄宫正式实现（ALG2.5C）、frontend / miniprogram / SQL / deploy。
+
+**验收（后端）：**
+
+- [x] 6 组 fixtures 完整性 + chief 一致性
+- [x] 同输入重复输出一致；category 不影响排盘
+- [x] POC / qimen-simple-v1 不受影响
+
 ## 26. Phase UX1：八字 / 奇门轻量动效
 
 Phase UX1 在小程序与 Web 八字、奇门页面增加贴合传统文化场景的轻量 UI 动效，提升氛围与完成感。**仅改 UI 动效，不改后端、数据库、部署。**

@@ -1,8 +1,7 @@
 package qimen
 
 const (
-	professionalPalaceSummary   = "用于结构化观察，不作强预测"
-	professionalPalaceLayoutNote = "ALG2.5 第一版转盘排布（pending_verification）；天禽暂保留中五宫 layout_role=center"
+	professionalPalaceSummary = "用于结构化观察，不作强预测"
 )
 
 var (
@@ -41,8 +40,9 @@ func rotatePalaceIndex(startJu, step int, dunType string) int {
 	return (startJu-1+step)%9 + 1
 }
 
-// BuildProfessionalStars lays nine stars by ju and dun direction; center keeps 天禽.
-func BuildProfessionalStars(ju int, dunType string, _ Xun) map[int]string {
+// BuildProfessionalStars lays nine stars by ju and dun direction; center uses layout config.
+func BuildProfessionalStars(ju int, dunType string, _ Xun, cfg *ProfessionalLayoutConfig) map[int]string {
+	c := layoutConfigOrDefault(cfg)
 	if ju < 1 || ju > 9 {
 		ju = 1
 	}
@@ -51,7 +51,7 @@ func BuildProfessionalStars(ju int, dunType string, _ Xun) map[int]string {
 		palace := rotatePalaceIndex(ju, i, dunType)
 		out[palace] = star
 	}
-	out[5] = "天禽"
+	applyTianQinPlacement(out, c.TianQinMode)
 	return out
 }
 
@@ -125,21 +125,15 @@ func BuildProfessionalHeavenPlateStems(earth map[int]string, chief ProfessionalC
 }
 
 // BuildProfessionalPalaces assembles the nine-palace professional layout (first version).
-func BuildProfessionalPalaces(ju ProfessionalJuResult, dun ProfessionalDun, xun Xun, chief ProfessionalChief) []ProfessionalPalace {
+func BuildProfessionalPalaces(ju ProfessionalJuResult, dun ProfessionalDun, xun Xun, chief ProfessionalChief, cfg *ProfessionalLayoutConfig) []ProfessionalPalace {
+	c := layoutConfigOrDefault(cfg)
 	earth := BuildProfessionalEarthPlateStems(ju.Ju, dun.Type)
 	heaven := BuildProfessionalHeavenPlateStems(earth, chief, dun)
-	stars := BuildProfessionalStars(ju.Ju, dun.Type, xun)
+	stars := BuildProfessionalStars(ju.Ju, dun.Type, xun, &c)
 	doors := BuildProfessionalDoors(ju.Ju, dun.Type, xun)
 	deities := BuildProfessionalDeities(dun.Type, chief)
 	palaces := make([]ProfessionalPalace, 0, 9)
 	for i := 1; i <= 9; i++ {
-		role := "palace"
-		if i == 5 {
-			role = "center"
-		}
-		if professionalPalaceName(i) == chief.ZhiFuPalace {
-			role = "chief"
-		}
 		palaces = append(palaces, ProfessionalPalace{
 			Index:           i,
 			Name:            professionalPalaceName(i),
@@ -149,7 +143,7 @@ func BuildProfessionalPalaces(ju ProfessionalJuResult, dun ProfessionalDun, xun 
 			Door:            doors[i],
 			Deity:           deities[i],
 			Summary:         professionalPalaceSummary,
-			LayoutRole:      role,
+			LayoutRole:      layoutRoleForPalace(i, chief.ZhiFuPalace),
 		})
 	}
 	return palaces

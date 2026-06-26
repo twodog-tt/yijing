@@ -30,6 +30,12 @@ func TestCalculateProfessionalPreviewStructure(t *testing.T) {
 	if obj["algorithm_version"] != qimen.AlgorithmVersionQimenV2Professional {
 		t.Fatalf("algorithm_version=%v", obj["algorithm_version"])
 	}
+	if obj["layout_version"] != qimen.ProfessionalLayoutVersionV1 {
+		t.Fatalf("layout_version=%v", obj["layout_version"])
+	}
+	if obj["layout_basis"] != qimen.ProfessionalLayoutVersionV1 {
+		t.Fatalf("layout_basis=%v", obj["layout_basis"])
+	}
 	assertProfessionalPreviewPayload(t, obj, when)
 }
 
@@ -138,25 +144,134 @@ func TestCalculateProfessionalPreviewPalacesCategoryIndependent(t *testing.T) {
 	}
 }
 
+func TestCalculateProfessionalPreviewRepeatStable(t *testing.T) {
+	when := time.Date(2025, 2, 3, 11, 30, 0, 0, clock.Location())
+	input := qimen.CalculateInputProfessional{Category: "career", Now: when}
+	a, err := qimen.CalculateProfessionalPreview(input)
+	if err != nil {
+		t.Fatalf("first preview: %v", err)
+	}
+	b, err := qimen.CalculateProfessionalPreview(input)
+	if err != nil {
+		t.Fatalf("second preview: %v", err)
+	}
+	payloadA, _ := a.ResultPayload()
+	payloadB, _ := b.ResultPayload()
+	if string(payloadA) != string(payloadB) {
+		t.Fatal("repeat preview payload differs")
+	}
+}
+
+func TestCalculateProfessionalPreviewDoesNotAffectSimpleV1(t *testing.T) {
+	when := time.Date(2024, 3, 20, 9, 0, 0, 0, clock.Location())
+	v1, err := qimen.Calculate("test", "career", when)
+	if err != nil {
+		t.Fatalf("Calculate v1: %v", err)
+	}
+	v1Payload, err := v1.ResultPayload()
+	if err != nil {
+		t.Fatalf("v1 ResultPayload: %v", err)
+	}
+	_, err = qimen.CalculateProfessionalPreview(qimen.CalculateInputProfessional{Category: "career", Now: when})
+	if err != nil {
+		t.Fatalf("CalculateProfessionalPreview: %v", err)
+	}
+	v1Again, err := qimen.Calculate("test", "career", when)
+	if err != nil {
+		t.Fatalf("Calculate v1 again: %v", err)
+	}
+	v1AgainPayload, err := v1Again.ResultPayload()
+	if err != nil {
+		t.Fatalf("v1 again ResultPayload: %v", err)
+	}
+	if string(v1Payload) != string(v1AgainPayload) {
+		t.Fatal("qimen-simple-v1 result changed after professional preview")
+	}
+}
+
+func TestCalculateProfessionalPreviewYinYangDunDiffers(t *testing.T) {
+	yang := qimen.BuildProfessionalEarthPlateStems(3, "yang")
+	yin := qimen.BuildProfessionalEarthPlateStems(3, "yin")
+	if yang[1] == yin[1] && yang[2] == yin[2] {
+		t.Fatal("expected different earth stems for yang vs yin")
+	}
+}
+
 func assertProfessionalPalaces(t *testing.T, result *qimen.CalculationResultV2Professional) {
 	t.Helper()
+	if result.LayoutVersion != qimen.ProfessionalLayoutVersionV1 {
+		t.Fatalf("layout_version=%q want %q", result.LayoutVersion, qimen.ProfessionalLayoutVersionV1)
+	}
+	if result.LayoutBasis != qimen.ProfessionalLayoutVersionV1 {
+		t.Fatalf("layout_basis=%q want %q", result.LayoutBasis, qimen.ProfessionalLayoutVersionV1)
+	}
 	if result.Chief.ZhiFuPalace == "" || result.Chief.ZhiShiPalace == "" {
 		t.Fatalf("chief incomplete: %+v", result.Chief)
 	}
 	if len(result.Palaces) != 9 {
 		t.Fatalf("palaces len=%d", len(result.Palaces))
 	}
+	if !qimen.ValidateProfessionalPalaceIntegrity(result.Palaces) {
+		t.Fatal("palace integrity validation failed")
+	}
+	if !qimen.ValidateChiefPalaceConsistency(result.Chief, result.Palaces) {
+		t.Fatalf("chief consistency failed: %+v", result.Chief)
+	}
+	hasChiefRole := false
 	for _, p := range result.Palaces {
-		if p.EarthPlateStem == "" || p.HeavenPlateStem == "" || p.Star == "" || p.Deity == "" {
+		if p.EarthPlateStem == "" || p.HeavenPlateStem == "" || p.Star == "" || p.Summary == "" {
 			t.Fatalf("palace %d missing fields: %+v", p.Index, p)
 		}
 		if p.Index == 5 {
-			if p.Star != "天禽" || p.Door != "—" {
+			if p.Star != "天禽" || p.Door != "—" || p.LayoutRole != qimen.LayoutRoleCenter {
 				t.Fatalf("center palace invalid: %+v", p)
 			}
-		} else if p.Door == "" {
-			t.Fatalf("palace %d door empty", p.Index)
+			if p.Deity != "—" && p.Deity != "值符" {
+				t.Fatalf("center deity=%q", p.Deity)
+			}
+			continue
 		}
+		if p.Door == "" || p.Deity == "" {
+			t.Fatalf("palace %d door/deity empty: %+v", p.Index, p)
+		}
+		if p.LayoutRole == qimen.LayoutRoleChief {
+			hasChiefRole = true
+		}
+		if p.LayoutRole != qimen.LayoutRolePalace && p.LayoutRole != qimen.LayoutRoleChief {
+			t.Fatalf("palace %d layout_role=%q", p.Index, p.LayoutRole)
+		}
+	}
+	if !hasChiefRole {
+		centerName := ""
+		for _, p := range result.Palaces {
+			if p.Index == 5 {
+				centerName = p.Name
+				break
+			}
+		}
+		if result.Chief.ZhiFuPalace != centerName {
+			t.Fatal("expected chief layout_role or 值符落中五")
+		}
+	}
+	assertNoForbiddenProfessionalPhrases(t, result.MethodNote, result.Palaces)
+}
+
+func assertNoForbiddenProfessionalPhrases(t *testing.T, methodNote string, palaces []qimen.ProfessionalPalace) {
+	t.Helper()
+	text := methodNote
+	for _, p := range palaces {
+		text += " " + p.Summary
+	}
+	for _, phrase := range []string{
+		"必成", "必败", "大吉", "大凶", "必发财", "必复合",
+		"改运", "化灾", "转运", "投资建议", "医疗建议", "法律建议", "赌博建议", "军事行动建议",
+	} {
+		if strings.Contains(text, phrase) {
+			t.Fatalf("forbidden phrase %q in professional output", phrase)
+		}
+	}
+	if strings.Contains(text, "精准预测") && !strings.Contains(text, "不提供精准预测") && !strings.Contains(text, "不做精准预测") {
+		t.Fatalf("forbidden positive phrase 精准预测 in professional output")
 	}
 }
 
@@ -307,10 +422,15 @@ func assertProfessionalPreviewPayload(t *testing.T, obj map[string]any, when tim
 		t.Fatal("limits missing")
 	}
 	limitText := strings.Join(toStringSlice(limits), " ")
-	for _, phrase := range []string{"不提供精准预测", "不构成现实决策依据"} {
+	for _, phrase := range []string{"不提供精准预测", "不构成现实决策依据", "professional_layout_v1_center_tianqin", "天禽默认留中五宫"} {
 		if !strings.Contains(limitText, phrase) {
 			t.Fatalf("limits missing %q: %s", phrase, limitText)
 		}
+	}
+
+	methodNote, _ := obj["method_note"].(string)
+	if methodNote == "" || !strings.Contains(methodNote, "ALG2.5B") {
+		t.Fatalf("method_note should mention ALG2.5B: %q", methodNote)
 	}
 
 	_ = when

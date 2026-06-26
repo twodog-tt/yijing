@@ -13,7 +13,7 @@ const (
 	DunYuanPending                = "upper_middle_lower_pending"
 	DunMethodSolarTermBoundary    = "solar_term_boundary"
 
-	MethodNoteV2Professional = "奇门 v2 专业口径（ALG2.4A–C / ALG2.5），含二十四节气拆补与九宫落盘第一版；仅供传统文化学习与结构化观察，不等同于线下大师排盘，不构成现实决策依据。"
+	MethodNoteV2Professional = "奇门 v2 专业口径（ALG2.4A–C / ALG2.5 / ALG2.5B），含版本化九宫落盘；默认天禽留中五宫；仅供传统文化学习与结构化观察，不等同于线下大师排盘，不构成现实决策依据。"
 )
 
 // CalculationLimitsV2Professional returns limits for the professional target payload (design only).
@@ -25,7 +25,8 @@ var calculationLimitsV2Professional = []string{
 	"当前不提供精准预测",
 	"当前不提供应期断言",
 	"当前不构成现实决策依据",
-	"九宫落盘为 ALG2.5 第一版转盘排布（pending_verification），天禽暂保留中五宫",
+	"九宫落盘口径 layout_version=professional_layout_v1_center_tianqin（ALG2.5B 版本化）",
+	"天禽默认留中五宫；坤二/艮八寄宫流派仅结构预留，未默认启用",
 	"置闰法尚未实现",
 }
 
@@ -78,7 +79,7 @@ var ProfessionalGapAudits = []ProfessionalGapAudit{
 	{
 		Dimension: "天禽寄宫", CurrentPOC: "中五宫门为 —，未专业寄宫",
 		TargetPro: "明确寄坤二 / 寄艮八等流派口径并文档化",
-		Status: "partial", Implementation: "ALG2.5",
+		Status: "partial", Implementation: "ALG2.5B",
 	},
 }
 
@@ -144,6 +145,8 @@ type CalculationResultV2Professional struct {
 	Xun            Xun
 	Chief          ProfessionalChief
 	Palaces        []ProfessionalPalace
+	LayoutVersion  string
+	LayoutBasis    string
 	MethodNote     string
 	Limits         []string
 }

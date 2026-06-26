@@ -22,7 +22,7 @@ func TestBuildProfessionalEarthPlateStemsRange(t *testing.T) {
 }
 
 func TestBuildProfessionalStarsCenterTianQin(t *testing.T) {
-	stars := BuildProfessionalStars(3, "yang", Xun{XunShou: "甲子"})
+	stars := BuildProfessionalStars(3, "yang", Xun{XunShou: "甲子"}, nil)
 	if stars[5] != "天禽" {
 		t.Fatalf("center star=%q want 天禽", stars[5])
 	}
@@ -47,8 +47,13 @@ func TestBuildProfessionalPalacesCountAndFields(t *testing.T) {
 	ju := ProfessionalJuResult{Ju: 4, Yuan: DunYuanUpper, Method: DunMethodChaiBu}
 	dun := ProfessionalDun{Type: "yang", Ju: 4}
 	xun := Xun{XunShou: "甲子", EmptyBranches: []string{"戌", "亥"}}
-	chief := ResolveProfessionalChief(ju, xun, dun)
-	palaces := BuildProfessionalPalaces(ju, dun, xun, chief)
+	chief, palaces := BuildProfessionalLayout(ju, dun, xun, nil)
+	if !ValidateProfessionalPalaceIntegrity(palaces) {
+		t.Fatal("palace integrity failed")
+	}
+	if !ValidateChiefPalaceConsistency(chief, palaces) {
+		t.Fatalf("chief consistency failed: %+v", chief)
+	}
 	if len(palaces) != 9 {
 		t.Fatalf("palaces len=%d", len(palaces))
 	}
@@ -57,7 +62,7 @@ func TestBuildProfessionalPalacesCountAndFields(t *testing.T) {
 		if p.Index < 1 || p.Index > 9 {
 			t.Fatalf("index=%d", p.Index)
 		}
-		if p.Name == "" || p.EarthPlateStem == "" || p.HeavenPlateStem == "" || p.Star == "" || p.Deity == "" || p.Summary == "" {
+		if p.Name == "" || p.EarthPlateStem == "" || p.HeavenPlateStem == "" || p.Star == "" || p.Summary == "" {
 			t.Fatalf("palace %d incomplete: %+v", p.Index, p)
 		}
 		if p.Index == 5 {
@@ -70,6 +75,9 @@ func TestBuildProfessionalPalacesCountAndFields(t *testing.T) {
 			}
 			if p.Door != "—" {
 				t.Fatalf("center door=%q", p.Door)
+			}
+			if p.Deity != "—" && p.Deity != "值符" {
+				t.Fatalf("center deity=%q", p.Deity)
 			}
 		} else if p.Door == "" {
 			t.Fatalf("palace %d door empty", p.Index)
@@ -84,9 +92,11 @@ func TestBuildProfessionalPalacesStable(t *testing.T) {
 	ju := ProfessionalJuResult{Ju: 2, Method: DunMethodChaiBu}
 	dun := ProfessionalDun{Type: "yin", Ju: 2}
 	xun := Xun{XunShou: "甲戌"}
-	chief := ResolveProfessionalChief(ju, xun, dun)
-	a := BuildProfessionalPalaces(ju, dun, xun, chief)
-	b := BuildProfessionalPalaces(ju, dun, xun, chief)
+	aChief, a := BuildProfessionalLayout(ju, dun, xun, nil)
+	bChief, b := BuildProfessionalLayout(ju, dun, xun, nil)
+	if aChief != bChief {
+		t.Fatalf("chief not stable: %+v vs %+v", aChief, bChief)
+	}
 	if len(a) != len(b) {
 		t.Fatal("length mismatch")
 	}
