@@ -4,7 +4,7 @@
   <view class="card-dialog" catchtap="preventTouchMove">
     <view class="card-dialog__header">
       <text class="card-dialog__title">分享长图</text>
-      <text class="card-dialog__hint">长图不包含完整原问题、session_key 或小程序码</text>
+      <text class="card-dialog__hint">长图展示高价值摘要与行动要点，不包含完整原问题、完整报告全文或小程序码</text>
       <text wx:if="{{truncatedHint}}" class="card-dialog__warning">{{truncatedHint}}</text>
     </view>
     <scroll-view class="card-preview" scroll-y="true">

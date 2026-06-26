@@ -2,9 +2,8 @@ const {
   POSTER_WIDTH,
   CONTENT_WIDTH,
   PADDING_X,
-  FOOTER_RESERVE,
   MIN_POSTER_HEIGHT,
-  TRUNCATION_NOTICE,
+  POSTER_DISCLAIMER,
   computePosterDimensions,
   drawDivider,
   drawRoundedRect,
@@ -15,67 +14,48 @@ const {
   exportCanvasToTempFile,
   getAlbumPermissionHelpers,
   normalizeText,
-  remainingLines,
   resolveExportPixelRatio,
-  wrapAllLines,
 } = require("../../utils/long-poster-canvas");
 
 const QIMEN_INTRO_NOTE =
   "qimen-simple-v1 简化学习版，仅供传统文化学习与自我反思。不等同于专业奇门排盘，不生成完整九宫盘，不构成现实决策依据。";
 const SAFE_QUESTION_SUMMARY = "用户问题已用于本次局势梳理";
 
-function estimateMetaHeight(data) {
-  const metaParts = [
-    data.categoryLabel ? `分类 · ${data.categoryLabel}` : "",
-    data.timeBucketLabel ? `时段 · ${data.timeBucketLabel}` : "",
-    `摘要 · ${SAFE_QUESTION_SUMMARY}`,
-  ].filter(Boolean);
-  return estimateParagraphHeight(metaParts.join("\n"), 22, 30);
-}
-
 function estimateRawLongPosterHeight(data) {
-  let height = 120;
-  height += 80;
+  let height = 300;
   height += estimateParagraphHeight(QIMEN_INTRO_NOTE, 22, 30);
   height += estimateParagraphHeight(data.methodNote, 22, 30);
-  height += estimateMetaHeight(data);
-  height += 80;
-  height += estimateParagraphHeight(data.situationOverview, 24, 30);
-  if (Array.isArray(data.riskObservations) && data.riskObservations.length) {
+  height += 72;
+  height += 100;
+  height += 100;
+  height += 72;
+  height += 56;
+  if (Array.isArray(data.actionPoints) && data.actionPoints.length) {
     height += 40;
-    data.riskObservations.forEach((item) => {
+    data.actionPoints.forEach((item) => {
       height += estimateParagraphHeight(item, 24, 30);
     });
   }
-  if (data.actionPacing) {
-    height += 40 + estimateParagraphHeight(data.actionPacing, 24, 30);
-  }
-  if (Array.isArray(data.reflectionQuestions) && data.reflectionQuestions.length) {
-    height += 40;
-    data.reflectionQuestions.forEach((item) => {
-      height += estimateParagraphHeight(item, 24, 30);
-    });
-  }
-  if (Array.isArray(data.actionSuggestions) && data.actionSuggestions.length) {
-    height += 40;
-    data.actionSuggestions.forEach((item) => {
-      height += estimateParagraphHeight(item, 24, 30);
-    });
-  }
-  if (data.freeContent) {
-    height += 40 + estimateParagraphHeight(data.freeContent, 24, 28);
-  }
-  if (data.fullContent) {
-    height += 40 + estimateParagraphHeight(data.fullContent, 24, 28);
-  }
-  height += 80;
+  height += 96;
   return height;
 }
 
-function layoutLongPoster(ctx, data, canvasHeight, options) {
-  const { isTruncated = false } = options || {};
-  const contentStopY = canvasHeight - FOOTER_RESERVE;
+function drawInsightCard(ctx, x, y, title, lines) {
+  const filtered = lines.filter(Boolean);
+  const cardHeight = 28 + filtered.length * 26;
+  drawRoundedRect(ctx, x, y, CONTENT_WIDTH, cardHeight, 16, "#faf8f3");
+  ctx.fillStyle = "#292524";
+  ctx.font = "bold 16px sans-serif";
+  ctx.fillText(title, x + 20, y + 30);
+  ctx.fillStyle = "#57534e";
+  ctx.font = "15px sans-serif";
+  filtered.forEach((line, index) => {
+    ctx.fillText(line, x + 20, y + 58 + index * 26);
+  });
+  return y + cardHeight + 16;
+}
 
+function layoutLongPoster(ctx, data, canvasHeight) {
   ctx.fillStyle = "#f4efe5";
   ctx.fillRect(0, 0, POSTER_WIDTH, canvasHeight);
   drawRoundedRect(ctx, 24, 24, 552, canvasHeight - 48, 22, "#fffdf8");
@@ -88,13 +68,11 @@ function layoutLongPoster(ctx, data, canvasHeight, options) {
   y += 28;
   y = drawDivider(ctx, PADDING_X, y);
   y = drawTitle(ctx, "奇门问事", PADDING_X, y, { font: "bold 26px sans-serif" });
-  y = drawWrappedParagraph(
-    ctx,
-    QIMEN_INTRO_NOTE,
-    PADDING_X,
-    y,
-    { lineHeight: 22, font: "14px sans-serif", color: "#57534e" }
-  );
+  y = drawWrappedParagraph(ctx, QIMEN_INTRO_NOTE, PADDING_X, y, {
+    lineHeight: 22,
+    font: "14px sans-serif",
+    color: "#57534e",
+  });
   y += 12;
   y = drawWrappedParagraph(ctx, normalizeText(data.methodNote), PADDING_X, y, {
     lineHeight: 22,
@@ -115,83 +93,61 @@ function layoutLongPoster(ctx, data, canvasHeight, options) {
   });
   y += 16;
 
-  y = drawSectionTitle(ctx, "局势梳理", PADDING_X, y);
-  y = drawWrappedParagraph(ctx, data.situationOverview || "—", PADDING_X, y);
+  const lens = data.qimenLens || {};
+  y = drawInsightCard(ctx, PADDING_X, y, "关注主题", [
+    lens.focusTheme ? `主题 · ${lens.focusTheme}` : "",
+  ]);
+
+  y = drawInsightCard(ctx, PADDING_X, y, "可借助与需留意", [
+    lens.supportTheme ? `可借助 · ${lens.supportTheme}` : "",
+    lens.cautionTheme ? `需留意 · ${lens.cautionTheme}` : "",
+  ]);
+
+  y = drawSectionTitle(ctx, "行动节奏", PADDING_X, y);
+  y = drawWrappedParagraph(
+    ctx,
+    lens.pacingTheme ? `节奏 · ${lens.pacingTheme}` : "先观察，再安排一件可验证的小事。",
+    PADDING_X,
+    y
+  );
   y += 8;
 
-  if (Array.isArray(data.riskObservations) && data.riskObservations.length) {
-    y = drawSectionTitle(ctx, "风险观察", PADDING_X, y);
-    data.riskObservations.forEach((item, index) => {
-      y = drawWrappedParagraph(ctx, `${index + 1}. ${item}`, PADDING_X, y);
-      y += 4;
-    });
-    y += 4;
-  }
-
-  if (data.actionPacing) {
-    y = drawSectionTitle(ctx, "行动节奏", PADDING_X, y);
-    y = drawWrappedParagraph(ctx, data.actionPacing, PADDING_X, y);
+  if (data.categoryHighlight) {
+    y = drawSectionTitle(ctx, "本类关注重点", PADDING_X, y);
+    y = drawWrappedParagraph(ctx, data.categoryHighlight, PADDING_X, y);
     y += 8;
   }
 
-  if (Array.isArray(data.reflectionQuestions) && data.reflectionQuestions.length) {
-    y = drawSectionTitle(ctx, "自我反思问题", PADDING_X, y);
-    data.reflectionQuestions.forEach((item, index) => {
-      y = drawWrappedParagraph(ctx, `${index + 1}. ${item}`, PADDING_X, y);
-      y += 4;
-    });
-    y += 4;
-  }
-
-  if (Array.isArray(data.actionSuggestions) && data.actionSuggestions.length) {
-    y = drawSectionTitle(ctx, "行动建议", PADDING_X, y);
-    data.actionSuggestions.forEach((item, index) => {
-      y = drawWrappedParagraph(ctx, `${index + 1}. ${item}`, PADDING_X, y);
-      y += 4;
-    });
-    y += 4;
-  }
-
-  if (data.freeContent) {
-    y = drawSectionTitle(ctx, "免费解读", PADDING_X, y);
-    y = drawWrappedParagraph(ctx, data.freeContent, PADDING_X, y);
-    y += 8;
-  }
-
-  let contentTruncated = false;
-  if (data.fullContent) {
-    y = drawSectionTitle(ctx, "完整报告", PADDING_X, y);
-    if (isTruncated) {
-      const maxLines = remainingLines(contentStopY, y, 28);
-      const totalLines = wrapAllLines(ctx, data.fullContent, CONTENT_WIDTH);
-      contentTruncated = totalLines.length > maxLines;
-      y = drawWrappedParagraph(ctx, data.fullContent, PADDING_X, y, {
-        lineHeight: 28,
-        maxLines,
-      });
-    } else {
-      y = drawWrappedParagraph(ctx, data.fullContent, PADDING_X, y, { lineHeight: 28 });
-    }
-    y += 8;
-  }
-
-  if (isTruncated && contentTruncated) {
-    y = drawWrappedParagraph(ctx, TRUNCATION_NOTICE, PADDING_X, y, {
+  const profile = data.questionProfile || {};
+  const profileParts = [
+    profile.intentType ? `问事侧重 · ${profile.intentType}` : "",
+    profile.timeHorizon ? `时间范围 · ${profile.timeHorizon}` : "",
+    profile.decisionPressure ? `决策压力 · ${profile.decisionPressure}` : "",
+  ].filter(Boolean);
+  if (profileParts.length) {
+    y = drawWrappedParagraph(ctx, profileParts.join("\n"), PADDING_X, y, {
       lineHeight: 22,
-      font: "13px sans-serif",
-      color: "#b45309",
+      font: "14px sans-serif",
+      color: "#78716c",
     });
     y += 8;
+  }
+
+  if (Array.isArray(data.actionPoints) && data.actionPoints.length) {
+    y = drawSectionTitle(ctx, "反思与行动要点", PADDING_X, y);
+    data.actionPoints.forEach((item, index) => {
+      y = drawWrappedParagraph(ctx, `${index + 1}. ${item}`, PADDING_X, y);
+      y += 4;
+    });
+    y += 4;
   }
 
   y = drawDivider(ctx, PADDING_X, y + 8);
-  drawWrappedParagraph(
-    ctx,
-    "内容仅用于传统文化学习、自我反思和行动整理，不构成现实决策依据。",
-    PADDING_X,
-    y,
-    { lineHeight: 20, font: "12px sans-serif", color: "#78716c" }
-  );
+  drawWrappedParagraph(ctx, POSTER_DISCLAIMER, PADDING_X, y, {
+    lineHeight: 20,
+    font: "12px sans-serif",
+    color: "#78716c",
+  });
 }
 
 Component({
@@ -274,7 +230,7 @@ Component({
 
     async generateLongPoster(cardData) {
       const rawHeight = estimateRawLongPosterHeight(cardData);
-      const { canvasHeight, isTruncated, truncatedHint } = computePosterDimensions(rawHeight);
+      const { canvasHeight, truncatedHint } = computePosterDimensions(rawHeight);
 
       await new Promise((resolve) => {
         this.setData({ canvasHeight, truncatedHint }, resolve);
@@ -288,7 +244,7 @@ Component({
       const ctx = canvas.getContext("2d");
       ctx.scale(pixelRatio, pixelRatio);
       this.canvasNode = canvas;
-      layoutLongPoster(ctx, cardData, canvasHeight, { isTruncated });
+      layoutLongPoster(ctx, cardData, canvasHeight);
 
       await new Promise((resolve) => setTimeout(resolve, 60));
       return exportCanvasToTempFile(canvas, width, canvasHeight, this, pixelRatio);

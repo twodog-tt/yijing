@@ -322,6 +322,7 @@ Tab: 今日 | 问事 | 扩展(八字/奇门) | 我的(历史/设置)
 | **Phase ALG1** | 八字 v2 POC（后端） | 立春换年、节气月柱、`CalculateV2`、golden tests | Cursor ✅ |
 | **Phase ALG1.2** | 八字 v2 灰度接入 | 创建 API 可选 `algorithm_version`；默认 v1；内部可测 v2 | Cursor ✅ |
 | **Phase REPORT1** | 八字 / 奇门完整报告质量 | 7 段结构、DeepSeek + fallback 差异化、禁用词与隐私测试 | Cursor ✅ |
+| **Phase SHARE1** | 小程序长图分享优化 | 高价值摘要 + 行动要点，移除完整报告粘贴 | Cursor ✅ |
 | **Phase G** | 奇门增强（unlock / AI / 高级 UI） | 完整解读、九宫盘等（规划，未启动） | Cursor + Codex review |
 | **Phase H（P4）** | 统一报告中心 & 商业化 | 会员/次数包调研、支付资质、**暂不实施** | 产品决策后单独立项 |
 

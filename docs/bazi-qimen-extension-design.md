@@ -1422,3 +1422,29 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 **测试：** 5 组八字样例 + 5 组奇门样例差异化；禁用词 body 检测；`go test` / `go vet` 通过。
 
 **部署：** 仅 backend；无需 frontend / 小程序重编译 / SQL。
+
+---
+
+### 10.30 Phase SHARE1 交付清单（小程序长图分享内容优化）
+
+**目标：** 八字 / 奇门分享长图从「字段罗列 + 完整报告粘贴」优化为「高价值摘要 + 行动要点」。
+
+**八字长图：**
+
+- [x] 展示四柱示意（未知时辰不展示时柱）
+- [x] 展示解读视角（五行倾向 / 行动风格 / 反思主题）
+- [x] 展示节奏与留意（interpretation_lens）
+- [x] 展示 2–3 条行动要点
+- [x] 移除完整报告全文粘贴
+
+**奇门长图：**
+
+- [x] 展示分类 + 安全问事摘要（不含完整原问题）
+- [x] 展示关注主题 / 可借助 / 需留意 / 行动节奏（qimen_lens）
+- [x] 按 category 突出本类关注重点
+- [x] 展示 2–3 条反思或行动要点
+- [x] 移除完整报告全文粘贴
+
+**隐私与合规：** 不含 birth_date / 完整原问题 / session_key / payload；过滤强预测/改运/投资医疗法律等禁用词。
+
+**部署：** 仅小程序重新编译；无需 backend / frontend / SQL。

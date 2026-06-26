@@ -183,10 +183,9 @@ Page({
         fullContent,
         fullRevealActive: isUnlocked && !!fullContent,
         resultReady: true,
-        cardData:
-          isUnlocked && fullContent
-            ? buildQimenLongPosterData(this.data.recordId, view, fullContent)
-            : null,
+        cardData: isUnlocked
+          ? buildQimenLongPosterData(this.data.recordId, view, fullContent)
+          : null,
       });
     } catch (error) {
       this.setData({
@@ -326,12 +325,8 @@ Page({
       this.data.unlocking ||
       !this.data.isUnlocked ||
       !this.data.view ||
-      !this.data.recordId ||
-      !String(this.data.fullContent || "").trim()
+      !this.data.recordId
     ) {
-      if (this.data.isUnlocked && !String(this.data.fullContent || "").trim()) {
-        wx.showToast({ title: "完整报告暂不可用，请刷新后重试", icon: "none" });
-      }
       return;
     }
 

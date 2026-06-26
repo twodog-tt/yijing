@@ -2,9 +2,8 @@ const {
   POSTER_WIDTH,
   CONTENT_WIDTH,
   PADDING_X,
-  FOOTER_RESERVE,
   MIN_POSTER_HEIGHT,
-  TRUNCATION_NOTICE,
+  POSTER_DISCLAIMER,
   computePosterDimensions,
   drawDivider,
   drawRoundedRect,
@@ -15,41 +14,44 @@ const {
   exportCanvasToTempFile,
   getAlbumPermissionHelpers,
   normalizeText,
-  remainingLines,
   resolveExportPixelRatio,
-  wrapAllLines,
 } = require("../../utils/long-poster-canvas");
 
+const BAZI_METHOD_INTRO =
+  "基于简化干支与五行观察，仅供传统文化学习参考，不等同于专业八字排盘，不构成现实决策依据。";
+
 function estimateRawLongPosterHeight(data) {
-  let height = 120;
-  height += 80;
+  let height = 320;
   height += estimateParagraphHeight(data.methodNote, 22, 30);
-  height += 140;
-  height += 40;
-  height += estimateParagraphHeight(data.elementSummary, 24, 30);
-  if (data.reflectionFocus) {
-    height += 40 + estimateParagraphHeight(data.reflectionFocus, 24, 30);
-  }
-  if (Array.isArray(data.actionSuggestions) && data.actionSuggestions.length) {
+  height += data.hourUnknown ? 132 : 156;
+  height += 120;
+  height += 120;
+  if (Array.isArray(data.actionPoints) && data.actionPoints.length) {
     height += 40;
-    data.actionSuggestions.forEach((item) => {
+    data.actionPoints.forEach((item) => {
       height += estimateParagraphHeight(item, 24, 30);
     });
   }
-  if (data.freeContent) {
-    height += 40 + estimateParagraphHeight(data.freeContent, 24, 28);
-  }
-  if (data.fullContent) {
-    height += 40 + estimateParagraphHeight(data.fullContent, 24, 28);
-  }
-  height += 80;
+  height += 96;
   return height;
 }
 
-function layoutLongPoster(ctx, data, canvasHeight, options) {
-  const { isTruncated = false } = options || {};
-  const contentStopY = canvasHeight - FOOTER_RESERVE;
+function drawInsightCard(ctx, x, y, title, lines) {
+  const filtered = lines.filter(Boolean);
+  const cardHeight = 28 + filtered.length * 26;
+  drawRoundedRect(ctx, x, y, CONTENT_WIDTH, cardHeight, 16, "#faf8f3");
+  ctx.fillStyle = "#292524";
+  ctx.font = "bold 16px sans-serif";
+  ctx.fillText(title, x + 20, y + 30);
+  ctx.fillStyle = "#57534e";
+  ctx.font = "15px sans-serif";
+  filtered.forEach((line, index) => {
+    ctx.fillText(line, x + 20, y + 58 + index * 26);
+  });
+  return y + cardHeight + 16;
+}
 
+function layoutLongPoster(ctx, data, canvasHeight) {
   ctx.fillStyle = "#f4efe5";
   ctx.fillRect(0, 0, POSTER_WIDTH, canvasHeight);
   drawRoundedRect(ctx, 24, 24, 552, canvasHeight - 48, 22, "#fffdf8");
@@ -62,13 +64,11 @@ function layoutLongPoster(ctx, data, canvasHeight, options) {
   y += 28;
   y = drawDivider(ctx, PADDING_X, y);
   y = drawTitle(ctx, "八字简析", PADDING_X, y, { font: "bold 26px sans-serif" });
-  y = drawWrappedParagraph(
-    ctx,
-    "基于简化干支文化规则，仅供传统文化学习与自我反思。不等同于专业八字排盘，不构成现实决策依据。",
-    PADDING_X,
-    y,
-    { lineHeight: 22, font: "14px sans-serif", color: "#57534e" }
-  );
+  y = drawWrappedParagraph(ctx, BAZI_METHOD_INTRO, PADDING_X, y, {
+    lineHeight: 22,
+    font: "14px sans-serif",
+    color: "#57534e",
+  });
   y += 12;
   y = drawWrappedParagraph(ctx, normalizeText(data.methodNote), PADDING_X, y, {
     lineHeight: 22,
@@ -77,85 +77,57 @@ function layoutLongPoster(ctx, data, canvasHeight, options) {
   });
   y += 16;
 
-  drawRoundedRect(ctx, PADDING_X, y, CONTENT_WIDTH, 132, 16, "#faf8f3");
+  const pillarLines = [
+    `年柱 · ${normalizeText(data.pillars?.year || "—")}`,
+    `月柱 · ${normalizeText(data.pillars?.month || "—")}`,
+    `日柱 · ${normalizeText(data.pillars?.day || "—")}`,
+  ];
+  if (!data.hourUnknown) {
+    pillarLines.push(`时柱 · ${normalizeText(data.pillars?.hour || "—")}`);
+  }
+  pillarLines.push(`日主 · ${normalizeText(data.dayMaster || "—")}`);
+  const pillarCardHeight = 28 + pillarLines.length * 26;
+  drawRoundedRect(ctx, PADDING_X, y, CONTENT_WIDTH, pillarCardHeight, 16, "#faf8f3");
   ctx.fillStyle = "#292524";
   ctx.font = "bold 16px sans-serif";
-  ctx.fillText("简化干支示意", PADDING_X + 20, y + 30);
+  ctx.fillText("四柱示意", PADDING_X + 20, y + 30);
   ctx.fillStyle = "#57534e";
   ctx.font = "15px sans-serif";
-  ctx.fillText(`年柱 · ${normalizeText(data.pillars?.year || "—")}`, PADDING_X + 20, y + 60);
-  ctx.fillText(`月柱 · ${normalizeText(data.pillars?.month || "—")}`, PADDING_X + 20, y + 86);
-  ctx.fillText(`日柱 · ${normalizeText(data.pillars?.day || "—")}`, PADDING_X + 20, y + 112);
-  if (data.hourUnknown) {
-    ctx.fillText("时柱 · 时辰未知，本次不生成时柱", PADDING_X + 20, y + 138);
-  } else {
-    ctx.fillText(`时柱 · ${normalizeText(data.pillars?.hour || "—")}`, PADDING_X + 20, y + 138);
-  }
-  y += 156;
+  pillarLines.forEach((line, index) => {
+    ctx.fillText(line, PADDING_X + 20, y + 58 + index * 26);
+  });
+  y += pillarCardHeight + 16;
 
-  y = drawSectionTitle(ctx, "日主", PADDING_X, y);
-  y = drawWrappedParagraph(ctx, normalizeText(data.dayMaster || "—"), PADDING_X, y);
-  y += 8;
+  const profile = data.baziProfile || {};
+  y = drawInsightCard(ctx, PADDING_X, y, "解读视角", [
+    profile.elementBalanceType ? `五行倾向 · ${profile.elementBalanceType}` : "",
+    profile.actionStyle ? `行动风格 · ${profile.actionStyle}` : "",
+    profile.reflectionTheme ? `反思主题 · ${profile.reflectionTheme}` : "",
+    profile.seasonTendency ? `季节倾向 · ${profile.seasonTendency}` : "",
+  ]);
 
-  y = drawSectionTitle(ctx, "五行倾向", PADDING_X, y);
-  y = drawWrappedParagraph(ctx, data.elementSummary || "木 0 · 火 0 · 土 0 · 金 0 · 水 0", PADDING_X, y);
-  y += 8;
+  const lens = data.interpretationLens || {};
+  y = drawInsightCard(ctx, PADDING_X, y, "节奏与留意", [
+    lens.strengthHint ? `可借助 · ${lens.strengthHint}` : "",
+    lens.cautionHint ? `需留意 · ${lens.cautionHint}` : "",
+    lens.pacingHint ? `节奏建议 · ${lens.pacingHint}` : "",
+  ]);
 
-  if (data.reflectionFocus) {
-    y = drawSectionTitle(ctx, "反思焦点", PADDING_X, y);
-    y = drawWrappedParagraph(ctx, data.reflectionFocus, PADDING_X, y);
-    y += 8;
-  }
-
-  if (Array.isArray(data.actionSuggestions) && data.actionSuggestions.length) {
-    y = drawSectionTitle(ctx, "行动建议", PADDING_X, y);
-    data.actionSuggestions.forEach((item, index) => {
+  if (Array.isArray(data.actionPoints) && data.actionPoints.length) {
+    y = drawSectionTitle(ctx, "行动要点", PADDING_X, y);
+    data.actionPoints.forEach((item, index) => {
       y = drawWrappedParagraph(ctx, `${index + 1}. ${item}`, PADDING_X, y);
       y += 4;
     });
     y += 4;
   }
 
-  if (data.freeContent) {
-    y = drawSectionTitle(ctx, "免费解读", PADDING_X, y);
-    y = drawWrappedParagraph(ctx, data.freeContent, PADDING_X, y);
-    y += 8;
-  }
-
-  let contentTruncated = false;
-  if (data.fullContent) {
-    y = drawSectionTitle(ctx, "完整报告", PADDING_X, y);
-    if (isTruncated) {
-      const maxLines = remainingLines(contentStopY, y, 28);
-      const totalLines = wrapAllLines(ctx, data.fullContent, CONTENT_WIDTH);
-      contentTruncated = totalLines.length > maxLines;
-      y = drawWrappedParagraph(ctx, data.fullContent, PADDING_X, y, {
-        lineHeight: 28,
-        maxLines,
-      });
-    } else {
-      y = drawWrappedParagraph(ctx, data.fullContent, PADDING_X, y, { lineHeight: 28 });
-    }
-    y += 8;
-  }
-
-  if (isTruncated && contentTruncated) {
-    y = drawWrappedParagraph(ctx, TRUNCATION_NOTICE, PADDING_X, y, {
-      lineHeight: 22,
-      font: "13px sans-serif",
-      color: "#b45309",
-    });
-    y += 8;
-  }
-
   y = drawDivider(ctx, PADDING_X, y + 8);
-  drawWrappedParagraph(
-    ctx,
-    "内容仅用于传统文化学习、自我反思和行动整理，不构成现实决策依据。",
-    PADDING_X,
-    y,
-    { lineHeight: 20, font: "12px sans-serif", color: "#78716c" }
-  );
+  drawWrappedParagraph(ctx, POSTER_DISCLAIMER, PADDING_X, y, {
+    lineHeight: 20,
+    font: "12px sans-serif",
+    color: "#78716c",
+  });
 }
 
 Component({
@@ -238,7 +210,7 @@ Component({
 
     async generateLongPoster(cardData) {
       const rawHeight = estimateRawLongPosterHeight(cardData);
-      const { canvasHeight, isTruncated, truncatedHint } = computePosterDimensions(rawHeight);
+      const { canvasHeight, truncatedHint } = computePosterDimensions(rawHeight);
 
       await new Promise((resolve) => {
         this.setData({ canvasHeight, truncatedHint }, resolve);
@@ -252,7 +224,7 @@ Component({
       const ctx = canvas.getContext("2d");
       ctx.scale(pixelRatio, pixelRatio);
       this.canvasNode = canvas;
-      layoutLongPoster(ctx, cardData, canvasHeight, { isTruncated });
+      layoutLongPoster(ctx, cardData, canvasHeight);
 
       await new Promise((resolve) => setTimeout(resolve, 60));
       return exportCanvasToTempFile(canvas, width, canvasHeight, this, pixelRatio);

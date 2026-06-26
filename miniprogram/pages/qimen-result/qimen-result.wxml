@@ -151,7 +151,7 @@
             bindtap="handleGenerateCard"
           >生成分享长图</button>
         </view>
-        <text wx:if="{{isUnlocked}}" class="share-hint share-hint--secondary">长图包含免费解读与完整报告，不包含完整原问题或小程序码。</text>
+        <text wx:if="{{isUnlocked}}" class="share-hint share-hint--secondary">长图展示关注主题、行动节奏与要点，不包含完整原问题、完整报告全文或小程序码。</text>
       </view>
     </section-reveal>
 

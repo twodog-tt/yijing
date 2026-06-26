@@ -7,8 +7,156 @@ const FOOTER_RESERVE = 132;
 const TRUNCATION_NOTICE =
   "内容较长，长图仅展示前半部分内容；完整内容请在小程序结果页查看。";
 
+const POSTER_DISCLAIMER =
+  "内容仅供传统文化学习、自我观察与行动节奏整理，不构成现实决策依据，建议结合现实情况判断。";
+
+const FORBIDDEN_POSTER_PHRASES = Object.freeze([
+  "精准预测",
+  "必成",
+  "必败",
+  "大吉",
+  "大凶",
+  "必发财",
+  "必复合",
+  "改运",
+  "化灾",
+  "转运",
+  "投资建议",
+  "医疗建议",
+  "法律建议",
+  "赌博建议",
+  "军事行动建议",
+]);
+
+const PRIVACY_POSTER_PATTERNS = Object.freeze([
+  /session_key/i,
+  /input_payload/i,
+  /result_payload/i,
+  /\bprompt\b/i,
+  /\d{4}-\d{2}-\d{2}/,
+]);
+
 function normalizeText(value) {
   return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function containsForbiddenPosterPhrase(text) {
+  const normalized = normalizeText(text);
+  if (!normalized) return false;
+  return FORBIDDEN_POSTER_PHRASES.some((phrase) => normalized.includes(phrase));
+}
+
+function containsPosterPrivacyLeak(text) {
+  const normalized = String(text || "");
+  if (!normalized) return false;
+  return PRIVACY_POSTER_PATTERNS.some((pattern) => pattern.test(normalized));
+}
+
+function sanitizePosterText(text) {
+  const normalized = normalizeText(text);
+  if (!normalized) return "";
+  if (containsForbiddenPosterPhrase(normalized)) return "";
+  if (containsPosterPrivacyLeak(normalized)) return "";
+  return normalized;
+}
+
+function limitPosterText(text, maxLength = 80) {
+  const cleaned = sanitizePosterText(text);
+  if (!cleaned) return "";
+  if (cleaned.length <= maxLength) return cleaned;
+  return `${cleaned.slice(0, maxLength)}…`;
+}
+
+function normalizePosterLines(items, options) {
+  const { maxItems = 3, maxLength = 80 } = options || {};
+  const seen = new Set();
+  const lines = [];
+  (Array.isArray(items) ? items : []).forEach((item) => {
+    const line = limitPosterText(item, maxLength);
+    if (!line || seen.has(line)) return;
+    seen.add(line);
+    lines.push(line);
+  });
+  return lines.slice(0, maxItems);
+}
+
+function extractReportSection(fullContent, sectionHints) {
+  const content = String(fullContent || "").trim();
+  if (!content || !Array.isArray(sectionHints) || !sectionHints.length) return "";
+
+  const hints = sectionHints.map((hint) => String(hint || "").trim()).filter(Boolean);
+  const sectionPattern =
+    /(?:【?\s*[一二三四五六七八九十\d]+[、.]?\s*([^】\n]+)】?\s*\n)([\s\S]*?)(?=(?:\n\s*(?:【?\s*[一二三四五六七八九十\d]+[、.]?)|$))/g;
+
+  let match;
+  while ((match = sectionPattern.exec(content)) !== null) {
+    const title = normalizeText(match[1]);
+    const body = normalizeText(match[2]);
+    if (!body) continue;
+    if (hints.some((hint) => title.includes(hint))) {
+      return body;
+    }
+  }
+  return "";
+}
+
+function extractReportHighlights(fullContent, sectionHints, options) {
+  const body = extractReportSection(fullContent, sectionHints);
+  if (!body) return [];
+
+  const { maxItems = 3, maxLength = 80 } = options || {};
+  const bulletMatches = body.match(/(?:^|\n)\s*(?:[-·•]|\d+[.、)])\s*([^\n]+)/g);
+  if (bulletMatches && bulletMatches.length) {
+    return normalizePosterLines(
+      bulletMatches.map((line) => line.replace(/^\s*(?:[-·•]|\d+[.、)])\s*/, "")),
+      { maxItems, maxLength }
+    );
+  }
+
+  const sentences = body
+    .split(/[。；;]\s*/)
+    .map((part) => limitPosterText(part, maxLength))
+    .filter(Boolean);
+  return normalizePosterLines(sentences, { maxItems, maxLength });
+}
+
+function pickPosterActionPoints(options) {
+  const {
+    suggestions = [],
+    fullContent = "",
+    sectionHints = ["行动"],
+    fallback = [],
+    maxItems = 3,
+    maxLength = 72,
+  } = options || {};
+
+  const fromStructured = normalizePosterLines(suggestions, { maxItems, maxLength });
+  if (fromStructured.length >= maxItems) return fromStructured;
+
+  const fromReport = extractReportHighlights(fullContent, sectionHints, {
+    maxItems: maxItems - fromStructured.length,
+    maxLength,
+  });
+
+  const merged = normalizePosterLines([...fromStructured, ...fromReport], {
+    maxItems,
+    maxLength,
+  });
+  if (merged.length) return merged;
+
+  return normalizePosterLines(fallback, { maxItems, maxLength });
+}
+
+const QIMEN_CATEGORY_HIGHLIGHTS = Object.freeze({
+  career: "推进顺序 · 资源协调 · 执行风险",
+  relationship: "沟通边界 · 误解修复 · 关系节奏",
+  study: "复盘节奏 · 专注方法 · 阶段目标",
+  decision: "信息补齐 · 小步试探 · 备用方案",
+  general: "问题整理 · 风险收敛 · 小步行动",
+});
+
+function getQimenCategoryHighlight(category) {
+  return QIMEN_CATEGORY_HIGHLIGHTS[category] || QIMEN_CATEGORY_HIGHLIGHTS.general;
 }
 
 function preserveNewlines(text) {
@@ -252,7 +400,17 @@ module.exports = {
   MAX_CANVAS_HEIGHT,
   FOOTER_RESERVE,
   TRUNCATION_NOTICE,
+  POSTER_DISCLAIMER,
+  FORBIDDEN_POSTER_PHRASES,
   normalizeText,
+  sanitizePosterText,
+  limitPosterText,
+  normalizePosterLines,
+  extractReportSection,
+  extractReportHighlights,
+  pickPosterActionPoints,
+  getQimenCategoryHighlight,
+  containsForbiddenPosterPhrase,
   preserveNewlines,
   wrapAllLines,
   measureWrappedText,

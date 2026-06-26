@@ -23,6 +23,8 @@ const ELEMENT_LABELS = Object.freeze({
 
 const MODULE_BAZI_LABEL = "八字简析";
 
+const { pickPosterActionPoints, limitPosterText } = require("./long-poster-canvas");
+
 function parseJSONField(raw) {
   if (!raw) return {};
   if (typeof raw === "object") return raw;
@@ -144,18 +146,43 @@ function buildBaziLongPosterData(recordId, view, fullContent) {
   };
   const hourUnknown =
     Boolean(view.hourUnknown) || !String(pillars.hour || "").trim();
+  const profile = view.baziProfile || {};
+  const lens = view.interpretationLens || {};
+
+  const actionPoints = pickPosterActionPoints({
+    suggestions: view.actionSuggestions,
+    fullContent,
+    sectionHints: ["行动", "近期行动"],
+    fallback: [
+      profile.reflectionTheme
+        ? `围绕「${limitPosterText(profile.reflectionTheme, 24)}」安排一件本周可完成的小事。`
+        : "",
+      "记录一周内的精力变化，做行动整理。",
+    ].filter(Boolean),
+    maxItems: 3,
+    maxLength: 72,
+  });
 
   return {
     id: String(recordId),
-    methodNote: view.methodNote || "本功能采用简化干支文化规则，不等同于专业八字排盘。",
+    methodNote:
+      view.methodNote || "本功能采用简化干支文化规则，不等同于专业八字排盘。",
     pillars,
     hourUnknown,
     dayMaster: view.dayMaster || "—",
     elementSummary: buildElementSummary(view.elements),
-    reflectionFocus: view.reflectionFocus || "",
-    actionSuggestions: Array.isArray(view.actionSuggestions) ? view.actionSuggestions : [],
-    freeContent: view.freeContent || "",
-    fullContent: String(fullContent || "").trim(),
+    baziProfile: {
+      elementBalanceType: limitPosterText(profile.elementBalanceType, 32),
+      actionStyle: limitPosterText(profile.actionStyle, 32),
+      reflectionTheme: limitPosterText(profile.reflectionTheme, 32),
+      seasonTendency: limitPosterText(profile.seasonTendency, 40),
+    },
+    interpretationLens: {
+      strengthHint: limitPosterText(lens.strengthHint, 72),
+      cautionHint: limitPosterText(lens.cautionHint, 72),
+      pacingHint: limitPosterText(lens.pacingHint, 72),
+    },
+    actionPoints,
   };
 }
 

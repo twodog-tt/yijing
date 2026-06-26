@@ -1,4 +1,8 @@
-const MODULE_QIMEN_TYPE = 2;
+const {
+  pickPosterActionPoints,
+  limitPosterText,
+  getQimenCategoryHighlight,
+} = require("./long-poster-canvas");
 const MODULE_QIMEN_LABEL = "奇门问事";
 const QUESTION_SUMMARY = "用户问题已用于本次局势梳理";
 const ALGORITHM_QIMEN_SIMPLE_V1 = "qimen-simple-v1";
@@ -68,6 +72,7 @@ function buildQimenView(record) {
   const limits = result.calculation_meta?.limits;
   const timeBucket = result.time_context?.time_bucket || "";
   const lens = result.qimen_lens || {};
+  const questionProfile = result.question_profile || {};
 
   return {
     algorithmVersion:
@@ -84,6 +89,14 @@ function buildQimenView(record) {
       cautionTheme: lens.caution_theme || "",
       pacingTheme: lens.pacing_theme || "",
     },
+    questionProfile: {
+      intentType: questionProfile.intent_type || "",
+      timeHorizon: questionProfile.time_horizon || "",
+      decisionPressure: questionProfile.decision_pressure || "",
+      relationScope: questionProfile.relation_scope || "",
+      riskTone: questionProfile.risk_tone || "",
+    },
+    safeQuestionSummary: result.safe_question_summary || QUESTION_SUMMARY,
     situationOverview: result.situation_overview || "",
     riskObservations: risks,
     actionPacing: result.action_pacing || "",
@@ -109,24 +122,47 @@ function listRecordSubtitle(item) {
 function buildQimenLongPosterData(recordId, view, fullContent) {
   if (!recordId || !view) return null;
 
-  const normalizedFullContent = String(fullContent || "").trim();
-  if (!normalizedFullContent) return null;
+  const lens = view.qimenLens || {};
+  const profile = view.questionProfile || {};
+  const combinedSuggestions = [
+    ...(Array.isArray(view.actionSuggestions) ? view.actionSuggestions : []),
+    ...(Array.isArray(view.reflectionQuestions) ? view.reflectionQuestions : []),
+  ];
+
+  const actionPoints = pickPosterActionPoints({
+    suggestions: combinedSuggestions,
+    fullContent,
+    sectionHints: ["反思", "行动", "节奏"],
+    fallback: [
+      "先把问题拆小，安排一件今天能完成的小事。",
+      "记录一次互动或学习感受，再决定是否调整节奏。",
+    ],
+    maxItems: 3,
+    maxLength: 72,
+  });
 
   return {
     id: String(recordId),
     methodNote: view.methodNote || METHOD_NOTE,
-    categoryLabel: view.categoryLabel || "",
+    category: view.category || "general",
+    categoryLabel: view.categoryLabel || getCategoryLabel(view.category),
     timeBucketLabel: view.timeBucketLabel || "",
     questionSummary: QUESTION_SUMMARY,
-    situationOverview: view.situationOverview || "",
-    riskObservations: Array.isArray(view.riskObservations) ? view.riskObservations : [],
-    actionPacing: view.actionPacing || "",
-    reflectionQuestions: Array.isArray(view.reflectionQuestions)
-      ? view.reflectionQuestions
-      : [],
-    actionSuggestions: Array.isArray(view.actionSuggestions) ? view.actionSuggestions : [],
-    freeContent: FREE_CONTENT_POSTER_NOTE,
-    fullContent: normalizedFullContent,
+    qimenLens: {
+      focusTheme: limitPosterText(lens.focusTheme, 72),
+      supportTheme: limitPosterText(lens.supportTheme, 72),
+      cautionTheme: limitPosterText(lens.cautionTheme, 72),
+      pacingTheme: limitPosterText(lens.pacingTheme, 72),
+    },
+    questionProfile: {
+      intentType: limitPosterText(profile.intentType, 32),
+      timeHorizon: limitPosterText(profile.timeHorizon, 24),
+      decisionPressure: limitPosterText(profile.decisionPressure, 16),
+      relationScope: limitPosterText(profile.relationScope, 24),
+      riskTone: limitPosterText(profile.riskTone, 24),
+    },
+    categoryHighlight: getQimenCategoryHighlight(view.category || "general"),
+    actionPoints,
   };
 }
 
