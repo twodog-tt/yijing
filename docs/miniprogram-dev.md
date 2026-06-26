@@ -1100,6 +1100,18 @@ node --check miniprogram/components/qimen-share-card/qimen-share-card.js
 
 **小程序结果页：** 新增「解读视角」卡片（五行倾向 / 行动风格 / 反思主题 / 节奏建议）。
 
+## 25.3 Phase ALG1：八字 v2 POC（后端，未改小程序）
+
+**说明：** ALG1 仅在 `backend/internal/service/bazi/` 增加 `bazi-v2-poc` 计算函数与测试；**小程序 / Web 仍展示 simple-v1 结果**，待 ALG1.1 灰度后再评估前端字段切换。
+
+**v2 增强点：** 立春换年、节气月柱；不做大运/流年/神煞/真太阳时（ALG1.1+）。
+
+**验收（后端）：**
+
+- [ ] `go test ./internal/service/bazi/...` 通过
+- [ ] `CalculateV2` golden tests 覆盖立春/惊蛰/清明/小寒/大雪边界
+- [ ] `bazi-simple-v1` golden 未被破坏
+
 ## 26. Phase UX1：八字 / 奇门轻量动效
 
 Phase UX1 在小程序与 Web 八字、奇门页面增加贴合传统文化场景的轻量 UI 动效，提升氛围与完成感。**仅改 UI 动效，不改后端、数据库、部署。**
