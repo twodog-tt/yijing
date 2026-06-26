@@ -2,9 +2,8 @@ const {
   POSTER_WIDTH,
   CONTENT_WIDTH,
   PADDING_X,
-  FOOTER_RESERVE,
   MIN_POSTER_HEIGHT,
-  TRUNCATION_NOTICE,
+  POSTER_DISCLAIMER,
   computePosterDimensions,
   drawDivider,
   drawRoundedRect,
@@ -15,10 +14,11 @@ const {
   exportCanvasToTempFile,
   getAlbumPermissionHelpers,
   normalizeText,
-  remainingLines,
   resolveExportPixelRatio,
-  wrapAllLines,
 } = require("../../utils/long-poster-canvas");
+
+const DIVINATION_METHOD_INTRO =
+  "卦象解读仅供传统文化学习与自我观察参考，不等同于专业判断，不构成现实决策依据。";
 
 function hexagramName(hexagram, fallback) {
   return normalizeText(hexagram?.full_name || hexagram?.name || fallback);
@@ -55,76 +55,46 @@ function drawHexagramLines(ctx, lines, x, y, changed = false) {
   });
 }
 
-function estimateReportSectionsHeight(report) {
-  if (!report) return 0;
-  let height = 0;
-  const sections = [
-    report.summary,
-    report.overall,
-    report.current_state,
-    report.opportunity,
-    report.risk,
-    report.emotion_reminder,
-    report.disclaimer,
-  ];
-  sections.forEach((text) => {
-    if (text) height += 40 + estimateParagraphHeight(text, 24, 28);
+function drawInsightCard(ctx, x, y, title, lines) {
+  const filtered = (Array.isArray(lines) ? lines : []).filter(Boolean);
+  if (!filtered.length) return y;
+  const cardHeight = 28 + filtered.length * 26;
+  drawRoundedRect(ctx, x, y, CONTENT_WIDTH, cardHeight, 16, "#faf8f3");
+  ctx.fillStyle = "#292524";
+  ctx.font = "bold 16px sans-serif";
+  ctx.fillText(title, x + 20, y + 30);
+  ctx.fillStyle = "#57534e";
+  ctx.font = "15px sans-serif";
+  filtered.forEach((line, index) => {
+    ctx.fillText(line, x + 20, y + 58 + index * 26);
   });
-  if (Array.isArray(report.action_steps) && report.action_steps.length) {
-    height += 40;
-    report.action_steps.forEach((item) => {
-      height += estimateParagraphHeight(item, 24, 28);
-    });
-  }
-  if (Array.isArray(report.reflection_questions) && report.reflection_questions.length) {
-    height += 40;
-    report.reflection_questions.forEach((item) => {
-      height += estimateParagraphHeight(item, 24, 28);
-    });
-  }
-  return height;
+  return y + cardHeight + 16;
 }
 
 function estimateRawLongPosterHeight(data) {
-  let height = 120;
-  height += 80;
-  height += 40;
-  height += 220;
-  height += 40;
-  if (data.freeContent) {
-    height += 40 + estimateParagraphHeight(data.freeContent, 24, 28);
+  let height = 320;
+  height += estimateParagraphHeight(data.methodNote || DIVINATION_METHOD_INTRO, 22, 30);
+  height += 178;
+  height += 72;
+  height += 40 + estimateParagraphHeight(data.situationSummary || "", 24, 28);
+  height += 120;
+  if (Array.isArray(data.actionPoints) && data.actionPoints.length) {
+    height += 40;
+    data.actionPoints.forEach((item) => {
+      height += estimateParagraphHeight(item, 24, 30);
+    });
   }
-  if (data.fullReport) {
-    height += estimateReportSectionsHeight(data.fullReport);
-  } else if (data.fullFallbackText) {
-    height += 40 + estimateParagraphHeight(data.fullFallbackText, 24, 28);
+  if (Array.isArray(data.reflectionQuestions) && data.reflectionQuestions.length) {
+    height += 40;
+    data.reflectionQuestions.forEach((item) => {
+      height += estimateParagraphHeight(item, 24, 30);
+    });
   }
-  height += 80;
+  height += 96;
   return height;
 }
 
-function drawLimitedParagraph(ctx, text, x, y, contentStopY, options) {
-  const lineHeight = options?.lineHeight || 24;
-  const maxWidth = options?.maxWidth || CONTENT_WIDTH;
-  const maxLines = remainingLines(contentStopY, y, lineHeight);
-  if (maxLines <= 0) {
-    return { y, truncated: true, drew: false };
-  }
-  const totalLines = wrapAllLines(ctx, text, maxWidth);
-  const truncated = totalLines.length > maxLines;
-  const nextY = drawWrappedParagraph(ctx, text, x, y, {
-    ...options,
-    lineHeight,
-    maxLines,
-  });
-  return { y: nextY, truncated, drew: true };
-}
-
-function layoutLongPoster(ctx, data, canvasHeight, options) {
-  const { isTruncated = false } = options || {};
-  const contentStopY = canvasHeight - FOOTER_RESERVE;
-  let contentTruncated = false;
-
+function layoutLongPoster(ctx, data, canvasHeight) {
   ctx.fillStyle = "#f4efe5";
   ctx.fillRect(0, 0, POSTER_WIDTH, canvasHeight);
   drawRoundedRect(ctx, 24, 24, 552, canvasHeight - 48, 22, "#fffdf8");
@@ -136,20 +106,31 @@ function layoutLongPoster(ctx, data, canvasHeight, options) {
   ctx.fillText("传统文化学习 · 自我观察 · 行动整理", PADDING_X, y);
   y += 28;
   y = drawDivider(ctx, PADDING_X, y);
-  y = drawTitle(ctx, "卦象解析", PADDING_X, y, { font: "bold 26px sans-serif" });
+  y = drawTitle(ctx, normalizeText(data.moduleTitle || "问事起卦"), PADDING_X, y, {
+    font: "bold 26px sans-serif",
+  });
+  y = drawWrappedParagraph(ctx, DIVINATION_METHOD_INTRO, PADDING_X, y, {
+    lineHeight: 22,
+    font: "14px sans-serif",
+    color: "#57534e",
+  });
+  y += 12;
+  y = drawWrappedParagraph(ctx, normalizeText(data.methodNote), PADDING_X, y, {
+    lineHeight: 22,
+    font: "14px sans-serif",
+    color: "#78716c",
+  });
+  y += 16;
+
+  y = drawSectionTitle(ctx, "卦象概览", PADDING_X, y);
   y = drawWrappedParagraph(
     ctx,
-    "基于传统文化视角的卦象解读，仅供学习与自我反思。不等同于专业判断，不构成现实决策依据。",
+    `事项类型 · ${normalizeText(data.categoryName || "未分类")}`,
     PADDING_X,
-    y,
-    { lineHeight: 22, font: "14px sans-serif", color: "#57534e" }
+    y
   );
-  y += 12;
-
-  y = drawSectionTitle(ctx, "问事分类", PADDING_X, y);
-  y = drawWrappedParagraph(ctx, normalizeText(data.categoryName || "未分类"), PADDING_X, y);
   y += 4;
-  y = drawWrappedParagraph(ctx, data.themeNote || "问事主题已用于本次解析", PADDING_X, y, {
+  y = drawWrappedParagraph(ctx, data.questionSummary || "用户问题已用于本次卦象梳理", PADDING_X, y, {
     lineHeight: 22,
     font: "14px sans-serif",
     color: "#78716c",
@@ -165,137 +146,54 @@ function layoutLongPoster(ctx, data, canvasHeight, options) {
   ctx.fillStyle = "#292524";
   ctx.font = "bold 18px sans-serif";
   ctx.fillText(hexagramName(data.primaryHexagram, "本卦"), PADDING_X + 20, y + 58);
-  ctx.fillText(hexagramName(data.changedHexagram, "变卦"), 334, y + 58);
+  ctx.fillText(
+    data.hasHexagramChange
+      ? hexagramName(data.changedHexagram, "变卦")
+      : normalizeText(data.changedHexagramLabel || "无明显变卦"),
+    334,
+    y + 58
+  );
   drawHexagramLines(ctx, data.lines, 192, y + 72, false);
   drawHexagramLines(ctx, data.lines, 458, y + 72, true);
   y += 178;
 
-  y = drawSectionTitle(ctx, "动爻", PADDING_X, y);
-  y = drawWrappedParagraph(ctx, normalizeText(data.movingLinesDisplay || "无动爻"), PADDING_X, y);
+  y = drawWrappedParagraph(ctx, normalizeText(data.movingHint || data.movingLinesDisplay || "无明显动爻"), PADDING_X, y, {
+    lineHeight: 22,
+    font: "14px sans-serif",
+    color: "#57534e",
+  });
+  y += 12;
+
+  y = drawSectionTitle(ctx, "局势摘要", PADDING_X, y);
+  y = drawWrappedParagraph(ctx, normalizeText(data.situationSummary), PADDING_X, y);
   y += 8;
 
-  if (data.freeContent) {
-    y = drawSectionTitle(ctx, "免费解读", PADDING_X, y);
-    if (isTruncated) {
-      const result = drawLimitedParagraph(ctx, data.freeContent, PADDING_X, y, contentStopY);
-      y = result.y + 8;
-      contentTruncated = contentTruncated || result.truncated;
-    } else {
-      y = drawWrappedParagraph(ctx, data.freeContent, PADDING_X, y);
-      y += 8;
-    }
-  }
+  y = drawInsightCard(ctx, PADDING_X, y, "变化观察", data.changeObservations);
 
-  const report = data.fullReport;
-  if (report) {
-    y = drawSectionTitle(ctx, "完整解析", PADDING_X, y);
-
-    const drawSection = (title, text) => {
-      if (!text || y >= contentStopY) {
-        contentTruncated = contentTruncated || Boolean(text);
-        return;
-      }
-      if (title) y = drawSectionTitle(ctx, title, PADDING_X, y);
-      if (isTruncated) {
-        const result = drawLimitedParagraph(ctx, text, PADDING_X, y, contentStopY);
-        y = result.y + 4;
-        contentTruncated = contentTruncated || result.truncated;
-      } else {
-        y = drawWrappedParagraph(ctx, text, PADDING_X, y);
-        y += 4;
-      }
-    };
-
-    if (report.summary) drawSection(null, `一句话总结：${report.summary}`);
-    drawSection("总体判断", report.overall);
-    drawSection("当前处境", report.current_state);
-    drawSection("机会点", report.opportunity);
-    drawSection("风险点", report.risk);
-
-    if (Array.isArray(report.action_steps) && report.action_steps.length) {
-      if (y < contentStopY) y = drawSectionTitle(ctx, "行动建议", PADDING_X, y);
-      report.action_steps.forEach((item, index) => {
-        if (y >= contentStopY) {
-          contentTruncated = true;
-          return;
-        }
-        if (isTruncated) {
-          const result = drawLimitedParagraph(
-            ctx,
-            `${index + 1}. ${item}`,
-            PADDING_X,
-            y,
-            contentStopY
-          );
-          y = result.y + 4;
-          contentTruncated = contentTruncated || result.truncated;
-        } else {
-          y = drawWrappedParagraph(ctx, `${index + 1}. ${item}`, PADDING_X, y);
-          y += 4;
-        }
-      });
+  if (Array.isArray(data.actionPoints) && data.actionPoints.length) {
+    y = drawSectionTitle(ctx, "行动提醒", PADDING_X, y);
+    data.actionPoints.forEach((item, index) => {
+      y = drawWrappedParagraph(ctx, `${index + 1}. ${item}`, PADDING_X, y);
       y += 4;
-    }
-
-    drawSection("情绪提醒", report.emotion_reminder);
-
-    if (Array.isArray(report.reflection_questions) && report.reflection_questions.length) {
-      if (y < contentStopY) y = drawSectionTitle(ctx, "自我反思问题", PADDING_X, y);
-      report.reflection_questions.forEach((item) => {
-        if (y >= contentStopY) {
-          contentTruncated = true;
-          return;
-        }
-        if (isTruncated) {
-          const result = drawLimitedParagraph(ctx, `· ${item}`, PADDING_X, y, contentStopY);
-          y = result.y + 4;
-          contentTruncated = contentTruncated || result.truncated;
-        } else {
-          y = drawWrappedParagraph(ctx, `· ${item}`, PADDING_X, y);
-          y += 4;
-        }
-      });
-      y += 4;
-    }
-
-    if (report.disclaimer) {
-      drawSection(null, report.disclaimer);
-    }
-  } else if (data.fullFallbackText) {
-    y = drawSectionTitle(ctx, "完整解析", PADDING_X, y);
-    if (isTruncated) {
-      const result = drawLimitedParagraph(
-        ctx,
-        data.fullFallbackText,
-        PADDING_X,
-        y,
-        contentStopY
-      );
-      y = result.y + 8;
-      contentTruncated = contentTruncated || result.truncated;
-    } else {
-      y = drawWrappedParagraph(ctx, data.fullFallbackText, PADDING_X, y);
-      y += 8;
-    }
-  }
-
-  if (isTruncated && contentTruncated) {
-    y = drawWrappedParagraph(ctx, TRUNCATION_NOTICE, PADDING_X, y, {
-      lineHeight: 22,
-      font: "13px sans-serif",
-      color: "#b45309",
     });
-    y += 8;
+    y += 4;
+  }
+
+  if (Array.isArray(data.reflectionQuestions) && data.reflectionQuestions.length) {
+    y = drawSectionTitle(ctx, "自我反思", PADDING_X, y);
+    data.reflectionQuestions.forEach((item) => {
+      y = drawWrappedParagraph(ctx, `· ${item}`, PADDING_X, y);
+      y += 4;
+    });
+    y += 4;
   }
 
   y = drawDivider(ctx, PADDING_X, y + 8);
-  drawWrappedParagraph(
-    ctx,
-    "内容仅用于传统文化学习、自我反思和行动整理，不构成现实决策依据。",
-    PADDING_X,
-    y,
-    { lineHeight: 20, font: "12px sans-serif", color: "#78716c" }
-  );
+  drawWrappedParagraph(ctx, POSTER_DISCLAIMER, PADDING_X, y, {
+    lineHeight: 20,
+    font: "12px sans-serif",
+    color: "#78716c",
+  });
 }
 
 Component({
@@ -374,7 +272,7 @@ Component({
 
     async generateLongPoster(posterData) {
       const rawHeight = estimateRawLongPosterHeight(posterData);
-      const { canvasHeight, isTruncated, truncatedHint } = computePosterDimensions(rawHeight);
+      const { canvasHeight, truncatedHint } = computePosterDimensions(rawHeight);
 
       await new Promise((resolve) => {
         this.setData({ canvasHeight, truncatedHint }, resolve);
@@ -388,7 +286,7 @@ Component({
       const ctx = canvas.getContext("2d");
       ctx.scale(pixelRatio, pixelRatio);
       this.canvasNode = canvas;
-      layoutLongPoster(ctx, posterData, canvasHeight, { isTruncated });
+      layoutLongPoster(ctx, posterData, canvasHeight);
 
       await new Promise((resolve) => setTimeout(resolve, 60));
       return exportCanvasToTempFile(canvas, width, canvasHeight, this, pixelRatio);

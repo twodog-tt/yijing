@@ -1451,6 +1451,21 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 
 ---
 
+### 10.30.1 Phase SHARE2 交付清单（问事起卦长图摘要化）
+
+**目标：** 问事起卦 / 卦象分享长图与 SHARE1 对齐，改为摘要 + 行动提醒，不贴完整解析全文。
+
+- [x] 长图结构：卦象概览 / 局势摘要 / 变化观察 / 行动提醒 / 自我反思 / 免责声明
+- [x] 展示本卦 / 变卦（无变卦显示「无明显变卦」）与动爻提示
+- [x] 不展示完整原问题（使用「用户问题已用于本次卦象梳理」）
+- [x] 不贴 `full_content` / 完整解析全文
+- [x] 复用 `long-poster-canvas.js` 抽取工具；新增 `divination.js` 构建摘要数据
+- [x] 不改 backend / frontend / SQL
+
+**部署：** 仅小程序重新编译；无需 backend / frontend / SQL。
+
+---
+
 ### 10.31 Phase H1 交付清单（统一历史记录页）
 
 **目标：** 小程序「历史记录」页升级为问事 / 八字 / 奇门统一入口。

@@ -147,6 +147,100 @@ function pickPosterActionPoints(options) {
   return normalizePosterLines(fallback, { maxItems, maxLength });
 }
 
+function buildDivinationPosterSummary(options) {
+  const { freeContent = "", fullReport = null, fullFallbackText = "" } = options || {};
+
+  if (fullReport && typeof fullReport === "object") {
+    const summary = limitPosterText(fullReport.summary, 120);
+    if (summary) return summary;
+  }
+
+  const freeSentences = normalizePosterLines(
+    String(freeContent || "")
+      .split(/[。！？；;\n]/)
+      .map((part) => limitPosterText(part, 80)),
+    { maxItems: 2, maxLength: 80 }
+  );
+  if (freeSentences.length) {
+    return limitPosterText(freeSentences.join("。"), 120);
+  }
+
+  const fallbackLine = limitPosterText(
+    String(fullFallbackText || "")
+      .split(/[。！？；;\n]/)[0],
+    120
+  );
+  if (fallbackLine) return fallbackLine;
+
+  return "本次卦象梳理侧重局势观察与行动节奏整理，建议结合现实情况判断。";
+}
+
+function pickDivinationChangeObservations(options) {
+  const { fullReport = null, freeContent = "", maxItems = 3 } = options || {};
+  const items = [];
+
+  if (fullReport && typeof fullReport === "object") {
+    if (fullReport.opportunity) {
+      items.push(`可借助 · ${limitPosterText(fullReport.opportunity, 64)}`);
+    }
+    if (fullReport.risk) {
+      items.push(`需留意 · ${limitPosterText(fullReport.risk, 64)}`);
+    }
+    if (fullReport.current_state) {
+      items.push(limitPosterText(fullReport.current_state, 72));
+    }
+    if (items.length < maxItems && fullReport.overall) {
+      items.push(limitPosterText(fullReport.overall, 72));
+    }
+  }
+
+  if (items.length < maxItems) {
+    const freeHints = extractReportHighlights(freeContent, ["变化", "局势", "处境"], {
+      maxItems: maxItems - items.length,
+      maxLength: 72,
+    });
+    items.push(...freeHints);
+  }
+
+  return normalizePosterLines(items, { maxItems, maxLength: 72 });
+}
+
+function pickDivinationReflectionQuestions(options) {
+  const {
+    fullReport = null,
+    fullContent = "",
+    freeContent = "",
+    maxItems = 2,
+  } = options || {};
+
+  const structured = normalizePosterLines(fullReport?.reflection_questions, {
+    maxItems,
+    maxLength: 72,
+  });
+  if (structured.length) return structured;
+
+  const fromReport = extractReportHighlights(fullContent, ["反思", "问题"], {
+    maxItems,
+    maxLength: 72,
+  });
+  if (fromReport.length) return fromReport;
+
+  const fromFree = extractReportHighlights(freeContent, ["反思", "问题"], {
+    maxItems,
+    maxLength: 72,
+  });
+  if (fromFree.length) return fromFree;
+
+  return normalizePosterLines(
+    ["这次卦象变化，对你当前最相关的一点是什么？", "若只调整一个行动节奏，你会先做什么？"],
+    { maxItems, maxLength: 72 }
+  );
+}
+
+function normalizeDivinationPosterLines(items, options) {
+  return normalizePosterLines(items, options);
+}
+
 const QIMEN_CATEGORY_HIGHLIGHTS = Object.freeze({
   career: "推进顺序 · 资源协调 · 执行风险",
   relationship: "沟通边界 · 误解修复 · 关系节奏",
@@ -409,6 +503,10 @@ module.exports = {
   extractReportSection,
   extractReportHighlights,
   pickPosterActionPoints,
+  buildDivinationPosterSummary,
+  pickDivinationChangeObservations,
+  pickDivinationReflectionQuestions,
+  normalizeDivinationPosterLines,
   getQimenCategoryHighlight,
   containsForbiddenPosterPhrase,
   preserveNewlines,

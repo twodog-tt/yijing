@@ -58,11 +58,12 @@
 
     <view wx:if="{{fullStatus === 'loaded'}}" class="card share-section">
       <text class="section-title">分享这份解读</text>
-      <text class="share-hint">可以发送克制的微信分享卡片，或生成包含完整解析的本地长图。</text>
+      <text class="share-hint">可以发送克制的微信分享卡片，或生成摘要式分享长图（不含完整原问题或完整解析全文）。</text>
       <view class="share-actions">
         <button class="secondary-button share-button" open-type="share">分享给朋友</button>
-        <button class="primary-button share-button" loading="{{posterGenerating}}" disabled="{{posterGenerating}}" bindtap="handleGeneratePoster">生成解析长图</button>
+        <button class="primary-button share-button" loading="{{posterGenerating}}" disabled="{{posterGenerating}}" bindtap="handleGeneratePoster">生成分享长图</button>
       </view>
+      <text class="share-hint share-hint--secondary">长图展示卦象概览、变化观察与行动提醒，不包含完整原问题、完整解析全文或小程序码。</text>
     </view>
 
     <text class="disclaimer">解读用于传统文化学习、自我反思和行动整理，不代表确定结果。</text>

@@ -1395,6 +1395,25 @@ Web 端与小程序 UX1 对齐，使用 `frontend/app/globals.css` 中的 CSS an
 - [ ] 奇门解锁后可生成长图，含关注主题 / 可借助 / 需留意 / 行动节奏
 - [ ] 长图不贴完整报告全文，文本不溢出
 
+## 32.1 Phase SHARE2：问事起卦 / 卦象长图摘要化
+
+**范围：** `pages/result` + `components/share-poster` + `utils/divination.js`；**不改** backend / Web / SQL。
+
+**变化摘要：**
+
+- 卦象长图从「免费解读 + 完整解析全文粘贴」改为「卦象概览 + 局势摘要 + 变化观察 + 行动提醒 + 自我反思」
+- 不展示完整原问题；使用「用户问题已用于本次卦象梳理」
+- 不贴 `full_content` / 完整解析全文；复用 `pickPosterActionPoints` / `buildDivinationPosterSummary` 等工具
+- 与 SHARE1 八字 / 奇门长图风格统一（深色背景、金色点缀、卡片分区）
+
+**部署：** 无需 backend / frontend / SQL；需微信开发者工具重新编译预览。
+
+**验收：**
+
+- [ ] 问事解锁完整解析后可生成分享长图
+- [ ] 长图含本卦 / 变卦 / 变化观察 / 行动提醒
+- [ ] 长图不含完整原问题、完整解析全文、session_key / payload
+
 ## 33. Phase QA1：小程序端到端验收 + 合规回归
 
 **范围：** 首页 / 八字 / 奇门 / 卦象 / 今日一卦 / 历史记录 / 长图分享；仅验收与小修，不做新功能。

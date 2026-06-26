@@ -4,6 +4,7 @@ const {
   getFullInterpretation,
   unlockDivination,
 } = require("../../utils/api");
+const { buildDivinationLongPosterData } = require("../../utils/divination");
 const { formatDateTime } = require("../../utils/date");
 
 const POSITION_LABELS = ["", "初爻", "二爻", "三爻", "四爻", "五爻", "上爻"];
@@ -74,21 +75,18 @@ function buildPosterData(
   freeContent,
   movingLinesDisplay,
   displayLines,
+  movingLines,
   fullReport,
   fullFallbackText
 ) {
-  return {
-    id: Number(divination?.id) || 0,
-    categoryName: divination?.category?.name || "未分类",
-    themeNote: "问事主题已用于本次解析",
-    primaryHexagram: divination?.primary_hexagram || null,
-    changedHexagram: divination?.changed_hexagram || null,
+  return buildDivinationLongPosterData(divination?.id, divination, {
+    freeContent,
     movingLinesDisplay,
-    lines: displayLines,
-    freeContent: String(freeContent || "").trim(),
-    fullReport: fullReport || null,
-    fullFallbackText: String(fullFallbackText || "").trim(),
-  };
+    displayLines,
+    movingLines,
+    fullReport,
+    fullFallbackText,
+  });
 }
 
 Page({
@@ -182,6 +180,8 @@ Page({
       overrides.freeContent ?? this.data.freeContent,
       overrides.movingLinesDisplay ?? this.data.movingLinesDisplay,
       overrides.displayLines ?? this.data.displayLines,
+      overrides.movingLines ??
+        (Array.isArray(divination?.moving_lines) ? divination.moving_lines : []),
       overrides.fullReport ?? this.data.fullReport,
       overrides.fullFallbackText ?? this.data.fullFallbackText
     );
@@ -229,14 +229,15 @@ Page({
         aiProvider = full.ai_provider || "";
       }
 
-      const posterData = buildPosterData(
-        divination,
-        freeContent,
-        movingLinesDisplay,
-        displayLines,
-        fullReport,
-        fullFallbackText
-      );
+    const posterData = buildPosterData(
+      divination,
+      freeContent,
+      movingLinesDisplay,
+      displayLines,
+      movingLines,
+      fullReport,
+      fullFallbackText
+    );
 
       this.setData({
         divination,

@@ -136,6 +136,12 @@ line-chart {
   word-break: break-all;
 }
 
+.share-hint--secondary {
+  margin-top: 16rpx;
+  font-size: 22rpx;
+  color: #a8a29e;
+}
+
 .share-actions {
   display: flex;
   gap: 16rpx;
