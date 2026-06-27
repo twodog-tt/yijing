@@ -27,9 +27,9 @@ function estimateRawLongPosterHeight(data) {
   if (data.v2PosterNote) {
     height += estimateParagraphHeight(data.v2PosterNote, 22, 28);
   }
-  height += data.hourUnknown ? 132 : 156;
-  height += 120;
-  height += 120;
+  height += estimateInfoSectionHeight(buildPillarLines(data));
+  height += estimateInfoSectionHeight(buildProfileLines(data.baziProfile || {}));
+  height += estimateInfoSectionHeight(buildLensLines(data.interpretationLens || {}));
   if (Array.isArray(data.actionPoints) && data.actionPoints.length) {
     height += 40;
     data.actionPoints.forEach((item) => {
@@ -40,19 +40,72 @@ function estimateRawLongPosterHeight(data) {
   return height;
 }
 
-function drawInsightCard(ctx, x, y, title, lines) {
-  const filtered = lines.filter(Boolean);
-  const cardHeight = 28 + filtered.length * 26;
+function estimateInfoCardHeight(lines) {
+  const filtered = (Array.isArray(lines) ? lines : []).filter(Boolean);
+  if (!filtered.length) return 0;
+  const bodyHeight = filtered.reduce(
+    (total, line) => total + estimateParagraphHeight(line, 24, 30) + 8,
+    0
+  );
+  return 62 + bodyHeight;
+}
+
+function estimateInfoSectionHeight(lines) {
+  const cardHeight = estimateInfoCardHeight(lines);
+  return cardHeight ? cardHeight + 16 : 0;
+}
+
+function drawInfoCard(ctx, x, y, title, lines) {
+  const filtered = (Array.isArray(lines) ? lines : []).filter(Boolean);
+  if (!filtered.length) return y;
+  const bodyWidth = CONTENT_WIDTH - 40;
+  const cardHeight = estimateInfoCardHeight(filtered);
   drawRoundedRect(ctx, x, y, CONTENT_WIDTH, cardHeight, 16, "#faf8f3");
   ctx.fillStyle = "#292524";
   ctx.font = "bold 16px sans-serif";
   ctx.fillText(title, x + 20, y + 30);
-  ctx.fillStyle = "#57534e";
-  ctx.font = "15px sans-serif";
-  filtered.forEach((line, index) => {
-    ctx.fillText(line, x + 20, y + 58 + index * 26);
+
+  let cursorY = y + 60;
+  filtered.forEach((line) => {
+    cursorY = drawWrappedParagraph(ctx, line, x + 20, cursorY, {
+      maxWidth: bodyWidth,
+      lineHeight: 24,
+      font: "15px sans-serif",
+      color: "#57534e",
+    });
+    cursorY += 8;
   });
   return y + cardHeight + 16;
+}
+
+function buildPillarLines(data) {
+  const pillarLines = [
+    `年柱 · ${normalizeText(data.pillars?.year || "—")}`,
+    `月柱 · ${normalizeText(data.pillars?.month || "—")}`,
+    `日柱 · ${normalizeText(data.pillars?.day || "—")}`,
+  ];
+  if (!data.hourUnknown) {
+    pillarLines.push(`时柱 · ${normalizeText(data.pillars?.hour || "—")}`);
+  }
+  pillarLines.push(`日主 · ${normalizeText(data.dayMaster || "—")}`);
+  return pillarLines;
+}
+
+function buildProfileLines(profile) {
+  return [
+    profile.elementBalanceType ? `五行倾向 · ${profile.elementBalanceType}` : "",
+    profile.actionStyle ? `行动风格 · ${profile.actionStyle}` : "",
+    profile.reflectionTheme ? `反思主题 · ${profile.reflectionTheme}` : "",
+    profile.seasonTendency ? `季节倾向 · ${profile.seasonTendency}` : "",
+  ];
+}
+
+function buildLensLines(lens) {
+  return [
+    lens.strengthHint ? `可借助 · ${lens.strengthHint}` : "",
+    lens.cautionHint ? `需留意 · ${lens.cautionHint}` : "",
+    lens.pacingHint ? `节奏建议 · ${lens.pacingHint}` : "",
+  ];
 }
 
 function layoutLongPoster(ctx, data, canvasHeight) {
@@ -90,41 +143,13 @@ function layoutLongPoster(ctx, data, canvasHeight) {
   }
   y += 4;
 
-  const pillarLines = [
-    `年柱 · ${normalizeText(data.pillars?.year || "—")}`,
-    `月柱 · ${normalizeText(data.pillars?.month || "—")}`,
-    `日柱 · ${normalizeText(data.pillars?.day || "—")}`,
-  ];
-  if (!data.hourUnknown) {
-    pillarLines.push(`时柱 · ${normalizeText(data.pillars?.hour || "—")}`);
-  }
-  pillarLines.push(`日主 · ${normalizeText(data.dayMaster || "—")}`);
-  const pillarCardHeight = 28 + pillarLines.length * 26;
-  drawRoundedRect(ctx, PADDING_X, y, CONTENT_WIDTH, pillarCardHeight, 16, "#faf8f3");
-  ctx.fillStyle = "#292524";
-  ctx.font = "bold 16px sans-serif";
-  ctx.fillText("四柱示意", PADDING_X + 20, y + 30);
-  ctx.fillStyle = "#57534e";
-  ctx.font = "15px sans-serif";
-  pillarLines.forEach((line, index) => {
-    ctx.fillText(line, PADDING_X + 20, y + 58 + index * 26);
-  });
-  y += pillarCardHeight + 16;
+  y = drawInfoCard(ctx, PADDING_X, y, "四柱示意", buildPillarLines(data));
 
   const profile = data.baziProfile || {};
-  y = drawInsightCard(ctx, PADDING_X, y, "解读视角", [
-    profile.elementBalanceType ? `五行倾向 · ${profile.elementBalanceType}` : "",
-    profile.actionStyle ? `行动风格 · ${profile.actionStyle}` : "",
-    profile.reflectionTheme ? `反思主题 · ${profile.reflectionTheme}` : "",
-    profile.seasonTendency ? `季节倾向 · ${profile.seasonTendency}` : "",
-  ]);
+  y = drawInfoCard(ctx, PADDING_X, y, "解读视角", buildProfileLines(profile));
 
   const lens = data.interpretationLens || {};
-  y = drawInsightCard(ctx, PADDING_X, y, "节奏与留意", [
-    lens.strengthHint ? `可借助 · ${lens.strengthHint}` : "",
-    lens.cautionHint ? `需留意 · ${lens.cautionHint}` : "",
-    lens.pacingHint ? `节奏建议 · ${lens.pacingHint}` : "",
-  ]);
+  y = drawInfoCard(ctx, PADDING_X, y, "节奏与留意", buildLensLines(lens));
 
   if (Array.isArray(data.actionPoints) && data.actionPoints.length) {
     y = drawSectionTitle(ctx, "行动要点", PADDING_X, y);
