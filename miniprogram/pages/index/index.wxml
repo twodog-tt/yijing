@@ -1,44 +1,44 @@
-<view class="page">
-  <view class="page-header hero">
-    <text class="eyebrow">易经问事</text>
-    <text class="page-title">从卦象中整理当下思路</text>
-    <text class="page-description">以传统文化学习和趣味解读为基础，为自我反思、风险梳理与下一步行动提供参考。</text>
+<view class="page page--home">
+  <view class="home-hero">
+    <view class="home-hero__aura" aria-hidden="true"></view>
+    <text class="home-hero__eyebrow">{{brand.eyebrow}}</text>
+    <text class="home-hero__title">{{brand.title}}</text>
+    <text class="home-hero__subtitle">{{brand.subtitle}}</text>
   </view>
 
-  <view class="positioning-card">
-    <view class="positioning-item"><text class="positioning-dot"></text><text>传统文化学习</text></view>
-    <view class="positioning-item"><text class="positioning-dot"></text><text>趣味卦象解读</text></view>
-    <view class="positioning-item"><text class="positioning-dot"></text><text>自我反思整理</text></view>
-    <view class="positioning-item"><text class="positioning-dot"></text><text>克制的行动建议</text></view>
+  <view class="home-modules">
+    <home-module-card
+      wx:for="{{modules}}"
+      wx:key="key"
+      title="{{item.title}}"
+      subtitle="{{item.subtitle}}"
+      tags="{{item.tags}}"
+      button-text="{{item.buttonText}}"
+      url="{{item.url}}"
+      accent="{{item.accent}}"
+    ></home-module-card>
   </view>
 
-  <navigator class="nav-link nav-link--primary" url="/pages/ask/ask">
-    <text>问事起卦</text><text>→</text>
-  </navigator>
-  <navigator class="nav-link bazi-link" url="/pages/bazi/bazi">
-    <view class="nav-link-content">
-      <text>八字简析</text>
-      <text class="nav-subtitle">基于传统干支文化的性格与五行倾向学习</text>
+  <home-guide-card items="{{guideItems}}"></home-guide-card>
+
+  <view class="home-boundary">
+    <text class="home-boundary__title">使用边界说明</text>
+    <view class="home-boundary__list">
+      <text class="home-boundary__item" wx:for="{{boundaryItems}}" wx:key="*this">· {{item}}</text>
     </view>
-    <text>→</text>
-  </navigator>
-  <navigator class="nav-link qimen-link" url="/pages/qimen/qimen">
-    <view class="nav-link-content">
-      <text>奇门问事</text>
-      <text class="nav-subtitle">基于传统奇门文化的局势梳理与行动节奏参考</text>
-    </view>
-    <text>→</text>
-  </navigator>
-  <navigator class="nav-link today-link" url="/pages/today/today">
-    <text>今日一卦</text><text>→</text>
-  </navigator>
-  <navigator class="nav-link" url="/pages/history/history">
-    <text>历史记录</text><text>→</text>
-  </navigator>
-  <navigator class="nav-link" url="/pages/about/about">
-    <text>关于与免责声明</text><text>→</text>
-  </navigator>
+  </view>
+
+  <view class="home-secondary">
+    <navigator class="home-secondary__link" url="/pages/history/history">
+      <text>历史记录</text>
+      <text class="home-secondary__arrow">→</text>
+    </navigator>
+    <navigator class="home-secondary__link" url="/pages/about/about">
+      <text>关于与说明</text>
+      <text class="home-secondary__arrow">→</text>
+    </navigator>
+  </view>
 
   <text wx:if="{{sessionStatus === 'retry_later'}}" class="session-hint">匿名会话暂未连接，进入功能页时将自动重试。</text>
-  <text class="disclaimer">仅供娱乐、传统文化学习和自我反思参考，不构成预测、医疗、法律、投资或重大决策建议。</text>
+  <text class="home-compliance">{{complianceNote}}</text>
 </view>

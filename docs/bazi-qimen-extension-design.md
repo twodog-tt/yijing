@@ -2066,6 +2066,26 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 
 **本阶段结论：** 自动化预检通过；无代码小修。
 
-**下一步：** RELEASE-QA；HOME1；BAZI1.4 报告质量增强。
+**下一步：** RELEASE-QA；HOME1-QA；BAZI1.4 报告质量增强。
+
+---
+
+### 10.52 Phase HOME1 交付清单（首页与模块引导优化）
+
+**目标：** 优化小程序首页模块入口与使用引导，让用户更清楚问事 / 八字 / 奇门分别适合什么场景；**不改** backend / Web / SQL。
+
+**本阶段完成：**
+
+- [x] 首页四块信息架构（品牌 / 三模块 / 如何选择 / 边界说明）
+- [x] `home-module-card` + `home-guide-card` 组件
+- [x] `utils/home.js` 集中模块文案
+- [x] 关于页补充三模块说明
+- [x] 保留历史 / 关于入口；无 algorithm_version / 广告 / 登录
+
+**仍不做：** 默认算法变更；backend / SQL；广告 / 支付 / 微信登录。
+
+**DevTools UI：** 需重新编译后本地确认。
+
+**下一步：** HOME1-QA；RELEASE-QA；BAZI1.4。
 
 ---

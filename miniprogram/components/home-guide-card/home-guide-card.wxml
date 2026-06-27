@@ -1,0 +1,9 @@
+<view class="home-guide-card">
+  <text class="home-guide-card__title">如何选择模块</text>
+  <view class="home-guide-card__list">
+    <view class="home-guide-card__item" wx:for="{{items}}" wx:key="scenario">
+      <text class="home-guide-card__scenario">{{item.scenario}}</text>
+      <text class="home-guide-card__module">{{item.module}}</text>
+    </view>
+  </view>
+</view>

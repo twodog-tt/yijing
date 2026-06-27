@@ -1,0 +1,44 @@
+.home-guide-card {
+  margin-bottom: 24rpx;
+  padding: 28rpx;
+  border: 1rpx solid #e7e5e4;
+  border-radius: 24rpx;
+  background: #ffffff;
+  box-shadow: 0 8rpx 24rpx rgba(41, 37, 36, 0.05);
+}
+
+.home-guide-card__title {
+  display: block;
+  margin-bottom: 20rpx;
+  color: #292524;
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.home-guide-card__list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.home-guide-card__item {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 16rpx;
+  background: #fafaf9;
+}
+
+.home-guide-card__scenario {
+  color: #57534e;
+  font-size: 24rpx;
+  line-height: 1.55;
+}
+
+.home-guide-card__module {
+  color: #92400e;
+  font-size: 26rpx;
+  font-weight: 600;
+  line-height: 1.5;
+}

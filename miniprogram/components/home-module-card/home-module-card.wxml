@@ -1,0 +1,13 @@
+<navigator class="home-module-card home-module-card--{{accent}}" url="{{url}}">
+  <view class="home-module-card__header">
+    <text class="home-module-card__title">{{title}}</text>
+    <text class="home-module-card__subtitle">{{subtitle}}</text>
+  </view>
+  <view class="home-module-card__tags">
+    <text class="home-module-card__tag" wx:for="{{tags}}" wx:key="*this">{{item}}</text>
+  </view>
+  <view class="home-module-card__action">
+    <text class="home-module-card__button">{{buttonText}}</text>
+    <text class="home-module-card__arrow">→</text>
+  </view>
+</navigator>

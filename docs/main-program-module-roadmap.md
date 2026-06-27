@@ -323,6 +323,7 @@ Tab: 今日 | 问事 | 扩展(八字/奇门) | 我的(历史/设置)
 | **Phase ALG1.2 / BAZI1.2** | 八字 v2 灰度接入 | 创建 API 可选 `algorithm_version`；默认 v1；内部可测 v2 | Cursor ✅ |
 | **Phase BAZI1.3** | 小程序八字 v2 内部展示 | 结果页条件展示 bazi-v2-poc 节气/四柱/五行；无算法选择 UI | Cursor ✅ |
 | **Phase BAZI1.3-QA** | 小程序八字 v2 展示回归验收 | API/视图层/合规预检通过；DevTools UI 待本地确认 | Cursor ✅ |
+| **Phase HOME1** | 首页与模块引导优化 | 三模块入口卡片、场景引导、合规边界；无算法选择 UI | Cursor ✅ |
 | **Phase ALG2** | 奇门 v2 POC（后端） | 九宫结构化 payload、`CalculateV2`、golden / 合规测试 | Cursor ✅ |
 | **Phase ALG2.1** | 奇门 v2 golden 扩展 | 10 组 fixtures、冬至/夏至边界、结构/合规测试、口径审计文档 | Cursor ✅ |
 | **Phase ALG2.2** | 奇门 v2 API 灰度接入 | 创建 API 可选 `algorithm_version`；默认 v1；内部可测 v2 | Cursor ✅ |

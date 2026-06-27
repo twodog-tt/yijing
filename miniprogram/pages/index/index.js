@@ -1,12 +1,23 @@
 const { ensureSession } = require("../../utils/session");
+const {
+  HOME_BOUNDARY_ITEMS,
+  HOME_BRAND,
+  HOME_COMPLIANCE_NOTE,
+  HOME_GUIDE_ITEMS,
+  HOME_MODULES,
+} = require("../../utils/home");
 
 Page({
   data: {
+    brand: HOME_BRAND,
+    modules: HOME_MODULES,
+    guideItems: HOME_GUIDE_ITEMS,
+    boundaryItems: HOME_BOUNDARY_ITEMS,
+    complianceNote: HOME_COMPLIANCE_NOTE,
     sessionStatus: "preparing",
   },
 
   onLoad() {
-    // 轻量预热匿名会话；失败不阻塞首页，进入业务页时会自动重试。
     ensureSession().then(
       () => this.setData({ sessionStatus: "ready" }),
       () => this.setData({ sessionStatus: "retry_later" })
@@ -15,7 +26,7 @@ Page({
 
   onShareAppMessage() {
     return {
-      title: "文易传统文化：学习、趣味解读与自我反思",
+      title: "文易传统文化：易经问事、八字简析、奇门问事",
       path: "/pages/index/index",
     };
   },

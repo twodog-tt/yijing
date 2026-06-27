@@ -1687,6 +1687,40 @@ Storage 写入 `yijing_session_key` 后打开对应结果页：
 
 **下一步：** 本地 DevTools 勾选 → RELEASE-QA 或 HOME1 或 BAZI1.4。
 
+## 25.25 Phase HOME1：首页与模块引导优化
+
+**说明：** 重构首页信息架构，明确三模块适用场景与合规边界；**不改** backend / Web / SQL；不接广告 / 支付 / 登录。
+
+**Git 起点：** `main` @ `d8a7e90`（BAZI1.3-QA docs）。
+
+**首页结构（四块）：**
+
+1. **顶部品牌区** — 文易传统文化；三模块一句话；学习参考边界
+2. **三模块入口** — `home-module-card`（问事 / 八字 / 奇门）
+3. **如何选择模块** — `home-guide-card`（场景 → 模块映射）
+4. **使用边界说明** — 不做精准预测 / 不替代现实决策 / 不提供投资医疗法律建议
+
+**新增文件：**
+
+- `miniprogram/utils/home.js` — 首页文案与模块配置
+- `miniprogram/components/home-module-card/` — 模块入口卡片
+- `miniprogram/components/home-guide-card/` — 模块选择引导
+
+**仍保留：** 历史记录、关于与说明入口；匿名 session 预热逻辑。
+
+**仍不做：** algorithm_version 选择 UI；广告 / 支付 / 微信登录；默认算法变更。
+
+**DevTools 验收（需重新编译）：**
+
+- [ ] 首页四块结构清晰
+- [ ] 三模块跳转 `/pages/ask/ask`、`/pages/bazi/bazi`、`/pages/qimen/qimen`
+- [ ] 历史 / 关于入口正常
+- [ ] 无 algorithm_version / 广告 / 强预测文案
+
+**部署：** 无需 backend / frontend / SQL；需微信开发者工具重新编译 / 预览。
+
+**下一步：** HOME1-QA 或 DevTools 本地勾选 → RELEASE-QA。
+
 ## 26. Phase UX1：八字 / 奇门轻量动效
 
 Phase UX1 在小程序与 Web 八字、奇门页面增加贴合传统文化场景的轻量 UI 动效，提升氛围与完成感。**仅改 UI 动效，不改后端、数据库、部署。**
