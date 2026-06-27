@@ -2386,3 +2386,58 @@ bash scripts/check-api-smoke.sh
 
 - 本阶段改动后端八字报告生成逻辑，若要让 dev API 生效，需要维护者确认后执行 backend-only 部署。
 - 无需 SQL / frontend / miniprogram 重新发版；不上传体验版，不提审。
+
+## 37. Phase BAZI1.4-DEPLOY-QA：backend-only 部署与线上验证
+
+**范围：** dev ECS backend-only 部署与 API 验证；**不改** miniprogram / frontend / SQL / deploy / `.env*`。
+
+**部署记录（2026-06-27）：**
+
+- 本地 commit：`29beebf feat(bazi): improve v2 report quality`
+- ECS 部署前 commit：`8e47cdb feat(qimen): improve professional v2 report quality`
+- ECS 部署后 commit：`29beebf`
+- 部署方式：
+  - `git pull --ff-only origin main`
+  - `docker compose -f docker-compose.prod.yml --env-file .env build backend`
+  - `docker compose -f docker-compose.prod.yml --env-file .env up -d backend`
+- backend：running，`127.0.0.1:8080->8080/tcp`
+- frontend：未部署，仍为既有容器
+- SQL：未手动执行；backend entrypoint 启动时仅自动检查 migrations，均为已应用 `skip`
+- `.env`：未修改
+
+**Health：**
+
+- `http://127.0.0.1:8080/health`：`status=ok`，`db=ok`
+- `http://127.0.0.1:8080/api/v1/health`：`status=ok`，`db=ok`
+- `http://123.57.48.214/health`：`status=ok`，`db=ok`
+- `http://123.57.48.214/api/v1/health`：`status=ok`，`db=ok`
+
+**BAZI1.4 线上验证：**
+
+- `bazi-v2-poc` 正常时辰记录：id=123，create code=0，unlock code=0
+- v2 `full_content` 有内容，并命中 8 段结构：整体结构摘要、排盘口径说明、四柱结构观察、五行分布观察、可借助的倾向、需要留意的倾向、行动节奏建议、边界声明
+- v2 报告包含 `bazi-v2-poc` / POC 说明、节气 / 节令口径、年柱 / 月柱 / 日柱 / 时柱、五行结构
+- v2 报告未展示完整出生日期、测试 session、`session_key`、prompt、payload 原始 JSON
+- 禁用词仅出现在否定边界或非预测语境，未见承诺式强预测、改运化灾或现实决策建议
+
+**未知时辰验证：**
+
+- 任务示例未传 `birth_hour_unknown` 时，当前 API 返回参数错误；按现有 API 字段补充 `birth_hour_unknown=true` 后通过
+- `bazi-v2-poc` 未知时辰记录：id=125，create code=0，unlock code=0
+- 报告有未知时辰 / 未生成时柱说明，不强行生成或伪造时柱，不展示完整出生日期
+
+**回归：**
+
+- `bazi-simple-v1` 回归记录：id=124，create code=0，unlock code=0，algorithm_version=`bazi-simple-v1`
+- v1 报告不展示 `bazi-v2-poc` 结构，不混入 v2 8 段标题
+- `scripts/check-api-smoke.sh`：13 PASS / 0 FAIL
+- 奇门回归：`qimen-simple-v1`、`qimen-v2-poc`、`qimen-v2-professional` create 正常，非法 `algorithm_version` 正常拒绝，`free_unlock` 正常
+
+**本地检查：**
+
+- `bash scripts/check-miniprogram-static.sh`：4 PASS / 0 FAIL
+- `bash scripts/check-release-privacy.sh`：4 PASS / 0 FAIL
+- `bash scripts/check-api-smoke.sh`：13 PASS / 0 FAIL
+- `git diff --check`：通过
+
+**结论：** dev ECS backend 已部署 BAZI1.4，八字 v2 报告线上验证通过；无需 frontend / SQL / 小程序发版；仍不上传体验版、不提审。

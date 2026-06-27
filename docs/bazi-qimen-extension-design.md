@@ -2232,3 +2232,39 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 **下一步：** DOMAIN1；RELEASE-QA-RECHECK；维护者确认后 backend-only dev 部署。
 
 ---
+
+### 10.59 Phase BAZI1.4-DEPLOY-QA 交付清单（backend-only 部署与线上验证）
+
+**目标：** 将 BAZI1.4 发布到 dev ECS backend，并通过公网 dev API 验证 `bazi-v2-poc` 完整报告已经使用新 prompt / fallback 结构；**不执行 SQL**、**不部署 frontend**、**不改小程序**。
+
+**部署完成：**
+
+- [x] ECS `/opt/yijing` 从 `8e47cdb` 快进到 `29beebf`
+- [x] `git pull --ff-only origin main` 成功，无 merge commit、无冲突
+- [x] `docker compose -f docker-compose.prod.yml --env-file .env build backend`
+- [x] `docker compose -f docker-compose.prod.yml --env-file .env up -d backend`
+- [x] backend running；frontend 未部署；mysql 未重建
+- [x] 未修改 `.env*`，未执行手动 SQL
+
+**Health：**
+
+- [x] `127.0.0.1:8080/health`：`status=ok`，`db=ok`
+- [x] `127.0.0.1:8080/api/v1/health`：`status=ok`，`db=ok`
+- [x] `123.57.48.214/health`：`status=ok`，`db=ok`
+- [x] `123.57.48.214/api/v1/health`：`status=ok`，`db=ok`
+
+**线上验证：**
+
+- [x] `bazi-v2-poc` 正常时辰 create / unlock 通过，记录 id=123
+- [x] `full_content` 命中 8 段结构：整体结构、排盘口径、四柱、五行、可借助、需留意、行动节奏、边界声明
+- [x] 报告包含 v2 / POC 说明、节气口径、四柱和五行结构
+- [x] 报告不展示完整出生日期、测试 session、`session_key`、prompt 或 payload 原始 JSON
+- [x] 未知时辰按当前 API 字段 `birth_hour_unknown=true` 创建通过，记录 id=125；报告不伪造时柱
+- [x] `bazi-simple-v1` create / unlock 回归通过，记录 id=124；不混入 v2 8 段结构
+- [x] `scripts/check-api-smoke.sh`：13 PASS / 0 FAIL，奇门 v1 / poc / professional 均正常
+
+**补充说明：** backend entrypoint 启动时自动检查 migrations，日志显示全部已应用 migration 均为 `skip`；本阶段未手动执行 SQL，也未新增或执行迁移。
+
+**下一步：** DOMAIN1；RELEASE-QA-RECHECK；DevTools / 真机 UI 本地勾选。
+
+---
