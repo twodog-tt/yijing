@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -279,6 +280,47 @@ func TestCreateBaziUsesV2AlgorithmVersion(t *testing.T) {
 	}
 }
 
+func TestCreateBaziV2UnknownHourOmitsHourPillars(t *testing.T) {
+	h, _ := newTestAnalysisHandler(t)
+	body := bytes.NewBufferString(`{"session_key":"sess-a","birth_date":"2024-02-05","birth_hour_unknown":true,"confirm_disclaimer":true,"algorithm_version":"bazi-v2-poc"}`)
+	rec := httptest.NewRecorder()
+	h.CreateBazi(rec, httptest.NewRequest(http.MethodPost, "/api/v1/analysis/bazi", body))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", rec.Code, rec.Body.String())
+	}
+	var resp struct {
+		Data struct {
+			AlgorithmVersion string          `json:"algorithm_version"`
+			ResultPayload    json.RawMessage `json:"result_payload"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.Data.AlgorithmVersion != bazi.AlgorithmVersionBaziV2POC {
+		t.Fatalf("algorithm_version=%q", resp.Data.AlgorithmVersion)
+	}
+	var payload struct {
+		Pillars   map[string]any `json:"pillars"`
+		PillarsV2 map[string]any `json:"pillars_v2"`
+	}
+	if err := json.Unmarshal(resp.Data.ResultPayload, &payload); err != nil {
+		t.Fatalf("decode result_payload: %v", err)
+	}
+	if _, ok := payload.Pillars["hour"]; ok {
+		t.Fatalf("v1 compatibility pillars must omit hour when birth hour is unknown")
+	}
+	if _, ok := payload.PillarsV2["hour"]; ok {
+		t.Fatalf("v2 pillars must omit hour when birth hour is unknown")
+	}
+	raw := string(resp.Data.ResultPayload)
+	for _, forbidden := range []string{"birth_date", "session_key", "prompt"} {
+		if strings.Contains(raw, forbidden) {
+			t.Fatalf("result_payload must not contain %q", forbidden)
+		}
+	}
+}
+
 func TestCreateBaziRejectsInvalidAlgorithmVersion(t *testing.T) {
 	h, _ := newTestAnalysisHandler(t)
 	body := bytes.NewBufferString(`{"session_key":"sess-a","birth_date":"1995-01-01","birth_hour_branch":"zi","confirm_disclaimer":true,"algorithm_version":"bazi-v3"}`)
@@ -334,6 +376,50 @@ func TestUnlockAnalysisV2FreeUnlockSuccess(t *testing.T) {
 	}
 	if !strings.Contains(unlockResp.Data.FullContent, "bazi-v2-poc") {
 		t.Fatalf("expected v2 full content marker")
+	}
+}
+
+func TestUnlockAnalysisV2UnknownHourDoesNotInventHourPillar(t *testing.T) {
+	h, sessions := newTestAnalysisHandler(t)
+	sessions.sessions["sess-a"] = &model.Session{ID: 10, SessionKey: "sess-a"}
+	body := bytes.NewBufferString(`{"session_key":"sess-a","birth_date":"2024-02-05","birth_hour_unknown":true,"confirm_disclaimer":true,"algorithm_version":"bazi-v2-poc"}`)
+	createRec := httptest.NewRecorder()
+	h.CreateBazi(createRec, httptest.NewRequest(http.MethodPost, "/api/v1/analysis/bazi", body))
+	if createRec.Code != http.StatusOK {
+		t.Fatalf("create failed: %s", createRec.Body.String())
+	}
+	var createResp struct {
+		Data struct {
+			ID int64 `json:"id"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(createRec.Body.Bytes(), &createResp); err != nil {
+		t.Fatalf("decode create response: %v", err)
+	}
+
+	unlockRec := unlockAnalysisRequest(t, h, createResp.Data.ID, "sess-a", `{"unlock_type":"free_unlock"}`)
+	if unlockRec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", unlockRec.Code, unlockRec.Body.String())
+	}
+	var unlockResp struct {
+		Data struct {
+			FullContent string `json:"full_content"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(unlockRec.Body.Bytes(), &unlockResp); err != nil {
+		t.Fatalf("decode unlock response: %v", err)
+	}
+	if !strings.Contains(unlockResp.Data.FullContent, "时辰未知") &&
+		!strings.Contains(unlockResp.Data.FullContent, "未生成时柱") &&
+		!strings.Contains(unlockResp.Data.FullContent, "不生成时柱") {
+		t.Fatalf("expected unknown-hour explanation in full_content")
+	}
+	inventedHourPillar := regexp.MustCompile(`时柱[：:]\s*[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]`)
+	if inventedHourPillar.MatchString(unlockResp.Data.FullContent) {
+		t.Fatalf("full_content must not invent hour pillar")
+	}
+	if strings.Contains(unlockRec.Body.String(), "birth_date") || strings.Contains(unlockRec.Body.String(), "session_key") || strings.Contains(unlockRec.Body.String(), "prompt") {
+		t.Fatalf("unlock response must not expose private fields")
 	}
 }
 
