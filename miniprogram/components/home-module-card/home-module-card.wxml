@@ -1,4 +1,5 @@
 <navigator class="home-module-card home-module-card--{{accent}}" url="{{url}}">
+  <view class="home-module-card__accent"></view>
   <view class="home-module-card__header">
     <text class="home-module-card__title">{{title}}</text>
     <text class="home-module-card__subtitle">{{subtitle}}</text>

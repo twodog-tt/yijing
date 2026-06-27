@@ -9,13 +9,19 @@
   </view>
 
   <block wx:if="{{!loading && divination}}">
-    <view class="page-header">
+    <view class="page-header result-header">
       <text class="eyebrow">卦象结果</text>
-      <text class="page-title">{{divination.question}}</text>
+      <text class="page-title">卦象已生成</text>
+      <text class="page-description">以下内容用于传统文化学习、自我观察与行动整理。</text>
       <view class="result-meta">
         <text>{{divination.category.name}}</text>
         <text>{{createdAtDisplay}}</text>
       </view>
+    </view>
+
+    <view class="card result-question-card">
+      <text class="result-question-card__label">本次问题</text>
+      <text class="result-question-card__text">{{divination.question}}</text>
     </view>
 
     <view class="card result-summary">

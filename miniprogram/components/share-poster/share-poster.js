@@ -59,15 +59,30 @@ function drawHexagramLines(ctx, lines, x, y, changed = false) {
 function drawInsightCard(ctx, x, y, title, lines) {
   const filtered = (Array.isArray(lines) ? lines : []).filter(Boolean);
   if (!filtered.length) return y;
-  const cardHeight = 28 + filtered.length * 26;
+
+  const bodyWidth = CONTENT_WIDTH - 40;
+  const lineHeight = 24;
+  const bodyHeight = filtered.reduce(
+    (total, line) => total + estimateParagraphHeight(line, lineHeight, 30) + 8,
+    0
+  );
+  const cardHeight = 62 + bodyHeight;
   drawRoundedRect(ctx, x, y, CONTENT_WIDTH, cardHeight, 16, "#faf8f3");
+  ctx.fillStyle = "#f59e0b";
+  ctx.fillRect(x, y, 5, cardHeight);
   ctx.fillStyle = "#292524";
   ctx.font = "bold 16px sans-serif";
   ctx.fillText(title, x + 20, y + 30);
-  ctx.fillStyle = "#57534e";
-  ctx.font = "15px sans-serif";
+
+  let cursorY = y + 60;
   filtered.forEach((line, index) => {
-    ctx.fillText(line, x + 20, y + 58 + index * 26);
+    cursorY = drawWrappedParagraph(ctx, `${index + 1}. ${line}`, x + 20, cursorY, {
+      maxWidth: bodyWidth,
+      lineHeight,
+      font: "14px sans-serif",
+      color: "#57534e",
+    });
+    cursorY += 8;
   });
   return y + cardHeight + 16;
 }
@@ -78,7 +93,12 @@ function estimateRawLongPosterHeight(data) {
   height += 178;
   height += 72;
   height += 40 + estimateParagraphHeight(data.situationSummary || "", 24, 28);
-  height += 120;
+  if (Array.isArray(data.changeObservations) && data.changeObservations.length) {
+    height += 76;
+    data.changeObservations.forEach((item) => {
+      height += estimateParagraphHeight(item, 24, 30) + 8;
+    });
+  }
   if (Array.isArray(data.actionPoints) && data.actionPoints.length) {
     height += 40;
     data.actionPoints.forEach((item) => {
@@ -96,9 +116,9 @@ function estimateRawLongPosterHeight(data) {
 }
 
 function layoutLongPoster(ctx, data, canvasHeight) {
-  ctx.fillStyle = "#f4efe5";
+  ctx.fillStyle = "#f3eadc";
   ctx.fillRect(0, 0, POSTER_WIDTH, canvasHeight);
-  drawRoundedRect(ctx, 24, 24, 552, canvasHeight - 48, 22, "#fffdf8");
+  drawRoundedRect(ctx, 24, 24, 552, canvasHeight - 48, 22, "#fffaf2");
 
   let y = 72;
   y = drawTitle(ctx, "文易传统文化", PADDING_X, y);
@@ -108,7 +128,7 @@ function layoutLongPoster(ctx, data, canvasHeight) {
   y += 28;
   y = drawDivider(ctx, PADDING_X, y);
   y = drawTitle(ctx, normalizeText(data.moduleTitle || "问事起卦"), PADDING_X, y, {
-    font: "bold 26px sans-serif",
+    font: "bold 28px sans-serif",
   });
   y = drawWrappedParagraph(ctx, DIVINATION_METHOD_INTRO, PADDING_X, y, {
     lineHeight: 22,
@@ -138,21 +158,35 @@ function layoutLongPoster(ctx, data, canvasHeight) {
   });
   y += 12;
 
-  drawRoundedRect(ctx, PADDING_X, y, 238, 158, 16, "#faf8f3");
-  drawRoundedRect(ctx, 314, y, 238, 158, 16, "#faf8f3");
+  drawRoundedRect(ctx, PADDING_X, y, 238, 158, 16, "#ffffff");
+  drawRoundedRect(ctx, 314, y, 238, 158, 16, "#ffffff");
   ctx.fillStyle = "#a8a29e";
   ctx.font = "13px sans-serif";
   ctx.fillText("本卦", PADDING_X + 20, y + 28);
   ctx.fillText("变卦", 334, y + 28);
   ctx.fillStyle = "#292524";
   ctx.font = "bold 18px sans-serif";
-  ctx.fillText(hexagramName(data.primaryHexagram, "本卦"), PADDING_X + 20, y + 58);
-  ctx.fillText(
+  drawWrappedParagraph(ctx, hexagramName(data.primaryHexagram, "本卦"), PADDING_X + 20, y + 58, {
+    maxWidth: 136,
+    lineHeight: 22,
+    font: "bold 18px sans-serif",
+    color: "#292524",
+    maxLines: 2,
+  });
+  drawWrappedParagraph(
+    ctx,
     data.hasHexagramChange
       ? hexagramName(data.changedHexagram, "变卦")
       : normalizeText(data.changedHexagramLabel || "无明显变卦"),
     334,
-    y + 58
+    y + 58,
+    {
+      maxWidth: 136,
+      lineHeight: 22,
+      font: "bold 18px sans-serif",
+      color: "#292524",
+      maxLines: 2,
+    }
   );
   drawHexagramLines(ctx, data.lines, 192, y + 72, false);
   drawHexagramLines(ctx, data.lines, 458, y + 72, true);

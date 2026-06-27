@@ -327,6 +327,7 @@ Tab: 今日 | 问事 | 扩展(八字/奇门) | 我的(历史/设置)
 | **Phase HOME1-QA** | 首页与模块引导回归验收 | 静态/代码层/合规预检通过；DevTools UI 待本地确认 | Cursor ✅ |
 | **Phase LOVE1** | 感情关系观察 MVP | 作为问事起卦场景入口；首页低优先级入口 + 问事页模板；不新增主模块 / 后端字段 | Cursor ✅ |
 | **Phase LOVE1-QA** | 感情关系观察回归验收 | 首页入口、relationship scene、普通问事、八字/奇门入口与隐私合规代码层通过；DevTools 待本地勾选 | Cursor ✅ |
+| **Phase UI1** | 小程序视觉层级与可读性优化 | 首页主模块卡片、问事结果页长问题展示、问事长图预览与 Canvas 可读性优化 | Cursor ✅ |
 | **Phase RELEASE-QA-PREP** | 体验版前全模块验收准备 | health/API/视图层预检通过；统一 DevTools 清单待勾选 | Cursor ✅ |
 | **Phase RELEASE-QA** | 体验版前最终验收 | 自动化 24/24 通过；DevTools/真机/备案域名待闭环 | Cursor ✅ |
 | **Phase MINIAPP-UX1** | 小程序状态体验优化 | 加载/错误/空状态、防重复提交、相册权限失败提示 | Cursor ✅ |
