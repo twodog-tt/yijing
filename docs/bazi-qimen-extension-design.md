@@ -2181,3 +2181,23 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 **下一步：** RELEASE-QA-RECHECK；DOMAIN1；BAZI1.4。
 
 ---
+
+### 10.57 Phase TEST1 交付清单（回归脚本与验收命令整理）
+
+**目标：** 固化 release 前可复用检查命令，覆盖小程序静态合规、隐私扫描与 API smoke；**不改** backend / miniprogram 功能 / Web / SQL / deploy / 默认算法。
+
+**本阶段完成：**
+
+- [x] `scripts/check-miniprogram-static.sh`：JS 语法、广告文案、禁用词白名单、`git diff --check`
+- [x] `scripts/check-release-privacy.sh`：真实 AppID、疑似 AppSecret / access_token / API key 与合规文案检查
+- [x] `scripts/check-api-smoke.sh`：health、sessions、bazi v1/v2、qimen v1/poc/professional、非法算法、`free_unlock`、问事起卦 create/unlock
+- [x] `scripts/README.md`：脚本说明与 API 地址覆盖方式
+- [x] `docs/release-checklist.md`：release 前统一检查清单与固定测试记录
+
+**TEST1 验收：** 静态脚本通过；隐私脚本通过；API smoke 13/13 通过。脚本默认使用 HTTP dev ECS，不依赖备案或正式 HTTPS 域名。
+
+**仍不做：** 执行 SQL；部署 backend；上传体验版；提审；接广告 / 支付 / 登录；改变默认算法。
+
+**下一步：** DOMAIN1；RELEASE-QA-RECHECK；BAZI1.4。
+
+---

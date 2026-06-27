@@ -2305,3 +2305,37 @@ Web 端与小程序 UX1 对齐，使用 `frontend/app/globals.css` 中的 CSS an
 **DevTools / 真机：** 仍需维护者本地重新编译，真机验证网络失败、导航失败与相册拒绝授权后的提示。
 
 **部署：** 无需 backend / frontend / SQL；需小程序重新编译预览。
+
+## 35. Phase TEST1：回归脚本与验收命令整理
+
+**范围：** 新增 release 前回归脚本与说明文档；**不改** backend 业务代码 / miniprogram 功能代码 / frontend / SQL / deploy / `.env*` / 默认算法。
+
+**新增脚本：**
+
+- `scripts/check-miniprogram-static.sh`：小程序 JS 语法、广告文案、禁用词白名单、`git diff --check`。
+- `scripts/check-release-privacy.sh`：小程序合规 grep、跟踪文档真实 AppID 与疑似密钥检查。
+- `scripts/check-api-smoke.sh`：dev API health、sessions、八字 / 奇门多算法 create、非法算法、`free_unlock`、问事起卦 create / unlock。
+- `scripts/README.md`：脚本运行说明。
+
+**新增文档：**
+
+- `docs/release-checklist.md`：静态检查、API smoke、DevTools / 真机、历史页、长图 / 相册权限、备案 / HTTPS / request 合法域名、上传体验版前检查。
+
+**脚本运行：**
+
+```bash
+bash scripts/check-miniprogram-static.sh
+bash scripts/check-release-privacy.sh
+bash scripts/check-api-smoke.sh
+```
+
+`check-api-smoke.sh` 默认使用 `http://123.57.48.214` / `http://123.57.48.214/api/v1`，可通过 `ROOT_BASE` / `API_BASE` 覆盖；脚本动态创建测试记录，不依赖备案或正式域名，不输出完整报告正文或完整 payload。
+
+**TEST1 验收：**
+
+- [x] 静态检查脚本通过
+- [x] 隐私与合规脚本通过
+- [x] API smoke 13/13 通过（health / sessions / bazi v1-v2 / qimen v1-poc-professional / illegal algorithm_version / free_unlock / divination）
+- [x] 不执行 SQL，不部署，不上传体验版
+
+**后续使用：** DOMAIN1 完成备案 / HTTPS / request 合法域名后，RELEASE-QA-RECHECK 应先运行上述脚本，再做 DevTools / 真机勾选。
