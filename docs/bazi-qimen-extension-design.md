@@ -2194,7 +2194,9 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 - [x] `scripts/README.md`：脚本说明与 API 地址覆盖方式
 - [x] `docs/release-checklist.md`：release 前统一检查清单与固定测试记录
 
-**TEST1 验收：** 静态脚本通过；隐私脚本通过；API smoke 13/13 通过。脚本默认使用 HTTP dev ECS，不依赖备案或正式 HTTPS 域名。
+**TEST1 验收：** 静态脚本通过；隐私脚本通过；API smoke 13/13 通过（TEST1 当时结果）。脚本默认使用 HTTP dev ECS，不依赖备案或正式 HTTPS 域名。
+
+**TEST1.1 更新：** 当前 `check-api-smoke.sh` 已增加 `bazi-v2-poc` 未知时辰 create / unlock 覆盖，最新期望结果为 `15 PASS / 0 FAIL`。未知时辰 API 必须显式传 `birth_hour_unknown=true`；只省略 `birth_hour_branch` 会返回 400。
 
 **仍不做：** 执行 SQL；部署 backend；上传体验版；提审；接广告 / 支付 / 登录；改变默认算法。
 
@@ -2261,10 +2263,25 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 - [x] 报告不展示完整出生日期、测试 session、`session_key`、prompt 或 payload 原始 JSON
 - [x] 未知时辰按当前 API 字段 `birth_hour_unknown=true` 创建通过，记录 id=125；报告不伪造时柱
 - [x] `bazi-simple-v1` create / unlock 回归通过，记录 id=124；不混入 v2 8 段结构
-- [x] `scripts/check-api-smoke.sh`：13 PASS / 0 FAIL，奇门 v1 / poc / professional 均正常
+- [x] `scripts/check-api-smoke.sh`：13 PASS / 0 FAIL（BAZI1.4-DEPLOY-QA 当时结果；TEST1.1 后当前期望为 15 PASS / 0 FAIL），奇门 v1 / poc / professional 均正常
 
 **补充说明：** backend entrypoint 启动时自动检查 migrations，日志显示全部已应用 migration 均为 `skip`；本阶段未手动执行 SQL，也未新增或执行迁移。
 
 **下一步：** DOMAIN1；RELEASE-QA-RECHECK；DevTools / 真机 UI 本地勾选。
+
+---
+
+### 10.60 Phase TEST1.1 同步说明（八字未知时辰 API 回归）
+
+**目标：** 将 TEST1.1 后的 smoke 覆盖与 release checklist 口径同步到文档；**不改**业务逻辑、脚本逻辑、SQL 或部署配置。
+
+**当前状态：**
+
+- [x] `scripts/check-api-smoke.sh` 当前期望结果为 `15 PASS / 0 FAIL`
+- [x] API smoke 已覆盖 `bazi-v2-poc` 未知时辰 create / unlock
+- [x] 未知时辰请求必须显式传 `birth_hour_unknown=true`
+- [x] create 响应不回填 `hour`
+- [x] unlock 报告包含未知时辰说明，不伪造干支时柱
+- [x] 后端 handler API 回归测试已覆盖八字 v2 未知时辰 create / unlock
 
 ---

@@ -27,6 +27,7 @@ API_BASE=http://127.0.0.1:8080/api/v1 ROOT_BASE=http://127.0.0.1 bash scripts/ch
   - 动态创建测试记录，不依赖历史 id。
   - 覆盖 health、sessions、八字 v1/v2、八字 v2 未知时辰、奇门 v1/poc/professional、非法 algorithm_version、analysis free_unlock、问事起卦 create/unlock。
   - 八字 v2 未知时辰 smoke 会显式传 `birth_hour_unknown=true`，并在解锁后确认完整报告有未知时辰说明且未生成干支时柱。
+  - TEST1.1 后当前期望结果为 `15 PASS / 0 FAIL`。
   - 只输出 id、algorithm_version、关键字段摘要，不输出完整 payload、完整报告正文或 session_key 响应内容。
 
 ## Release 前建议顺序

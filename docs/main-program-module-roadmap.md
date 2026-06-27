@@ -329,6 +329,7 @@ Tab: 今日 | 问事 | 扩展(八字/奇门) | 我的(历史/设置)
 | **Phase RELEASE-QA** | 体验版前最终验收 | 自动化 24/24 通过；DevTools/真机/备案域名待闭环 | Cursor ✅ |
 | **Phase MINIAPP-UX1** | 小程序状态体验优化 | 加载/错误/空状态、防重复提交、相册权限失败提示 | Cursor ✅ |
 | **Phase TEST1** | 回归脚本与验收命令整理 | 静态合规、隐私扫描、API smoke、release checklist | Cursor ✅ |
+| **Phase TEST1.1** | 八字未知时辰 API 回归 | smoke 升级为 15 PASS；birth_hour_unknown=true；create/unlock 不伪造时柱 | Cursor ✅ |
 | **Phase BAZI1.4** | 八字 v2 报告质量增强 | bazi-v2-poc 专用 prompt、fallback 8 段、排盘口径与五行表达增强 | Cursor ✅ |
 | **Phase BAZI1.4-DEPLOY-QA** | 八字 v2 报告 dev 部署验证 | ECS backend-only 部署到 29beebf；v2 8 段、未知时辰、v1/qimen smoke 通过 | Cursor ✅ |
 | **Phase ALG2** | 奇门 v2 POC（后端） | 九宫结构化 payload、`CalculateV2`、golden / 合规测试 | Cursor ✅ |

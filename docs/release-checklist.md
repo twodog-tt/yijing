@@ -48,6 +48,8 @@ API_BASE=http://127.0.0.1:8080/api/v1 ROOT_BASE=http://127.0.0.1 bash scripts/ch
 
 脚本每次动态创建新测试记录，不依赖历史 id；日志只输出 id、algorithm_version、关键字段是否存在，不输出完整报告正文、完整 `result_payload` 或密钥。
 
+TEST1.1 后当前期望结果为 `15 PASS / 0 FAIL`。其中八字 v2 未知时辰用例必须显式传 `birth_hour_unknown=true`；只省略 `birth_hour_branch` 不表示未知时辰，当前 API 会按参数错误返回 400。
+
 ## 3. 隐私与合规检查
 
 ```bash

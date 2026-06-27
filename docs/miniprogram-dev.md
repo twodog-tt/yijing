@@ -2340,6 +2340,8 @@ bash scripts/check-api-smoke.sh
 
 **后续使用：** DOMAIN1 完成备案 / HTTPS / request 合法域名后，RELEASE-QA-RECHECK 应先运行上述脚本，再做 DevTools / 真机勾选。
 
+**TEST1.1 更新：** 当前 `check-api-smoke.sh` 已增加 `bazi-v2-poc` 未知时辰 create / unlock 覆盖，最新期望结果为 `15 PASS / 0 FAIL`。未知时辰 API 必须显式传 `birth_hour_unknown=true`；只省略 `birth_hour_branch` 会返回参数错误。
+
 ## 36. Phase BAZI1.4：八字 v2 报告质量增强
 
 **范围：** `backend/internal/service/bazi` 八字报告生成与测试；同步更新阶段文档。**不改** miniprogram / frontend / SQL / deploy / `.env*` / 默认算法 / 普通用户算法选择。
@@ -2430,14 +2432,43 @@ bash scripts/check-api-smoke.sh
 
 - `bazi-simple-v1` 回归记录：id=124，create code=0，unlock code=0，algorithm_version=`bazi-simple-v1`
 - v1 报告不展示 `bazi-v2-poc` 结构，不混入 v2 8 段标题
-- `scripts/check-api-smoke.sh`：13 PASS / 0 FAIL
+- `scripts/check-api-smoke.sh`：13 PASS / 0 FAIL（BAZI1.4-DEPLOY-QA 当时结果；TEST1.1 后当前期望为 15 PASS / 0 FAIL）
 - 奇门回归：`qimen-simple-v1`、`qimen-v2-poc`、`qimen-v2-professional` create 正常，非法 `algorithm_version` 正常拒绝，`free_unlock` 正常
 
 **本地检查：**
 
 - `bash scripts/check-miniprogram-static.sh`：4 PASS / 0 FAIL
 - `bash scripts/check-release-privacy.sh`：4 PASS / 0 FAIL
-- `bash scripts/check-api-smoke.sh`：13 PASS / 0 FAIL
+- `bash scripts/check-api-smoke.sh`：13 PASS / 0 FAIL（BAZI1.4-DEPLOY-QA 当时结果；TEST1.1 后当前期望为 15 PASS / 0 FAIL）
 - `git diff --check`：通过
 
 **结论：** dev ECS backend 已部署 BAZI1.4，八字 v2 报告线上验证通过；无需 frontend / SQL / 小程序发版；仍不上传体验版、不提审。
+
+## 38. Phase TEST1.1：八字未知时辰 API 回归收口
+
+**范围：** release smoke 文档与后端 API 回归测试状态同步；**不改**业务逻辑 / miniprogram / frontend / SQL / deploy / `.env*`。
+
+**当前 smoke 覆盖：**
+
+- health / sessions
+- `bazi-simple-v1`
+- `bazi-v2-poc`
+- `bazi-v2-poc` 未知时辰
+- `qimen-simple-v1`
+- `qimen-v2-poc`
+- `qimen-v2-professional`
+- illegal `algorithm_version`
+- analysis `free_unlock`
+- 问事起卦 create / unlock
+
+**未知时辰口径：**
+
+- API 请求必须显式传 `birth_hour_unknown=true`。
+- 只省略 `birth_hour_branch` 不表示未知时辰，当前 API 会返回 400 参数错误。
+- create 响应不得回填 `hour`。
+- unlock 报告必须有未知时辰说明，不伪造干支时柱。
+
+**当前结果：**
+
+- `scripts/check-api-smoke.sh`：15 PASS / 0 FAIL
+- 后端 handler API 回归测试已覆盖八字 v2 未知时辰 create / unlock
