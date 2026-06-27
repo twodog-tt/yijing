@@ -29,11 +29,19 @@ function estimateRawLongPosterHeight(data) {
   if (data.professionalPosterNote) {
     height += estimateParagraphHeight(data.professionalPosterNote, 22, 28);
   }
-  height += 72;
-  height += 100;
-  height += 100;
-  height += 72;
-  height += 56;
+  height += estimateParagraphHeight(buildMetaText(data), 22, 30) + 16;
+  height += estimateInfoSectionHeight(buildFocusLines(data.qimenLens || {}));
+  height += estimateInfoSectionHeight(buildSupportLines(data.qimenLens || {}));
+  height += 40;
+  height += estimateParagraphHeight(buildPacingText(data.qimenLens || {}), 24, 30) + 8;
+  if (data.categoryHighlight) {
+    height += 40;
+    height += estimateParagraphHeight(data.categoryHighlight, 24, 30) + 8;
+  }
+  const profileText = buildProfileText(data.questionProfile || {});
+  if (profileText) {
+    height += estimateParagraphHeight(profileText, 22, 30) + 8;
+  }
   if (Array.isArray(data.actionPoints) && data.actionPoints.length) {
     height += 40;
     data.actionPoints.forEach((item) => {
@@ -44,19 +52,75 @@ function estimateRawLongPosterHeight(data) {
   return height;
 }
 
-function drawInsightCard(ctx, x, y, title, lines) {
-  const filtered = lines.filter(Boolean);
-  const cardHeight = 28 + filtered.length * 26;
+function estimateInfoCardHeight(lines) {
+  const filtered = (Array.isArray(lines) ? lines : []).filter(Boolean);
+  if (!filtered.length) return 0;
+  const bodyHeight = filtered.reduce(
+    (total, line) => total + estimateParagraphHeight(line, 24, 30) + 8,
+    0
+  );
+  return 62 + bodyHeight;
+}
+
+function estimateInfoSectionHeight(lines) {
+  const cardHeight = estimateInfoCardHeight(lines);
+  return cardHeight ? cardHeight + 16 : 0;
+}
+
+function drawInfoCard(ctx, x, y, title, lines) {
+  const filtered = (Array.isArray(lines) ? lines : []).filter(Boolean);
+  if (!filtered.length) return y;
+  const bodyWidth = CONTENT_WIDTH - 40;
+  const cardHeight = estimateInfoCardHeight(filtered);
   drawRoundedRect(ctx, x, y, CONTENT_WIDTH, cardHeight, 16, "#faf8f3");
   ctx.fillStyle = "#292524";
   ctx.font = "bold 16px sans-serif";
   ctx.fillText(title, x + 20, y + 30);
-  ctx.fillStyle = "#57534e";
-  ctx.font = "15px sans-serif";
-  filtered.forEach((line, index) => {
-    ctx.fillText(line, x + 20, y + 58 + index * 26);
+
+  let cursorY = y + 60;
+  filtered.forEach((line) => {
+    cursorY = drawWrappedParagraph(ctx, line, x + 20, cursorY, {
+      maxWidth: bodyWidth,
+      lineHeight: 24,
+      font: "15px sans-serif",
+      color: "#57534e",
+    });
+    cursorY += 8;
   });
   return y + cardHeight + 16;
+}
+
+function buildMetaText(data) {
+  const metaParts = [
+    data.categoryLabel ? `分类 · ${normalizeText(data.categoryLabel)}` : "",
+    data.timeBucketLabel ? `时段 · ${normalizeText(data.timeBucketLabel)}` : "",
+    `摘要 · ${SAFE_QUESTION_SUMMARY}`,
+  ].filter(Boolean);
+  return metaParts.join("\n");
+}
+
+function buildFocusLines(lens) {
+  return [lens.focusTheme ? `主题 · ${lens.focusTheme}` : ""];
+}
+
+function buildSupportLines(lens) {
+  return [
+    lens.supportTheme ? `可借助 · ${lens.supportTheme}` : "",
+    lens.cautionTheme ? `需留意 · ${lens.cautionTheme}` : "",
+  ];
+}
+
+function buildPacingText(lens) {
+  return lens.pacingTheme ? `节奏 · ${lens.pacingTheme}` : "先观察，再安排一件可验证的小事。";
+}
+
+function buildProfileText(profile) {
+  const profileParts = [
+    profile.intentType ? `问事侧重 · ${profile.intentType}` : "",
+    profile.timeHorizon ? `时间范围 · ${profile.timeHorizon}` : "",
+    profile.decisionPressure ? `决策压力 · ${profile.decisionPressure}` : "",
+  ].filter(Boolean);
+  return profileParts.join("\n");
 }
 
 function layoutLongPoster(ctx, data, canvasHeight) {
@@ -93,12 +157,7 @@ function layoutLongPoster(ctx, data, canvasHeight) {
     y += 8;
   }
 
-  const metaParts = [
-    data.categoryLabel ? `分类 · ${normalizeText(data.categoryLabel)}` : "",
-    data.timeBucketLabel ? `时段 · ${normalizeText(data.timeBucketLabel)}` : "",
-    `摘要 · ${SAFE_QUESTION_SUMMARY}`,
-  ].filter(Boolean);
-  y = drawWrappedParagraph(ctx, metaParts.join("\n"), PADDING_X, y, {
+  y = drawWrappedParagraph(ctx, buildMetaText(data), PADDING_X, y, {
     lineHeight: 22,
     font: "14px sans-serif",
     color: "#57534e",
@@ -106,22 +165,12 @@ function layoutLongPoster(ctx, data, canvasHeight) {
   y += 16;
 
   const lens = data.qimenLens || {};
-  y = drawInsightCard(ctx, PADDING_X, y, "关注主题", [
-    lens.focusTheme ? `主题 · ${lens.focusTheme}` : "",
-  ]);
+  y = drawInfoCard(ctx, PADDING_X, y, "关注主题", buildFocusLines(lens));
 
-  y = drawInsightCard(ctx, PADDING_X, y, "可借助与需留意", [
-    lens.supportTheme ? `可借助 · ${lens.supportTheme}` : "",
-    lens.cautionTheme ? `需留意 · ${lens.cautionTheme}` : "",
-  ]);
+  y = drawInfoCard(ctx, PADDING_X, y, "可借助与需留意", buildSupportLines(lens));
 
   y = drawSectionTitle(ctx, "行动节奏", PADDING_X, y);
-  y = drawWrappedParagraph(
-    ctx,
-    lens.pacingTheme ? `节奏 · ${lens.pacingTheme}` : "先观察，再安排一件可验证的小事。",
-    PADDING_X,
-    y
-  );
+  y = drawWrappedParagraph(ctx, buildPacingText(lens), PADDING_X, y);
   y += 8;
 
   if (data.categoryHighlight) {
@@ -131,13 +180,9 @@ function layoutLongPoster(ctx, data, canvasHeight) {
   }
 
   const profile = data.questionProfile || {};
-  const profileParts = [
-    profile.intentType ? `问事侧重 · ${profile.intentType}` : "",
-    profile.timeHorizon ? `时间范围 · ${profile.timeHorizon}` : "",
-    profile.decisionPressure ? `决策压力 · ${profile.decisionPressure}` : "",
-  ].filter(Boolean);
-  if (profileParts.length) {
-    y = drawWrappedParagraph(ctx, profileParts.join("\n"), PADDING_X, y, {
+  const profileText = buildProfileText(profile);
+  if (profileText) {
+    y = drawWrappedParagraph(ctx, profileText, PADDING_X, y, {
       lineHeight: 22,
       font: "14px sans-serif",
       color: "#78716c",
