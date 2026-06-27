@@ -2089,3 +2089,23 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 **下一步：** HOME1-QA；RELEASE-QA；BAZI1.4。
 
 ---
+
+### 10.53 Phase HOME1-QA 验收清单（首页与模块引导回归）
+
+**Git 基线：** `94c138b`（HOME1）；**不改** backend / Web / SQL。
+
+**代码层预检：**
+
+- [x] `home.js` 三模块文案 / 引导 / 边界与 HOME1 规格一致
+- [x] 跳转路径均在 `app.json` 注册
+- [x] `home-module-card` / `home-guide-card` 组件注册正常
+- [x] 八字 / 奇门创建 API 不传 `algorithm_version`
+- [x] 首页无内部算法版本 / 广告 / 强预测文案
+
+**DevTools UI：** 待本地重新编译后勾选（§25.26）。
+
+**本阶段结论：** 自动化预检通过；无代码小修。
+
+**下一步：** RELEASE-QA；BAZI1.4；用户反馈/体验优化。
+
+---

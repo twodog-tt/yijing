@@ -1721,6 +1721,56 @@ Storage 写入 `yijing_session_key` 后打开对应结果页：
 
 **下一步：** HOME1-QA 或 DevTools 本地勾选 → RELEASE-QA。
 
+## 25.26 Phase HOME1-QA：首页与模块引导回归验收
+
+**说明：** 对 HOME1（`94c138b`）做静态 / 代码层 / 合规回归；**不改** backend / Web / SQL。
+
+**Git 起点：** `main` @ `94c138b`；工作区仅 `?? .deploy-patches/`。
+
+**静态检查（2026-06-23）：**
+
+- [x] miniprogram JS `node --check` 全通过
+- [x] 无广告文案
+- [x] 禁用词仅出现在 `long-poster-canvas.js` 过滤器与 `home.js` / `about.wxml` 边界否定说明
+- [x] `git diff --check` 无问题
+
+**代码层 / 视图预检：**
+
+| 项 | 结论 |
+|----|------|
+| 四块结构（品牌 / 三模块 / 引导 / 边界） | ✅ `index.wxml` + `home.js` 配置齐全 |
+| 问事 → `/pages/ask/ask` | ✅ 已在 `app.json` 注册 |
+| 八字 → `/pages/bazi/bazi` | ✅ 已在 `app.json` 注册 |
+| 奇门 → `/pages/qimen/qimen` | ✅ 已在 `app.json` 注册 |
+| 历史 → `/pages/history/history` | ✅ |
+| 关于 → `/pages/about/about` | ✅ |
+| 三模块文案 | ✅ 与 HOME1 规格一致 |
+| 首页无 algorithm_version / 内部版本名 | ✅ |
+| 八字 / 奇门创建不传 algorithm_version | ✅ `createBaziAnalysis` / `createQimenAnalysis` 未携带 |
+
+**合规与隐私（首页 + about）：**
+
+- [x] 首页不展示 algorithm_version / bazi-v2-poc / qimen-v2-professional
+- [x] 首页不展示 session_key 实际值 / payload / prompt
+- [x] 边界说明为否定口径（不做精准预测 / 不替代现实决策等）
+- [x] about 隐私段说明 session_key 机制（非展示实际值），与 HOME1 前一致
+
+**微信开发者工具（需本地重新编译 / 预览确认）：**
+
+| 项 | 状态 |
+|----|------|
+| 首页四块渲染 / 样式 | ☐ |
+| 三模块跳转 | ☐ |
+| 历史 / 关于跳转 | ☐ |
+| 问事 / 八字 / 奇门轻回归 | ☐ |
+| 返回首页 | ☐ |
+
+**本阶段结论：** 自动化预检全部通过；无 miniprogram 小修；DevTools 真实渲染与跳转需本地勾选。
+
+**部署：** 无需 backend / frontend / SQL；需微信开发者工具重新编译 / 预览。
+
+**下一步：** 本地 DevTools 勾选 → RELEASE-QA 或 BAZI1.4。
+
 ## 26. Phase UX1：八字 / 奇门轻量动效
 
 Phase UX1 在小程序与 Web 八字、奇门页面增加贴合传统文化场景的轻量 UI 动效，提升氛围与完成感。**仅改 UI 动效，不改后端、数据库、部署。**
