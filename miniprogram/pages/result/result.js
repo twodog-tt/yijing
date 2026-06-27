@@ -6,6 +6,14 @@ const {
 } = require("../../utils/api");
 const { buildDivinationLongPosterData } = require("../../utils/divination");
 const { formatDateTime } = require("../../utils/date");
+const { isBusinessError } = require("../../utils/request");
+const {
+  CONTENT_LOAD_ERROR_MESSAGE,
+  NETWORK_ERROR_MESSAGE,
+  RECORD_OPEN_ERROR_MESSAGE,
+  REPORT_GENERATE_ERROR_MESSAGE,
+  isNetworkLikeError,
+} = require("../../utils/ux-state");
 
 const POSITION_LABELS = ["", "初爻", "二爻", "三爻", "四爻", "五爻", "上爻"];
 
@@ -68,6 +76,21 @@ function parseFullContent(content) {
   }
 
   return { report: null, fallbackText: "" };
+}
+
+function mapResultLoadError(error) {
+  if (isNetworkLikeError(error)) return NETWORK_ERROR_MESSAGE;
+  if (isBusinessError(error, 40001)) return "会话已失效，请重新进入页面。";
+  if (isBusinessError(error, 40401)) return RECORD_OPEN_ERROR_MESSAGE;
+  return CONTENT_LOAD_ERROR_MESSAGE;
+}
+
+function mapFullError(error) {
+  if (isNetworkLikeError(error)) return NETWORK_ERROR_MESSAGE;
+  if (isBusinessError(error, 40001)) return "会话已失效，请重新进入页面。";
+  if (isBusinessError(error, 40301)) return "完整解析尚未生成，请稍后再试。";
+  if (isBusinessError(error, 40401)) return RECORD_OPEN_ERROR_MESSAGE;
+  return REPORT_GENERATE_ERROR_MESSAGE;
 }
 
 function buildPosterData(
@@ -220,7 +243,7 @@ Page({
 
       if (full?._loadError) {
         fullStatus = "error";
-        fullError = full._loadError.message || "完整解读状态加载失败。";
+        fullError = mapFullError(full._loadError);
       } else if (full?.unlocked) {
         const parsed = parseFullContent(full.full_content);
         fullStatus = "loaded";
@@ -229,15 +252,15 @@ Page({
         aiProvider = full.ai_provider || "";
       }
 
-    const posterData = buildPosterData(
-      divination,
-      freeContent,
-      movingLinesDisplay,
-      displayLines,
-      movingLines,
-      fullReport,
-      fullFallbackText
-    );
+      const posterData = buildPosterData(
+        divination,
+        freeContent,
+        movingLinesDisplay,
+        displayLines,
+        movingLines,
+        fullReport,
+        fullFallbackText
+      );
 
       this.setData({
         divination,
@@ -254,7 +277,7 @@ Page({
       });
     } catch (error) {
       this.setData({
-        error: error?.message || "结果加载失败，请稍后重试。",
+        error: mapResultLoadError(error),
       });
     } finally {
       this.setData({ loading: false });
@@ -274,7 +297,7 @@ Page({
     } catch (error) {
       this.setData({
         fullStatus: "error",
-        fullError: error?.message || "完整解读加载失败，请稍后重试。",
+        fullError: mapFullError(error),
       });
     } finally {
       this.setData({ loadingFull: false });
@@ -327,7 +350,7 @@ Page({
       }
 
       if (!this.isFlowActive(flowToken)) return;
-      if (!content) throw new Error("完整解读暂未返回，请稍后重新加载。");
+      if (!content) throw new Error(REPORT_GENERATE_ERROR_MESSAGE);
 
       this.applyFullContent(content, aiProvider);
       wx.showToast({ title: "完整解析已加载", icon: "success" });
@@ -341,7 +364,7 @@ Page({
       if (!this.isFlowActive(flowToken)) return;
       this.safeSetData({
         fullStatus: "error",
-        fullError: error?.message || "加载完整解析失败，请稍后重试。",
+        fullError: mapFullError(error),
       });
     } finally {
       this.endUnlockFlow(flowToken);

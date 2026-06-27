@@ -40,8 +40,8 @@
       <button
         wx:if="{{item.canDelete}}"
         class="delete-button"
-        loading="{{deletingId === item.id}}"
-        disabled="{{deletingId === item.id}}"
+        loading="{{deletingKey === item.key}}"
+        disabled="{{deletingKey === item.key}}"
         catchtap="confirmDelete"
         data-id="{{item.id}}"
         data-type="{{item.recordType}}"

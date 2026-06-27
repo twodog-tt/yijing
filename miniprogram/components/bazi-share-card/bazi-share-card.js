@@ -16,6 +16,7 @@ const {
   normalizeText,
   resolveExportPixelRatio,
 } = require("../../utils/long-poster-canvas");
+const { ALBUM_SAVE_ERROR_MESSAGE } = require("../../utils/ux-state");
 
 const BAZI_METHOD_INTRO =
   "基于简化干支与五行观察，仅供传统文化学习参考，不等同于专业八字排盘，不构成现实决策依据。";
@@ -255,7 +256,7 @@ Component({
       try {
         await this.albumHelpers.saveImageToAlbum(this.data.imagePath);
       } catch (_error) {
-        wx.showToast({ title: "保存失败，请稍后重试", icon: "none" });
+        wx.showToast({ title: ALBUM_SAVE_ERROR_MESSAGE, icon: "none" });
       } finally {
         if (!this.isDetached) this.setData({ saving: false });
       }

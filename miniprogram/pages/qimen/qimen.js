@@ -1,6 +1,12 @@
 const { createQimenAnalysis, getQimenAnalysisList } = require("../../utils/api");
 const { formatDateTime } = require("../../utils/date");
-const { ERROR_TYPES, isBusinessError } = require("../../utils/request");
+const { isBusinessError } = require("../../utils/request");
+const {
+  NETWORK_ERROR_MESSAGE,
+  RECORD_OPEN_ERROR_MESSAGE,
+  isNetworkLikeError,
+  networkOr,
+} = require("../../utils/ux-state");
 const {
   MAX_QUESTION_LENGTH,
   METHOD_NOTE,
@@ -12,28 +18,24 @@ const {
 } = require("../../utils/qimen");
 
 function mapListError(error) {
-  if (!error) return "加载记录失败，请稍后重试。";
-  if (error.type === ERROR_TYPES.NETWORK) {
-    return "网络异常，请检查网络后重试。";
-  }
+  if (!error) return "最近记录暂时加载失败，请稍后再试。";
+  if (isNetworkLikeError(error)) return NETWORK_ERROR_MESSAGE;
   if (isBusinessError(error, 40001)) {
     return "会话已失效，请重新进入页面。";
   }
-  return error.message || "加载记录失败，请稍后重试。";
+  return networkOr(error, "最近记录暂时加载失败，请稍后再试。");
 }
 
 function mapSubmitError(error) {
-  if (!error) return "提交失败，请稍后重试。";
-  if (error.type === ERROR_TYPES.NETWORK) {
-    return "网络异常，请检查网络后重试。";
-  }
+  if (!error) return "提交失败，请稍后再试。";
+  if (isNetworkLikeError(error)) return NETWORK_ERROR_MESSAGE;
   if (isBusinessError(error, 40001)) {
     return "会话已失效，请重新进入页面。";
   }
   if (isBusinessError(error, 40002)) {
     return "这个问题不适合用奇门简化解读，请换成自我反思、局势整理或行动节奏类问题。";
   }
-  return error.message || "提交失败，请稍后重试。";
+  return "提交失败，请稍后再试。";
 }
 
 Page({
@@ -164,7 +166,7 @@ Page({
   },
 
   async submitForm() {
-    if (this.data.submitting) return;
+    if (this.submitInProgress || this.data.submitting) return;
 
     const fieldError = this.validateForm();
     if (fieldError) {
@@ -175,6 +177,7 @@ Page({
       return;
     }
 
+    this.submitInProgress = true;
     this.setData({
       submitting: true,
       fieldError: "",
@@ -188,16 +191,23 @@ Page({
         category: this.data.selectedCategory,
       });
 
+      this.submitInProgress = false;
       this.setData({ submitting: false });
       wx.navigateTo({
         url: `/pages/qimen-result/qimen-result?id=${record.id}`,
+        fail: () => {
+          this.setData({
+            submitError: RECORD_OPEN_ERROR_MESSAGE,
+            submitCanRetry: false,
+          });
+        },
       });
     } catch (error) {
+      this.submitInProgress = false;
       this.setData({
         submitting: false,
         submitError: mapSubmitError(error),
-        submitCanRetry:
-          error?.type === ERROR_TYPES.NETWORK && !isBusinessError(error, 40002),
+        submitCanRetry: isNetworkLikeError(error) && !isBusinessError(error, 40002),
       });
     }
   },
@@ -207,6 +217,9 @@ Page({
     if (!id) return;
     wx.navigateTo({
       url: `/pages/qimen-result/qimen-result?id=${id}`,
+      fail: () => {
+        wx.showToast({ title: RECORD_OPEN_ERROR_MESSAGE, icon: "none" });
+      },
     });
   },
 });

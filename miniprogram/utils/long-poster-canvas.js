@@ -1,3 +1,5 @@
+const { ALBUM_SAVE_ERROR_MESSAGE } = require("./ux-state");
+
 const POSTER_WIDTH = 600;
 const CONTENT_WIDTH = 504;
 const PADDING_X = 48;
@@ -474,7 +476,7 @@ function getAlbumPermissionHelpers(component) {
     async saveImageToAlbum(filePath) {
       const allowed = await this.ensureAlbumPermission();
       if (!allowed) {
-        wx.showToast({ title: "未获得相册权限，可稍后在设置中开启", icon: "none" });
+        wx.showToast({ title: ALBUM_SAVE_ERROR_MESSAGE, icon: "none" });
         return false;
       }
       await new Promise((resolve, reject) => {

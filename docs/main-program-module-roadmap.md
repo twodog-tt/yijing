@@ -327,6 +327,7 @@ Tab: 今日 | 问事 | 扩展(八字/奇门) | 我的(历史/设置)
 | **Phase HOME1-QA** | 首页与模块引导回归验收 | 静态/代码层/合规预检通过；DevTools UI 待本地确认 | Cursor ✅ |
 | **Phase RELEASE-QA-PREP** | 体验版前全模块验收准备 | health/API/视图层预检通过；统一 DevTools 清单待勾选 | Cursor ✅ |
 | **Phase RELEASE-QA** | 体验版前最终验收 | 自动化 24/24 通过；DevTools/真机/备案域名待闭环 | Cursor ✅ |
+| **Phase MINIAPP-UX1** | 小程序状态体验优化 | 加载/错误/空状态、防重复提交、相册权限失败提示 | Cursor ✅ |
 | **Phase ALG2** | 奇门 v2 POC（后端） | 九宫结构化 payload、`CalculateV2`、golden / 合规测试 | Cursor ✅ |
 | **Phase ALG2.1** | 奇门 v2 golden 扩展 | 10 组 fixtures、冬至/夏至边界、结构/合规测试、口径审计文档 | Cursor ✅ |
 | **Phase ALG2.2** | 奇门 v2 API 灰度接入 | 创建 API 可选 `algorithm_version`；默认 v1；内部可测 v2 | Cursor ✅ |

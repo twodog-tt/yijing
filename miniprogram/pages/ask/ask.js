@@ -1,5 +1,12 @@
 const { createDivination, getCategories } = require("../../utils/api");
 const { isBusinessError } = require("../../utils/request");
+const {
+  CONTENT_LOAD_ERROR_MESSAGE,
+  NETWORK_ERROR_MESSAGE,
+  RECORD_OPEN_ERROR_MESSAGE,
+  isNetworkLikeError,
+  networkOr,
+} = require("../../utils/ux-state");
 
 Page({
   data: {
@@ -21,6 +28,9 @@ Page({
   },
 
   onLoad() {
+    this.pageUnloaded = false;
+    this.flowInProgress = false;
+    this.navigationStarted = false;
     this.loadCategories();
   },
 
@@ -36,11 +46,11 @@ Page({
       const categories = (Array.isArray(result) ? result : []).filter(
         (item) => Number(item.id) !== 6 && item.name !== "今日运势"
       );
-      if (!categories.length) throw new Error("暂无可用事项类型，请稍后重试。");
+      if (!categories.length) throw new Error("暂无可用事项类型，请稍后再试。");
       this.setData({ categories });
     } catch (error) {
       this.setData({
-        loadError: error?.message || "事项类型加载失败，请稍后重试。",
+        loadError: networkOr(error, error?.message || CONTENT_LOAD_ERROR_MESSAGE),
       });
     } finally {
       this.setData({ loading: false });
@@ -107,7 +117,7 @@ Page({
         category_id: this.data.selectedCategoryId,
         question: this.data.question.trim(),
       });
-      if (!result?.id) throw new Error("起卦结果缺少记录 ID，请稍后重试。");
+      if (!result?.id) throw new Error("起卦结果缺少记录 ID，请稍后再试。");
       this.navigationStarted = false;
       this.setData({
         castingRecord: result,
@@ -115,7 +125,9 @@ Page({
       });
       animationStarted = true;
     } catch (error) {
-      let message = error?.message || "提交失败，请稍后重试。";
+      let message = isNetworkLikeError(error)
+        ? NETWORK_ERROR_MESSAGE
+        : error?.message || "提交失败，请稍后再试。";
       let submitCanRetry = true;
       if (isBusinessError(error, 40002)) {
         message = "这个问题不适合使用卦象方式解读，请换成自我反思或行动选择类问题。";
@@ -155,7 +167,7 @@ Page({
         if (this.pageUnloaded) return;
         this.setData({
           submitting: false,
-          submitError: "结果页打开失败，记录已保存，可从历史记录重新进入。",
+          submitError: RECORD_OPEN_ERROR_MESSAGE,
           submitCanRetry: false,
         });
       },

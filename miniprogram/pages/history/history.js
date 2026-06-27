@@ -8,7 +8,13 @@ const {
 const { buildBaziHistoryListItem } = require("../../utils/bazi");
 const { buildQimenHistoryListItem } = require("../../utils/qimen");
 const { formatDateTime } = require("../../utils/date");
-const { ERROR_TYPES, isBusinessError } = require("../../utils/request");
+const { isBusinessError } = require("../../utils/request");
+const {
+  NETWORK_ERROR_MESSAGE,
+  RECORD_OPEN_ERROR_MESSAGE,
+  isNetworkLikeError,
+  networkOr,
+} = require("../../utils/ux-state");
 
 const PAGE_SIZE = 20;
 
@@ -98,17 +104,15 @@ function emptyStateCopy(filter) {
 }
 
 function mapDeleteError(error) {
-  if (!error) return "删除失败，请稍后重试。";
-  if (error.type === ERROR_TYPES.NETWORK) {
-    return "网络异常，请检查网络后重试。";
-  }
+  if (!error) return "删除失败，请稍后再试。";
+  if (isNetworkLikeError(error)) return NETWORK_ERROR_MESSAGE;
   if (isBusinessError(error, 40001)) {
     return "会话已失效，请重新进入页面。";
   }
   if (isBusinessError(error, 40401)) {
-    return "记录不存在或已被删除。";
+    return "记录已不存在，请刷新后查看。";
   }
-  return "删除失败，请稍后重试。";
+  return "删除失败，请稍后再试。";
 }
 
 function shouldFetchDivination(filter) {
@@ -140,7 +144,7 @@ Page({
     hasMore: false,
     loading: true,
     loadingMore: false,
-    deletingId: null,
+    deletingKey: "",
     error: "",
     emptyTitle: "",
     emptyDescription: "",
@@ -300,7 +304,7 @@ Page({
       this.loadedOnce = true;
     } catch (error) {
       this.setData({
-        error: error?.message || "历史记录加载失败，请稍后重试。",
+        error: networkOr(error, "历史记录暂时加载失败，请稍后再试。"),
       });
     } finally {
       this.loadingRequest = false;
@@ -312,12 +316,17 @@ Page({
   openRecord(event) {
     const url = event.currentTarget.dataset.url;
     if (!url) return;
-    wx.navigateTo({ url });
+    wx.navigateTo({
+      url,
+      fail: () => {
+        wx.showToast({ title: RECORD_OPEN_ERROR_MESSAGE, icon: "none" });
+      },
+    });
   },
 
   confirmDelete(event) {
     const { id, type } = event.currentTarget.dataset;
-    if (!id || !type || this.data.deletingId) return;
+    if (!id || !type || this.data.deletingKey) return;
 
     wx.showModal({
       title: "确认删除",
@@ -336,7 +345,8 @@ Page({
       return;
     }
 
-    this.setData({ deletingId: id });
+    const deletingKey = `${recordType}-${id}`;
+    this.setData({ deletingKey });
     try {
       if (recordType === "divination") {
         await deleteDivination(id);
@@ -346,7 +356,7 @@ Page({
       wx.showToast({ title: "已删除", icon: "success" });
 
       const numericId = Number(id);
-      const nextState = { deletingId: null };
+      const nextState = { deletingKey: "" };
       if (recordType === "divination") {
         nextState.divItems = this.data.divItems.filter((item) => item.id !== numericId);
       } else if (recordType === "bazi") {
@@ -359,7 +369,7 @@ Page({
         this.updateVisibleState();
       });
     } catch (error) {
-      this.setData({ deletingId: null });
+      this.setData({ deletingKey: "" });
       wx.showToast({ title: mapDeleteError(error), icon: "none" });
     }
   },

@@ -6,41 +6,42 @@ const {
   MODULE_BAZI_LABEL,
 } = require("../../utils/bazi");
 const { formatDateTime } = require("../../utils/date");
-const { ERROR_TYPES, isBusinessError } = require("../../utils/request");
+const { isBusinessError } = require("../../utils/request");
+const {
+  CONTENT_LOAD_ERROR_MESSAGE,
+  NETWORK_ERROR_MESSAGE,
+  RECORD_OPEN_ERROR_MESSAGE,
+  REPORT_GENERATE_ERROR_MESSAGE,
+  isNetworkLikeError,
+} = require("../../utils/ux-state");
 
 function mapLoadError(error) {
-  if (!error) return "加载失败，请稍后重试。";
-  if (error.type === ERROR_TYPES.NETWORK) {
-    return "网络异常，请检查网络后重试。";
-  }
+  if (!error) return CONTENT_LOAD_ERROR_MESSAGE;
+  if (isNetworkLikeError(error)) return NETWORK_ERROR_MESSAGE;
   if (isBusinessError(error, 40001)) {
     return "会话已失效，请重新进入页面。";
   }
   if (isBusinessError(error, 40401)) {
-    return "记录不存在或已被删除。";
+    return RECORD_OPEN_ERROR_MESSAGE;
   }
-  return error.message || "加载失败，请稍后重试。";
+  return CONTENT_LOAD_ERROR_MESSAGE;
 }
 
 function mapDeleteError(error) {
-  if (!error) return "删除失败，请稍后重试。";
-  if (error.type === ERROR_TYPES.NETWORK) {
-    return "网络异常，请检查网络后重试。";
-  }
+  if (!error) return "删除失败，请稍后再试。";
+  if (isNetworkLikeError(error)) return NETWORK_ERROR_MESSAGE;
   if (isBusinessError(error, 40001)) {
     return "会话已失效，请重新进入页面。";
   }
   if (isBusinessError(error, 40401)) {
-    return "记录不存在或已被删除。";
+    return "记录已不存在，请刷新后查看。";
   }
-  return error.message || "删除失败，请稍后重试。";
+  return "删除失败，请稍后再试。";
 }
 
 function mapUnlockError(error) {
-  if (!error) return "完整报告获取失败，请稍后重试。";
-  if (error.type === ERROR_TYPES.NETWORK) {
-    return "网络异常，请检查网络后重试。";
-  }
+  if (!error) return REPORT_GENERATE_ERROR_MESSAGE;
+  if (isNetworkLikeError(error)) return NETWORK_ERROR_MESSAGE;
   if (isBusinessError(error, 40001)) {
     return "会话已失效，请重新进入页面。";
   }
@@ -48,9 +49,9 @@ function mapUnlockError(error) {
     return "当前记录暂不支持生成完整报告。";
   }
   if (isBusinessError(error, 40401)) {
-    return "记录不存在或已被删除。";
+    return RECORD_OPEN_ERROR_MESSAGE;
   }
-  return error.message || "完整报告获取失败，请稍后重试。";
+  return REPORT_GENERATE_ERROR_MESSAGE;
 }
 
 Page({
