@@ -1771,6 +1771,114 @@ Storage 写入 `yijing_session_key` 后打开对应结果页：
 
 **下一步：** 本地 DevTools 勾选 → RELEASE-QA 或 BAZI1.4。
 
+## 25.27 Phase RELEASE-QA-PREP：体验版前全模块验收准备
+
+**说明：** 汇总首页 / 问事 / 八字 / 奇门 / 历史 / 分享长图的体验版前验收清单；执行 backend health 与核心 API / 代码层预检；**不提审**；**不改** backend / Web / SQL（除非 health 异常）。
+
+**Git 起点：** `main` @ `17b9371`；工作区仅 `?? .deploy-patches/`。
+
+### backend health（2026-06-27）
+
+- [x] `GET /api/v1/health` → `status=ok`, `db=ok`
+- [x] `GET /health` → `status=ok`, `db=ok`
+- [x] `POST /api/v1/sessions` → code=0，返回 session_key
+
+### 静态检查
+
+- [x] miniprogram JS `node --check` 全通过
+- [x] 无广告解锁 / 模拟广告文案（`rewarded-ad.js` 为未接入 stub，无页面引用）
+- [x] 禁用词仅出现在过滤器与边界否定说明
+- [x] 无 algorithm_version 选择 UI；创建 API 不传 algorithm_version
+
+### 核心 API 测试记录（ECS）
+
+| 模块 | 类型 | id | session | algorithm_version | 代码层 |
+|------|------|-----|---------|-------------------|--------|
+| 八字 | v2 正常 | 105 | `bazi-v2-view-test` | bazi-v2-poc | ✅ isBaziV2=true |
+| 八字 | v1 默认 | 106 | `bazi-v1-view-test` | bazi-simple-v1 | ✅ isBaziV2=false |
+| 八字 | v2 未知时辰 | 107 | `bazi-v2-unknown-test` | bazi-v2-poc | ✅ hourUnknown=true |
+| 奇门 | professional | 102 | `qimen-devtools-prof` | qimen-v2-professional | ✅ 九宫 9 宫，中五 door=— |
+| 奇门 | v1 | 103 | `qimen-devtools-v1` | qimen-simple-v1 | ✅ 无 professional 区块 |
+| 奇门 | poc | 104 | `qimen-devtools-poc` | qimen-v2-poc | ✅ 不误触发 professional |
+
+**API 隐私：** 上述记录响应均不含 prompt；body 不含 session_key 字段。
+
+### 微信开发者工具统一验收清单（需本地重新编译 / 预览）
+
+#### 首页
+
+| # | 项 | 代码层 | DevTools |
+|---|-----|--------|----------|
+| 1 | 首页正常打开 | ✅ | ☐ |
+| 2 | 三模块入口 | ✅ | ☐ |
+| 3 | 问事 / 八字 / 奇门跳转 | ✅ | ☐ |
+| 4 | 历史 / 关于入口 | ✅ | ☐ |
+| 5 | 无 algorithm_version / 广告 / 登录 | ✅ | ☐ |
+
+Storage 参考：各模块测试记录 session 见上表；首页无需特殊 session。
+
+#### 问事起卦
+
+| # | 项 | DevTools |
+|---|-----|----------|
+| 1 | 普通入口创建 | ☐ |
+| 2 | 结果页 / 解锁完整报告 | ☐ |
+| 3 | 分享卡片 / 长图生成保存 | ☐ |
+| 4 | 历史页查看 / 删除 | ☐ |
+| 5 | 不展示 session_key / payload / prompt | ☐ |
+
+#### 八字简析
+
+| # | 项 | DevTools |
+|---|-----|----------|
+| 1 | 普通创建仍为 bazi-simple-v1 | ☐ |
+| 2 | id=106 无 v2 区块 | ☐ |
+| 3 | id=105 v2 区块（节气 / 四柱 / 五行） | ☐ |
+| 4 | id=107 未知时辰 fallback | ☐ |
+| 5 | 分享 / 长图无完整出生信息 | ☐ |
+| 6 | 历史跳转 / 删除 | ☐ |
+
+#### 奇门问事
+
+| # | 项 | DevTools |
+|---|-----|----------|
+| 1 | 普通创建仍为 qimen-simple-v1 | ☐ |
+| 2 | id=103 无 professional 九宫 | ☐ |
+| 3 | id=104 poc 不误触发 professional | ☐ |
+| 4 | id=102 professional 九宫 9 宫 | ☐ |
+| 5 | 中五宫 door=— / 值符宫标签 | ☐ |
+| 6 | 分享 / 长图 / 历史 | ☐ |
+
+#### 历史记录
+
+| # | 项 | 代码层 | DevTools |
+|---|-----|--------|----------|
+| 1 | 全部 / 问事 / 八字 / 奇门筛选 | ✅ | ☐ |
+| 2 | 三类详情跳转 URL 正确 | ✅ | ☐ |
+| 3 | 列表不展示完整原问题 / 出生信息 | ✅ | ☐ |
+| 4 | 删除 / 空状态 | ✅ 逻辑 | ☐ |
+
+### 合规与隐私总检查
+
+- [x] 首页 / 结果页 / 历史列表：代码层不绑定 payload 原始 JSON
+- [x] 分享 / 长图视图层：不含 birth_date / 完整原问题（程序化验证 bazi 105–107）
+- [x] 边界说明为否定 / 提醒口径
+- [x] 无支付 / 微信登录 / 手机号授权入口（about 明确说明不接入）
+- [ ] DevTools 全模块长图 / 分享层人工复核：待本地勾选
+
+### 阻塞项
+
+| 级别 | 说明 |
+|------|------|
+| 非代码 | 微信开发者工具真实 UI / 相册保存 / 真机预览尚未闭环 |
+| 无 | backend health 正常；静态 / API / 视图层预检通过 |
+
+**本阶段结论：** 体验版前验收清单已整理；自动化预检全部通过；无 miniprogram 小修；**不提审**。
+
+**部署：** 无需 backend / frontend / SQL；需微信开发者工具重新编译 / 预览。
+
+**下一步：** 本地 DevTools 勾选上表 → **RELEASE-QA**（正式体验版验收）→ 备案 / 合法域名。
+
 ## 26. Phase UX1：八字 / 奇门轻量动效
 
 Phase UX1 在小程序与 Web 八字、奇门页面增加贴合传统文化场景的轻量 UI 动效，提升氛围与完成感。**仅改 UI 动效，不改后端、数据库、部署。**

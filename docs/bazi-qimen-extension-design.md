@@ -2109,3 +2109,28 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 **下一步：** RELEASE-QA；BAZI1.4；用户反馈/体验优化。
 
 ---
+
+### 10.54 Phase RELEASE-QA-PREP 验收清单（体验版前全模块准备）
+
+**Git 基线：** `17b9371`；**不提审**；**不改** backend / Web / SQL。
+
+**backend health：**
+
+- [x] `/api/v1/health` 与 `/health`：`status=ok`, `db=ok`
+- [x] `POST /api/v1/sessions` 可用
+
+**代码层 / API 预检：**
+
+- [x] 首页三模块路由 + 历史 / 关于
+- [x] 八字 105/106/107 条件展示与隐私
+- [x] 奇门 102/103/104 professional 条件展示
+- [x] 普通创建不传 algorithm_version
+- [x] 静态合规检查通过
+
+**DevTools 统一清单：** 见 `docs/miniprogram-dev.md` §25.27（待本地勾选）。
+
+**阻塞项：** 仅 DevTools / 真机 UI 未闭环；无 backend 或代码阻塞。
+
+**下一步：** RELEASE-QA（正式体验版验收）；备案 / 合法域名。
+
+---
