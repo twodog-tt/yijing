@@ -1,109 +1,158 @@
-import ElementOrbit from "@/components/motion/ElementOrbit";
-import QimenScanGrid from "@/components/motion/QimenScanGrid";
 import Link from "next/link";
 
-const POSITIONING_TAGS = [
-  "传统文化学习",
-  "自我观察",
-  "行动节奏整理",
-] as const;
+const HOME_BRAND = {
+  eyebrow: "文易传统文化",
+  title: "易经问事、八字简析、奇门问事",
+  subtitle: "传统文化学习参考，不构成现实决策依据",
+} as const;
 
-const HOME_DISCLAIMER =
-  "仅供娱乐、传统文化学习和自我反思参考，不构成预测、医疗、法律、投资或重大决策建议。";
+const HOME_COMPLIANCE_NOTE =
+  "本产品内容基于传统文化模型生成，仅供学习参考、自我观察与行动节奏整理。结果不构成现实决策依据，请结合实际情况判断。";
 
-const NAV_ENTRIES = [
+const HOME_MODULES = [
   {
     href: "/ask",
     title: "问事起卦",
-    variant: "primary" as const,
+    subtitle: "适合梳理一个具体问题的当前状态与行动提醒",
+    tags: ["具体问题", "局势观察", "行动提醒"],
+    buttonText: "开始问事",
+    accent: "ask",
   },
   {
     href: "/bazi",
     title: "八字简析",
-    subtitle: "基于传统干支文化的性格与五行倾向参考",
-    variant: "bazi" as const,
-    deco: "orbit" as const,
+    subtitle: "适合从传统文化视角观察个人结构与长期节奏",
+    tags: ["自我观察", "五行结构", "长期节奏"],
+    buttonText: "查看八字",
+    accent: "bazi",
   },
   {
     href: "/qimen",
     title: "奇门问事",
-    subtitle: "基于传统奇门文化的局势梳理与行动节奏参考",
-    variant: "qimen" as const,
-    deco: "scan" as const,
+    subtitle: "适合观察当前局势、资源关系与推进节奏",
+    tags: ["局势梳理", "资源关系", "推进节奏"],
+    buttonText: "进入奇门",
+    accent: "qimen",
   },
+] as const;
+
+const HOME_GUIDE_ITEMS = [
+  { scenario: "临时问题 / 具体事情", module: "问事起卦" },
+  { scenario: "自我结构 / 长期节奏", module: "八字简析" },
+  { scenario: "当前局势 / 行动节奏", module: "奇门问事" },
+] as const;
+
+const HOME_SCENE_ITEMS = [
   {
-    href: "/today",
-    title: "今日一卦",
-    variant: "today" as const,
+    href: "/ask",
+    title: "感情关系观察",
+    subtitle: "适合梳理关系状态、沟通节奏与边界提醒",
+    description: "遇到感情困惑时，可以先从一个具体问题开始观察。",
+    buttonText: "去问感情问题",
   },
-  {
-    href: "/history",
-    title: "历史记录",
-    variant: "default" as const,
-  },
-  {
-    href: "/about",
-    title: "关于与免责声明",
-    variant: "default" as const,
-  },
+] as const;
+
+const HOME_BOUNDARY_ITEMS = [
+  "不做精准预测",
+  "不替代现实决策",
+  "不提供投资、医疗、法律等建议",
 ] as const;
 
 export default function Home() {
   return (
-    <main className="home-page mx-auto w-full max-w-lg flex-1 px-4 py-6 sm:max-w-xl sm:py-10">
-      <header className="home-hero">
-        <p className="home-eyebrow">文易传统文化</p>
-        <h1 className="home-title">易经问事、八字简析、奇门问事</h1>
-        <p className="home-description">
-          传统文化学习参考，不构成现实决策依据。
-        </p>
-      </header>
+    <main className="home-page flex-1">
+      <section className="home-hero">
+        <div className="home-hero__aura" aria-hidden />
+        <p className="home-hero__eyebrow">{HOME_BRAND.eyebrow}</p>
+        <h1 className="home-hero__title">{HOME_BRAND.title}</h1>
+        <p className="home-hero__subtitle">{HOME_BRAND.subtitle}</p>
+      </section>
 
-      <div className="home-positioning" aria-label="产品定位">
-        {POSITIONING_TAGS.map((tag) => (
-          <div key={tag} className="home-positioning-item">
-            <span className="home-positioning-dot" aria-hidden />
-            <span>{tag}</span>
-          </div>
-        ))}
-      </div>
-
-      <nav className="home-nav" aria-label="功能入口">
-        {NAV_ENTRIES.map((entry) => (
+      <section className="home-modules" aria-label="核心模块">
+        {HOME_MODULES.map((module) => (
           <Link
-            key={entry.href}
-            href={entry.href}
-            className={`home-nav-link home-nav-link--${entry.variant}`}
+            key={module.href}
+            href={module.href}
+            className={`home-module-card home-module-card--${module.accent}`}
           >
-            {"subtitle" in entry ? (
-              <span className="home-nav-link__content">
-                {"deco" in entry && entry.deco === "orbit" ? (
-                  <span className="home-entry-deco home-entry-deco-wrap" aria-hidden>
-                    <ElementOrbit compact />
-                  </span>
-                ) : null}
-                {"deco" in entry && entry.deco === "scan" ? (
-                  <span className="home-entry-deco home-entry-deco-wrap" aria-hidden>
-                    <QimenScanGrid compact />
-                  </span>
-                ) : null}
-                <span className="home-nav-link__text">
-                  <span>{entry.title}</span>
-                  <span className="home-nav-subtitle">{entry.subtitle}</span>
+            <span className="home-module-card__accent" aria-hidden />
+            <span className="home-module-card__header">
+              <span className="home-module-card__title">{module.title}</span>
+              <span className="home-module-card__subtitle">{module.subtitle}</span>
+            </span>
+            <span className="home-module-card__tags">
+              {module.tags.map((tag) => (
+                <span key={tag} className="home-module-card__tag">
+                  {tag}
                 </span>
+              ))}
+            </span>
+            <span className="home-module-card__action">
+              <span className="home-module-card__button">{module.buttonText}</span>
+              <span className="home-module-card__arrow" aria-hidden>
+                →
               </span>
-            ) : (
-              <span>{entry.title}</span>
-            )}
-            <span className="home-nav-arrow" aria-hidden>
-              →
             </span>
           </Link>
         ))}
+      </section>
+
+      <section className="home-guide-card">
+        <h2 className="home-guide-card__title">如何选择模块</h2>
+        <div className="home-guide-card__list">
+          {HOME_GUIDE_ITEMS.map((item) => (
+            <div key={item.scenario} className="home-guide-card__item">
+              <span className="home-guide-card__scenario">{item.scenario}</span>
+              <span className="home-guide-card__module">{item.module}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="home-scenes">
+        <h2 className="home-scenes__title">常见场景</h2>
+        {HOME_SCENE_ITEMS.map((item) => (
+          <Link key={item.title} href={item.href} className="home-scene-card">
+            <span className="home-scene-card__main">
+              <span className="home-scene-card__title">{item.title}</span>
+              <span className="home-scene-card__subtitle">{item.subtitle}</span>
+              <span className="home-scene-card__description">
+                {item.description}
+              </span>
+            </span>
+            <span className="home-scene-card__button">{item.buttonText}</span>
+          </Link>
+        ))}
+      </section>
+
+      <section className="home-boundary">
+        <h2 className="home-boundary__title">使用边界说明</h2>
+        <div className="home-boundary__list">
+          {HOME_BOUNDARY_ITEMS.map((item) => (
+            <p key={item} className="home-boundary__item">
+              · {item}
+            </p>
+          ))}
+        </div>
+      </section>
+
+      <nav className="home-secondary" aria-label="次级入口">
+        <Link href="/history" className="home-secondary__link">
+          <span>历史记录</span>
+          <span className="home-secondary__arrow" aria-hidden>
+            →
+          </span>
+        </Link>
+        <Link href="/about" className="home-secondary__link">
+          <span>关于与说明</span>
+          <span className="home-secondary__arrow" aria-hidden>
+            →
+          </span>
+        </Link>
       </nav>
 
-      <p className="home-disclaimer" role="note">
-        {HOME_DISCLAIMER}
+      <p className="home-compliance" role="note">
+        {HOME_COMPLIANCE_NOTE}
       </p>
     </main>
   );
