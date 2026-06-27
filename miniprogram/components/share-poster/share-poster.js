@@ -25,6 +25,11 @@ function hexagramName(hexagram, fallback) {
   return normalizeText(hexagram?.full_name || hexagram?.name || fallback);
 }
 
+function shouldDrawMethodNote(methodNote) {
+  const normalizedNote = normalizeText(methodNote);
+  return normalizedNote && normalizedNote !== normalizeText(DIVINATION_METHOD_INTRO);
+}
+
 function drawHexagramLines(ctx, lines, x, y, changed = false) {
   const ordered = (Array.isArray(lines) ? lines : [])
     .slice()
@@ -89,7 +94,9 @@ function drawInsightCard(ctx, x, y, title, lines) {
 
 function estimateRawLongPosterHeight(data) {
   let height = 320;
-  height += estimateParagraphHeight(data.methodNote || DIVINATION_METHOD_INTRO, 22, 30);
+  if (shouldDrawMethodNote(data.methodNote)) {
+    height += estimateParagraphHeight(data.methodNote, 22, 30) + 12;
+  }
   height += 178;
   height += 72;
   height += 40 + estimateParagraphHeight(data.situationSummary || "", 24, 28);
@@ -135,12 +142,14 @@ function layoutLongPoster(ctx, data, canvasHeight) {
     font: "14px sans-serif",
     color: "#57534e",
   });
-  y += 12;
-  y = drawWrappedParagraph(ctx, normalizeText(data.methodNote), PADDING_X, y, {
-    lineHeight: 22,
-    font: "14px sans-serif",
-    color: "#78716c",
-  });
+  if (shouldDrawMethodNote(data.methodNote)) {
+    y += 12;
+    y = drawWrappedParagraph(ctx, normalizeText(data.methodNote), PADDING_X, y, {
+      lineHeight: 22,
+      font: "14px sans-serif",
+      color: "#78716c",
+    });
+  }
   y += 16;
 
   y = drawSectionTitle(ctx, "卦象概览", PADDING_X, y);
@@ -204,6 +213,7 @@ function layoutLongPoster(ctx, data, canvasHeight) {
   y += 8;
 
   y = drawInsightCard(ctx, PADDING_X, y, "变化观察", data.changeObservations);
+  y += 8;
 
   if (Array.isArray(data.actionPoints) && data.actionPoints.length) {
     y = drawSectionTitle(ctx, "行动提醒", PADDING_X, y);
