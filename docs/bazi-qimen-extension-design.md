@@ -2131,6 +2131,32 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 
 **阻塞项：** 仅 DevTools / 真机 UI 未闭环；无 backend 或代码阻塞。
 
-**下一步：** RELEASE-QA（正式体验版验收）；备案 / 合法域名。
+**下一步：** 备案 / 合法域名 → 体验版上传评估。
+
+---
+
+### 10.55 Phase RELEASE-QA 验收清单（体验版前最终验收）
+
+**Git 基线：** `bcfbe59`（RELEASE-QA-PREP）；本阶段 docs @ 新 commit；**不提审**；**不上传体验版**。
+
+**自动化验收（2026-06-27）：**
+
+- [x] backend health：`status=ok`, `db=ok`
+- [x] 静态检查 / 合规 grep 通过
+- [x] 程序化 24/24：首页路由 + 八字 105/106/107 + 奇门 102/103/104 + 默认创建不传 algorithm_version
+- [x] `https://api.wenyiapp.cn` 不可用；HTTP dev ECS 可用
+
+**DevTools / 真机：** 待维护者本地勾选（§25.28）；Cursor 无法替代。
+
+**备案 / 合法域名阻塞：**
+
+- [ ] ICP 备案完成
+- [ ] HTTPS API 部署
+- [ ] 微信 request 合法域名配置
+- **建议上传体验版：否**（先完成上述三项）
+
+**本阶段结论：** 代码与 API 就绪；体验版分发与 UI 闭环为剩余阻塞；无 miniprogram 小修。
+
+**下一步：** DevTools 本地勾选 → 备案 / 合法域名 → 体验版上传。
 
 ---

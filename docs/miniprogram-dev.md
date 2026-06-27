@@ -1879,6 +1879,113 @@ Storage 参考：各模块测试记录 session 见上表；首页无需特殊 se
 
 **下一步：** 本地 DevTools 勾选上表 → **RELEASE-QA**（正式体验版验收）→ 备案 / 合法域名。
 
+## 25.28 Phase RELEASE-QA：体验版前最终验收
+
+**说明：** 在 RELEASE-QA-PREP（`bcfbe59`）基础上完成正式 RELEASE-QA 记录；**不提审**；**不上传体验版**；**不改** backend / Web / SQL。
+
+**Git 起点：** `main` @ `bcfbe59`；工作区仅 `?? .deploy-patches/`。
+
+### backend health（2026-06-27 复查）
+
+- [x] `GET /api/v1/health` → `status=ok`, `db=ok`
+- [x] `GET /health` → `status=ok`, `db=ok`
+- [x] `POST /api/v1/sessions` → code=0
+
+### 静态检查
+
+- [x] miniprogram JS `node --check` 全通过
+- [x] 无生产广告文案
+- [x] 禁用词仅出现在过滤器与边界否定说明
+- [x] 程序化验收 24/24 通过（首页路由 + 八字 105/106/107 + 奇门 102/103/104 + 默认创建不传 algorithm_version）
+
+### DevTools / 真机环境
+
+| 项 | 结论 |
+|----|------|
+| Cursor 是否可运行微信 DevTools | 否 |
+| 是否重新编译 / 真机预览（Agent） | 未执行，需维护者本地完成 |
+| 本地 DevTools 可测（关合法域名校验 + HTTP dev API） | **是** |
+| 体验版真机可稳定请求后端 | **否**（见备案 / 合法域名） |
+| 当前 appid（规格） | `wx80ab4e58d65af2b9`（仓库无 project.config.json，以开发者工具为准） |
+| 当前 API 基址（develop/trial） | `http://123.57.48.214/api/v1` |
+| 是否依赖「不校验合法域名」 | **是**（DevTools 本地调试） |
+| `https://api.wenyiapp.cn/api/v1/health` | 不可用（curl 失败） |
+
+### 微信开发者工具验收（需维护者本地勾选）
+
+#### 首页
+
+| # | 项 | 代码层 | DevTools |
+|---|-----|--------|----------|
+| 1–8 | 四块结构 / 跳转 / 历史 / 关于 | ✅ | ☐ |
+| 9–11 | 无 algorithm_version / 广告 / 强预测 | ✅ | ☐ |
+
+#### 问事起卦
+
+| # | 项 | DevTools |
+|---|-----|----------|
+| 1–10 | 创建 / 结果 / 解锁 / 分享 / 长图 / 历史 | ☐ |
+| 11–12 | 分享层隐私 / 无 session_key / payload | ☐ |
+
+#### 八字简析
+
+| 记录 | session | DevTools |
+|------|---------|----------|
+| v1 id=106 | `bazi-v1-view-test` | ☐ 无 v2 区块 |
+| v2 id=105 | `bazi-v2-view-test` | ☐ v2 区块 + 四柱 + 节气 |
+| 未知 id=107 | `bazi-v2-unknown-test` | ☐ 时柱 fallback |
+| 普通创建 | — | ☐ 仍 bazi-simple-v1 |
+
+#### 奇门问事
+
+| 记录 | session | DevTools |
+|------|---------|----------|
+| v1 id=103 | `qimen-devtools-v1` | ☐ 无 professional |
+| poc id=104 | `qimen-devtools-poc` | ☐ 不误触发 professional |
+| prof id=102 | `qimen-devtools-prof` | ☐ 九宫 9 宫 / 中五 / 值符 |
+| 普通创建 | — | ☐ 仍 qimen-simple-v1 |
+
+#### 历史页 / 关于页
+
+| 项 | 代码层 | DevTools |
+|----|--------|----------|
+| 筛选 / 跳转 / 删除 / 空状态 | ✅ | ☐ |
+| 列表隐私（无完整原问题 / 出生信息） | ✅ | ☐ |
+| 关于页三模块 / 边界说明 | ✅ | ☐ |
+
+### 备案 / 合法域名 / 体验版分发
+
+| 项 | 状态 |
+|----|------|
+| `wenyiapp.cn` ICP 备案 | **未完成**（文档 §11.3：审核中 / 待完成） |
+| 微信 request 合法域名 | **未配置** |
+| HTTPS API（`api.wenyiapp.cn`） | **不可用** |
+| DevTools 本地依赖关域名校验 | **是** |
+| 上传体验版后真机 API 请求 | **可能受阻**（HTTP IP + 无备案 HTTPS 域名） |
+| **是否建议上传体验版** | **否**（先完成备案 + HTTPS + 合法域名；DevTools 本地 QA 可继续） |
+
+### 合规与隐私（代码层）
+
+- [x] 首页 / 结果 / 历史：不绑定 payload 原始 JSON
+- [x] 八字 / 奇门分享长图视图层不含完整 birth / 完整原问题（程序化）
+- [x] API 测试记录不含 prompt；body 不含 session_key
+- [x] 无 algorithm_version 选择 UI；普通创建默认 v1
+- [ ] DevTools 长图相册 / 分享层人工复核：待本地勾选
+
+### 阻塞项汇总
+
+| 级别 | 项 | 说明 |
+|------|-----|------|
+| **体验版分发** | 备案 / HTTPS / 合法域名 | 未完成，阻塞普通用户体验版 |
+| **验收闭环** | DevTools / 真机 UI | Agent 无法执行，需维护者本地勾选 §25.28 表格 |
+| 无 | backend / 代码 | health 正常；24/24 程序化通过；无小修 |
+
+**本阶段结论：** RELEASE-QA 自动化部分全部通过；DevTools / 真机 UI 与体验版分发前置条件仍待本地 / 运维完成；**不上传体验版**；**不提审**。
+
+**部署：** 无需 backend / frontend / SQL；小程序需 DevTools 重新编译 / 预览。
+
+**下一步：** ① 本地 DevTools 勾选 §25.28 表格；② 完成备案 + `api.wenyiapp.cn` HTTPS + 微信 request 合法域名；③ 再评估体验版上传。
+
 ## 26. Phase UX1：八字 / 奇门轻量动效
 
 Phase UX1 在小程序与 Web 八字、奇门页面增加贴合传统文化场景的轻量 UI 动效，提升氛围与完成感。**仅改 UI 动效，不改后端、数据库、部署。**
