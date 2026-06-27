@@ -2315,3 +2315,39 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 **下一步：** DevTools / 真机本地勾选 LOVE1 入口与问事完整链路；DOMAIN1；RELEASE-QA-RECHECK。
 
 ---
+
+### 10.62 Phase LOVE1-QA 记录（感情关系观察入口与问事流程回归）
+
+**目标：** 对 LOVE1（`c310cc7`）做代码层回归与文档记录，确认感情关系观察只是问事起卦场景入口，不影响三大主模块、普通问事、八字 / 奇门和既有隐私合规边界。
+
+**代码层结论：**
+
+- [x] 首页三大主模块仍为问事起卦、八字简析、奇门问事
+- [x] 感情关系观察位于 `HOME_SCENE_ITEMS`，不是 `HOME_MODULES` 第四项
+- [x] 入口路径为 `/pages/ask/ask?scene=relationship`
+- [x] 问事页 `onLoad(options)` 读取 `scene=relationship` 后切换标题、说明、边界提示、placeholder 和模板
+- [x] 6 个模板可渲染，点击只填充 textarea，不触发提交
+- [x] 普通问事入口不显示 relationship 专属文案
+- [x] 提交防重复逻辑仍保留
+- [x] `createDivination` 未新增 `scene`、`algorithm_version` 或其他后端字段
+- [x] 八字 / 奇门入口未修改
+
+**合规与隐私：**
+
+- [x] relationship 场景未出现正缘判断、复合承诺、姻缘指数、脱单时间、合婚分数、命中注定、改运化灾等表达
+- [x] 历史列表继续不展示完整原问题
+- [x] 问事分享卡片与长图继续不展示完整原问题、完整报告全文、`session_key`、payload 或小程序码
+
+**自动化检查：**
+
+- [x] `bash scripts/check-miniprogram-static.sh`
+- [x] `bash scripts/check-release-privacy.sh`
+- [x] `bash scripts/check-api-smoke.sh`：15 PASS / 0 FAIL
+- [x] 小程序 JS `node --check`
+- [x] `git diff --check`
+
+**待人工勾选：** 微信 DevTools / 真机仍需维护者本地确认入口视觉层级、跳转、模板填充、提交、结果页、解锁、分享、长图保存、历史跳转 / 删除，以及普通问事、八字、奇门入口不受影响。
+
+**结论：** LOVE1-QA 代码层通过；不需要 backend / frontend / SQL / deploy；不上传体验版、不提审。
+
+---

@@ -2522,3 +2522,57 @@ bash scripts/check-api-smoke.sh
 - `git diff --check`
 
 **结论：** LOVE1 是小程序低风险场景入口优化，复用问事起卦全链路；不部署、不上传体验版、不提审。
+
+## 40. Phase LOVE1-QA：感情关系观察入口与问事流程回归
+
+**范围：** LOVE1 入口与问事流程代码层 QA、文档记录；**不改** backend / frontend / SQL / deploy / `.env*`，不上传体验版、不提审。
+
+**代码层验证：**
+
+- [x] 首页 `HOME_MODULES` 仍只有问事起卦、八字简析、奇门问事三大主模块。
+- [x] “感情关系观察”位于首页“常见场景”低优先级入口，不是第四大主模块。
+- [x] 入口路径为 `/pages/ask/ask?scene=relationship`。
+- [x] 首页文案未出现正缘、复合概率、姻缘指数、脱单时间、合婚分数等承诺式表达。
+- [x] 问事页 `onLoad(options)` 可读取 `scene=relationship`。
+- [x] relationship 场景标题、说明、边界提示、placeholder 与 LOVE1 规格一致。
+- [x] 6 个模板问题均为关系状态、沟通节奏、边界与下一步行动整理，不含强预测或复合承诺。
+- [x] 模板点击只填入 textarea，用户可编辑，不自动提交。
+- [x] 普通 `/pages/ask/ask` 入口仍使用普通问事标题、说明和 placeholder。
+- [x] 提交防重复逻辑仍由 `flowInProgress` 与 `submitting` 控制。
+- [x] `createDivination` payload 仍为 `category_id` + `question` + 既有 session / disclaimer 字段，不新增 `scene` 或 `algorithm_version`。
+- [x] 八字 / 奇门入口未修改，不受 LOVE1 影响。
+
+**隐私与分享：**
+
+- [x] 历史列表继续只展示卦象、事项类型和时间，不展示完整原问题。
+- [x] 问事分享卡片使用通用标题，不展示完整原问题。
+- [x] 问事长图继续使用 `QUESTION_SUMMARY` 摘要，不展示完整原问题、完整解析全文、`session_key`、payload 或小程序码。
+
+**程序化检查结果：**
+
+- `bash scripts/check-miniprogram-static.sh`：通过
+- `bash scripts/check-release-privacy.sh`：通过
+- `bash scripts/check-api-smoke.sh`：15 PASS / 0 FAIL
+- `find miniprogram -name "*.js" -not -path "*/miniprogram_npm/*" -print0 | xargs -0 -n1 node --check`：通过
+- `git diff --check`：通过
+
+**DevTools / 真机待维护者本地勾选：**
+
+- [ ] 首页显示“感情关系观察”场景入口
+- [ ] 视觉层级低于三大主模块
+- [ ] 点击进入 `/pages/ask/ask?scene=relationship`
+- [ ] 问事页标题切换为“感情关系观察”
+- [ ] 模板问题显示正常
+- [ ] 点击模板填入 textarea
+- [ ] 用户可编辑模板问题
+- [ ] 用户点击提交后创建问事记录
+- [ ] 结果页正常打开
+- [ ] 解锁完整报告正常
+- [ ] 分享卡片不展示完整原问题
+- [ ] 长图不展示完整原问题
+- [ ] 历史页能看到记录
+- [ ] 历史页能跳转 / 删除
+- [ ] 普通问事入口仍是普通文案
+- [ ] 八字 / 奇门入口不受影响
+
+**结论：** LOVE1 代码层回归通过；仍需维护者在微信 DevTools / 真机完成真实 UI、跳转、分享与长图保存勾选。
