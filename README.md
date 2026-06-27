@@ -1,18 +1,34 @@
-# AI 易经问事 · 本地 MVP
+# 文易传统文化
 
-传统文化学习与趣味卦象解读工具。用户输入问题、选择事项类型后自动起卦，展示本卦、变卦、动爻，并提供免费解读与完整 AI 解读（mock / DeepSeek）。另提供「今日运势」入口：每天为同一访客生成一卦，整理当日状态、节奏与行动提醒。
+微信小程序 + Go 后端项目，以传统文化模型为载体，提供学习参考、趣味解读、自我观察与行动节奏整理。
 
-> **仅供娱乐和传统文化参考**，不构成任何预测、医疗、法律或投资建议。
+当前核心模块包括问事起卦、今日一卦、八字简析、奇门问事、统一历史记录、分享卡片 / 长图和首页模块引导。后端完整报告优先使用 DeepSeek，失败时自动走模板 fallback。
+
+> **仅供传统文化学习与自我反思参考**，不构成预测、改命、医疗、法律、投资或其他现实决策建议。
 
 ## 技术栈
 
 | 层级 | 技术 |
 |------|------|
-| 前端 | Next.js + TypeScript + Tailwind CSS |
+| 微信小程序 | `miniprogram/` |
+| Web/H5 | Next.js + TypeScript + Tailwind CSS，位于 `frontend/` |
 | 后端 | Go |
 | 数据库 | MySQL 8.0 |
-| AI | mock / DeepSeek（完整解读，失败自动 fallback） |
-| 支付 | mock（看广告/点击解锁） |
+| AI | DeepSeek / mock / template fallback |
+| 部署 | Docker Compose、Nginx、阿里云 ECS |
+
+## 当前模块
+
+| 模块 | 状态 |
+|------|------|
+| 问事起卦 / 今日一卦 | 后端起卦、免费解读、完整解析、历史与长图 |
+| 八字简析 | 默认 `bazi-simple-v1`；内部灰度 `bazi-v2-poc` |
+| 奇门问事 | 默认 `qimen-simple-v1`；内部灰度 `qimen-v2-poc` / `qimen-v2-professional` |
+| 历史记录 | 聚合问事 / 八字 / 奇门，支持筛选与删除 |
+| 分享卡片 / 长图 | 本地 Canvas 摘要化生成，不展示隐私字段或完整报告 |
+| 首页模块引导 | 三模块入口、场景选择与合规边界 |
+
+普通小程序 / Web 创建流程不传 `algorithm_version`，普通用户不展示算法选择。内部算法只用于内部记录详情页条件展示。
 
 ## 项目结构
 
@@ -22,21 +38,30 @@ yijing/
 │   ├── cmd/server/       # API 服务
 │   └── cmd/migrate/      # SQL 迁移工具
 ├── frontend/
+├── miniprogram/           # 微信小程序页面、组件、utils
+├── docs/                  # 阶段设计、验收记录与上下文
+├── scripts/               # release 前检查脚本
+├── deploy/                # Nginx 与 ECS 脚本
 ├── sql/                  # 按序号排列的迁移脚本
 ├── docker-compose.yml
+├── docker-compose.prod.yml
 ├── .env.example
 ├── .env.docker.example
 └── .env.production.example
 ```
 
-详细安全说明见 [docs/phase8-production-hardening.md](docs/phase8-production-hardening.md)。
+详细项目规则见 [AGENTS.md](AGENTS.md)，当前 Codex 上下文见 [docs/CODEX_PROJECT_CONTEXT.md](docs/CODEX_PROJECT_CONTEXT.md)。
 
 ## 文档
 
 | 文档 | 说明 |
 |------|------|
 | [docs/ai-agent-workflow.md](docs/ai-agent-workflow.md) | **ChatGPT / Cursor / Codex 协作边界与 review 流程** |
+| [docs/CODEX_PROJECT_CONTEXT.md](docs/CODEX_PROJECT_CONTEXT.md) | Codex 当前项目上下文、阶段状态与阻塞项 |
+| [docs/release-checklist.md](docs/release-checklist.md) | 体验版 / release 前可复用检查清单 |
+| [scripts/README.md](scripts/README.md) | release 前检查脚本说明 |
 | [docs/main-program-module-roadmap.md](docs/main-program-module-roadmap.md) | 主程序模块路线图，说明今日一卦、六爻、八字、奇门、广告解锁、统一报告中心的阶段规划 |
+| [docs/bazi-qimen-extension-design.md](docs/bazi-qimen-extension-design.md) | 八字 / 奇门扩展设计与阶段交付 |
 | [docs/local-acceptance-test.md](docs/local-acceptance-test.md) | 本地 MVP 验收手册 |
 | [docs/phase8-production-hardening.md](docs/phase8-production-hardening.md) | 生产安全收口 |
 | [docs/phase9-aliyun-deployment-plan.md](docs/phase9-aliyun-deployment-plan.md) | 阿里云部署前方案 |
@@ -118,7 +143,7 @@ go run ./cmd/migrate
 ```
 
 - 记录表：`schema_migrations`
-- 按 `sql/001_*.sql` … `sql/006_*.sql` 顺序执行
+- 按 `sql/001_*.sql` … `sql/007_*.sql` 顺序执行
 - 已执行文件自动跳过
 
 ---
@@ -159,7 +184,7 @@ RATE_LIMIT_PER_MINUTE=20
 
 ---
 
-## Mock / DeepSeek / Fallback 测试
+## DeepSeek / Fallback 测试
 
 **Mock：** `AI_PROVIDER=mock`
 
@@ -201,7 +226,25 @@ curl -s -X POST http://localhost:8080/api/v1/daily-fortune/today \
 
 ---
 
-## 生产环境上线前检查清单
+## Release 回归检查
+
+当前 release 前脚本：
+
+```bash
+bash scripts/check-miniprogram-static.sh
+bash scripts/check-release-privacy.sh
+bash scripts/check-api-smoke.sh
+git diff --check
+git status --short
+```
+
+TEST1.1 后 `check-api-smoke.sh` 当前期望结果为 `15 PASS / 0 FAIL`，覆盖 health、sessions、八字 v1/v2、八字 v2 未知时辰、奇门 v1/poc/professional、非法 algorithm_version、analysis `free_unlock`、问事起卦 create/unlock。
+
+八字未知时辰 API 必须显式传 `birth_hour_unknown=true`；只省略 `birth_hour_branch` 会按参数错误处理。脚本会检查未知时辰报告包含安全说明且不伪造干支时柱。
+
+---
+
+## 体验版 / 生产环境上线前检查清单
 
 - [ ] `ENABLE_DEBUG_ROUTES=false`
 - [ ] `CORS_ALLOWED_ORIGINS` 为真实域名
@@ -209,9 +252,15 @@ curl -s -X POST http://localhost:8080/api/v1/daily-fortune/today \
 - [ ] 已执行 migrate
 - [ ] Rate limit 已启用
 - [ ] 前端 `NEXT_PUBLIC_*` 已按环境 build
-- [ ] 全流程冒烟测试通过
+- [ ] release 回归脚本通过
+- [ ] 微信 DevTools / 真机真实 UI 勾选完成
+- [ ] ICP 备案完成
+- [ ] `https://api.wenyiapp.cn/api/v1/health` 可用
+- [ ] 微信 request 合法域名配置完成
 
-完整清单见 [docs/phase8-production-hardening.md](docs/phase8-production-hardening.md)。
+当前 dev API 为 `http://123.57.48.214/api/v1`；正式 HTTPS API 域名尚未完成前，不建议上传体验版，不提审。
+
+完整清单见 [docs/release-checklist.md](docs/release-checklist.md)。
 
 ---
 
@@ -221,7 +270,13 @@ curl -s -X POST http://localhost:8080/api/v1/daily-fortune/today \
 - [x] Phase 7：Docker 全栈、海报二维码、AI 日志
 - [x] Phase 8：安全收口、migration、CORS、限流、配置分环境
 - [x] Phase 9：今日运势（`/today`、`daily_fortunes` 映射、解读适配）
+- [x] 八字 / 奇门 analysis API、完整报告、解锁、长图与历史记录
+- [x] 首页模块引导、加载 / 错误 / 空状态与防重复提交优化
+- [x] 内部算法灰度：`bazi-v2-poc`、`qimen-v2-poc`、`qimen-v2-professional`
+- [x] TEST1 / TEST1.1：release 静态检查、隐私检查、API smoke 与未知时辰回归
+
+当前主要阻塞：备案、HTTPS API 域名、微信 request 合法域名、微信 DevTools / 真机 UI 勾选。
 
 ## License
 
-Private / MVP — 本地开发用途
+Private
