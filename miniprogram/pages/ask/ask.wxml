@@ -5,14 +5,16 @@
 
   <view class="page-header">
     <text class="eyebrow">问事起卦</text>
-    <text class="page-title">整理你正在思考的问题</text>
-    <text class="page-description">选择事项类型，写下一个具体问题，用卦象帮助梳理处境与行动方向。</text>
+    <text class="page-title">{{pageTitle}}</text>
+    <text class="page-description">{{pageDescription}}</text>
   </view>
 
   <loading-state wx:if="{{loading}}" text="正在加载事项类型…"></loading-state>
   <error-state wx:if="{{loadError}}" visible="{{true}}" message="{{loadError}}" bindretry="loadCategories"></error-state>
 
   <view wx:if="{{!loading && !loadError}}" class="card form-card">
+    <view wx:if="{{isRelationshipScene}}" class="scene-hint">{{sceneBoundary}}</view>
+
     <text class="field-label">事项类型</text>
     <picker mode="selector" range="{{categories}}" range-key="name" value="{{categoryIndex}}" bindchange="onCategoryChange">
       <view class="picker-field {{selectedCategoryName ? 'picker-field--selected' : ''}}">
@@ -21,8 +23,21 @@
       </view>
     </picker>
 
+    <view wx:if="{{questionTemplates.length}}" class="template-group">
+      <text class="template-group__title">可以从这些问题开始</text>
+      <view class="template-group__list">
+        <button
+          wx:for="{{questionTemplates}}"
+          wx:key="*this"
+          class="template-chip"
+          data-template="{{item}}"
+          bindtap="onTemplateTap"
+        >{{item}}</button>
+      </view>
+    </view>
+
     <text class="field-label question-label">你的问题</text>
-    <textarea class="question-input" value="{{question}}" maxlength="200" placeholder="例如：我应该如何安排本周学习与休息的节奏？" bindinput="onQuestionInput"></textarea>
+    <textarea class="question-input" value="{{question}}" maxlength="200" placeholder="{{questionPlaceholder}}" bindinput="onQuestionInput"></textarea>
     <text class="counter">{{questionLength}} / 200 字</text>
 
     <view class="safety-hint">请勿输入医疗、法律、投资、赌博、伤害自己或他人等问题。本工具不会处理此类内容。</view>

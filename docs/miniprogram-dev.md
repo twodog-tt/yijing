@@ -2472,3 +2472,53 @@ bash scripts/check-api-smoke.sh
 
 - `scripts/check-api-smoke.sh`：15 PASS / 0 FAIL
 - 后端 handler API 回归测试已覆盖八字 v2 未知时辰 create / unlock
+
+## 39. Phase LOVE1：感情关系观察 MVP
+
+**范围：** 小程序首页与问事起卦表单；**不改** backend / frontend / SQL / deploy / `.env*` / 默认算法。
+
+**产品定位：**
+
+- “感情关系观察”是问事起卦的常见场景入口，不是新的第四个主模块。
+- 首页仍保持三模块入口：问事起卦、八字简析、奇门问事。
+- 入口放在首页“常见场景”低优先级区域，跳转 `/pages/ask/ask?scene=relationship`。
+
+**问事页行为：**
+
+- `scene=relationship` 时，页面标题为“感情关系观察”。
+- 页面说明改为围绕关系状态、沟通、边界和下一步行动提出具体问题。
+- 事项类型优先选中“关系”类目；如果后端类目变化导致未匹配，仍由用户手动选择事项类型。
+- 问题模板只填充 textarea，用户可以编辑，不自动提交。
+- 提交 payload 仍为既有 `category_id` + `question`，不新增 `scene` 字段，不要求后端改造。
+
+**模板：**
+
+- 我想梳理这段关系目前的状态
+- 我想了解现在是否适合继续主动沟通
+- 我想看看我们之间的问题主要卡在哪里
+- 我想整理这段关系接下来适合怎么处理
+- 我想知道现在是否应该先保持一点距离
+- 我想观察这段关系里的沟通边界
+
+**边界文案：**
+
+- 结果仅供传统文化学习参考与自我观察。
+- 不用于判断对方真实想法。
+- 不替代现实沟通与判断。
+- 不使用月老、正缘、复合概率、姻缘指数、脱单时间、合婚分数等承诺式或强预测表达。
+
+**隐私与分享：**
+
+- 结果页微信分享卡片继续使用通用标题，不包含完整原问题。
+- 问事长图继续使用摘要化问题说明，不展示完整原问题、完整解析全文、`session_key`、payload 或小程序码。
+- 历史列表继续只展示卦象与事项类型，不展示完整原问题。
+
+**本阶段检查：**
+
+- `bash scripts/check-miniprogram-static.sh`
+- `bash scripts/check-release-privacy.sh`
+- `bash scripts/check-api-smoke.sh`
+- `find miniprogram -name "*.js" -not -path "*/miniprogram_npm/*" -print0 | xargs -0 -n1 node --check`
+- `git diff --check`
+
+**结论：** LOVE1 是小程序低风险场景入口优化，复用问事起卦全链路；不部署、不上传体验版、不提审。

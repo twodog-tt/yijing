@@ -10,6 +10,54 @@
   margin-top: 32rpx;
 }
 
+.scene-hint {
+  margin-bottom: 28rpx;
+  padding: 22rpx;
+  border-radius: 14rpx;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 23rpx;
+  line-height: 1.65;
+}
+
+.template-group {
+  margin-top: 28rpx;
+}
+
+.template-group__title {
+  display: block;
+  margin-bottom: 16rpx;
+  color: #44403c;
+  font-size: 25rpx;
+  font-weight: 600;
+}
+
+.template-group__list {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.template-chip {
+  width: 100%;
+  min-height: 72rpx;
+  margin: 0;
+  padding: 16rpx 20rpx;
+  border: 1rpx solid #e7e5e4;
+  border-radius: 14rpx;
+  background: #ffffff;
+  color: #44403c;
+  font-size: 24rpx;
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.template-chip::after {
+  border: 0;
+}
+
 .picker-field,
 .question-input {
   width: 100%;

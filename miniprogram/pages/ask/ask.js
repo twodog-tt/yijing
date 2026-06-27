@@ -8,12 +8,53 @@ const {
   networkOr,
 } = require("../../utils/ux-state");
 
+const DEFAULT_PAGE_COPY = Object.freeze({
+  title: "整理你正在思考的问题",
+  description: "选择事项类型，写下一个具体问题，用卦象帮助梳理处境与行动方向。",
+  placeholder: "例如：我应该如何安排本周学习与休息的节奏？",
+});
+
+const RELATIONSHIP_TEMPLATES = Object.freeze([
+  "我想梳理这段关系目前的状态",
+  "我想了解现在是否适合继续主动沟通",
+  "我想看看我们之间的问题主要卡在哪里",
+  "我想整理这段关系接下来适合怎么处理",
+  "我想知道现在是否应该先保持一点距离",
+  "我想观察这段关系里的沟通边界",
+]);
+
+const SCENE_COPY = Object.freeze({
+  relationship: {
+    title: "感情关系观察",
+    description: "可以围绕一段关系的状态、沟通、边界和下一步行动提出一个具体问题。",
+    placeholder: "例如：我想梳理这段关系目前的状态",
+    boundary: "结果仅供传统文化学习参考与自我观察，不用于判断对方真实想法，也不替代你的现实沟通与判断。",
+    templates: RELATIONSHIP_TEMPLATES,
+  },
+});
+
+function resolveSceneCopy(scene) {
+  if (!scene) return null;
+  return SCENE_COPY[String(scene)] || null;
+}
+
+function findRelationshipCategoryIndex(categories) {
+  return categories.findIndex((item) => /关系|感情|情感|人际/.test(String(item.name || "")));
+}
+
 Page({
   data: {
     categories: [],
     categoryIndex: 0,
     selectedCategoryId: 0,
     selectedCategoryName: "",
+    pageTitle: DEFAULT_PAGE_COPY.title,
+    pageDescription: DEFAULT_PAGE_COPY.description,
+    questionPlaceholder: DEFAULT_PAGE_COPY.placeholder,
+    scene: "",
+    isRelationshipScene: false,
+    sceneBoundary: "",
+    questionTemplates: [],
     question: "",
     questionLength: 0,
     confirmed: false,
@@ -27,10 +68,23 @@ Page({
     castingRecord: null,
   },
 
-  onLoad() {
+  onLoad(options = {}) {
     this.pageUnloaded = false;
     this.flowInProgress = false;
     this.navigationStarted = false;
+    const sceneCopy = resolveSceneCopy(options.scene);
+    this.activeScene = sceneCopy ? String(options.scene) : "";
+    if (sceneCopy) {
+      this.setData({
+        pageTitle: sceneCopy.title,
+        pageDescription: sceneCopy.description,
+        questionPlaceholder: sceneCopy.placeholder,
+        scene: this.activeScene,
+        isRelationshipScene: this.activeScene === "relationship",
+        sceneBoundary: sceneCopy.boundary,
+        questionTemplates: sceneCopy.templates,
+      });
+    }
     this.loadCategories();
   },
 
@@ -47,7 +101,17 @@ Page({
         (item) => Number(item.id) !== 6 && item.name !== "今日运势"
       );
       if (!categories.length) throw new Error("暂无可用事项类型，请稍后再试。");
-      this.setData({ categories });
+      const nextData = { categories };
+      if (this.activeScene === "relationship") {
+        const categoryIndex = findRelationshipCategoryIndex(categories);
+        const category = categories[categoryIndex];
+        if (category) {
+          nextData.categoryIndex = categoryIndex;
+          nextData.selectedCategoryId = Number(category.id);
+          nextData.selectedCategoryName = category.name;
+        }
+      }
+      this.setData(nextData);
     } catch (error) {
       this.setData({
         loadError: networkOr(error, error?.message || CONTENT_LOAD_ERROR_MESSAGE),
@@ -75,6 +139,18 @@ Page({
       question,
       questionLength: [...question].length,
       fieldError: "",
+    });
+  },
+
+  onTemplateTap(event) {
+    const question = String(event.currentTarget.dataset.template || "");
+    if (!question) return;
+    this.setData({
+      question,
+      questionLength: [...question].length,
+      fieldError: "",
+      submitError: "",
+      submitCanRetry: false,
     });
   },
 

@@ -5,6 +5,7 @@ const {
   HOME_COMPLIANCE_NOTE,
   HOME_GUIDE_ITEMS,
   HOME_MODULES,
+  HOME_SCENE_ITEMS,
 } = require("../../utils/home");
 
 Page({
@@ -12,6 +13,7 @@ Page({
     brand: HOME_BRAND,
     modules: HOME_MODULES,
     guideItems: HOME_GUIDE_ITEMS,
+    sceneItems: HOME_SCENE_ITEMS,
     boundaryItems: HOME_BOUNDARY_ITEMS,
     complianceNote: HOME_COMPLIANCE_NOTE,
     sessionStatus: "preparing",

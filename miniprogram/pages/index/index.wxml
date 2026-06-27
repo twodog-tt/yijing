@@ -21,6 +21,23 @@
 
   <home-guide-card items="{{guideItems}}"></home-guide-card>
 
+  <view class="home-scenes">
+    <text class="home-scenes__title">常见场景</text>
+    <navigator
+      wx:for="{{sceneItems}}"
+      wx:key="key"
+      class="home-scene-card"
+      url="{{item.url}}"
+    >
+      <view class="home-scene-card__main">
+        <text class="home-scene-card__title">{{item.title}}</text>
+        <text class="home-scene-card__subtitle">{{item.subtitle}}</text>
+        <text class="home-scene-card__description">{{item.description}}</text>
+      </view>
+      <text class="home-scene-card__button">{{item.buttonText}}</text>
+    </navigator>
+  </view>
+
   <view class="home-boundary">
     <text class="home-boundary__title">使用边界说明</text>
     <view class="home-boundary__list">

@@ -2285,3 +2285,33 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 - [x] 后端 handler API 回归测试已覆盖八字 v2 未知时辰 create / unlock
 
 ---
+
+### 10.61 Phase LOVE1 交付说明（感情关系观察 MVP）
+
+**目标：** 在不新增后端能力、不改变默认算法和不增加主模块的前提下，为首页补充“感情关系观察”低优先级场景入口，并复用问事起卦链路完成表单、结果、解锁、历史和分享。
+
+**实现范围：**
+
+- [x] 首页保持问事起卦、八字简析、奇门问事三模块入口不变
+- [x] 首页新增“常见场景 / 感情关系观察”入口，跳转 `/pages/ask/ask?scene=relationship`
+- [x] 问事页识别 `scene=relationship`，切换标题、说明、边界提示、问题模板和 placeholder
+- [x] 问题模板仅填充 textarea，不自动提交
+- [x] 优先选中“关系”事项类型；若后端类目变化未匹配，仍由用户手动选择
+- [x] 提交 payload 继续使用 `category_id` + `question`，不新增 `scene` 字段
+
+**合规边界：**
+
+- [x] 文案定位为关系状态、沟通节奏、边界提醒和行动整理
+- [x] 不判断对方真实想法，不替代现实沟通与判断
+- [x] 不使用月老、正缘、复合概率、姻缘指数、脱单时间、合婚分数等强预测表达
+
+**验证重点：**
+
+- 首页低优先级入口可见且不挤占三模块入口
+- `/pages/ask/ask?scene=relationship` 渲染关系观察文案与模板
+- 模板点击后可编辑，未自动提交
+- 结果 / 历史 / 分享仍走问事起卦既有路径，不展示完整原问题到历史列表或长图
+
+**下一步：** DevTools / 真机本地勾选 LOVE1 入口与问事完整链路；DOMAIN1；RELEASE-QA-RECHECK。
+
+---

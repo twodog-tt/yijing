@@ -43,6 +43,17 @@ const HOME_GUIDE_ITEMS = Object.freeze([
   { scenario: "当前局势 / 行动节奏", module: "奇门问事" },
 ]);
 
+const HOME_SCENE_ITEMS = Object.freeze([
+  {
+    key: "relationship",
+    title: "感情关系观察",
+    subtitle: "适合梳理关系状态、沟通节奏与边界提醒",
+    description: "遇到感情困惑时，可以先从一个具体问题开始观察。",
+    buttonText: "去问感情问题",
+    url: "/pages/ask/ask?scene=relationship",
+  },
+]);
+
 const HOME_BOUNDARY_ITEMS = Object.freeze([
   "不做精准预测",
   "不替代现实决策",
@@ -55,4 +66,5 @@ module.exports = {
   HOME_COMPLIANCE_NOTE,
   HOME_GUIDE_ITEMS,
   HOME_MODULES,
+  HOME_SCENE_ITEMS,
 };
