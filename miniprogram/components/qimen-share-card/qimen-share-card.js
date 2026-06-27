@@ -19,7 +19,7 @@ const {
 const { ALBUM_SAVE_ERROR_MESSAGE } = require("../../utils/ux-state");
 
 const QIMEN_INTRO_NOTE =
-  "qimen-simple-v1 简化学习版，仅供传统文化学习与自我反思。不等同于专业奇门排盘，不生成完整九宫盘，不构成现实决策依据。";
+  "简化奇门学习版，仅供传统文化学习与自我反思。不等同于专业奇门排盘，不生成完整九宫盘，不构成现实决策依据。";
 const SAFE_QUESTION_SUMMARY = "用户问题已用于本次局势梳理";
 
 function estimateRawLongPosterHeight(data) {

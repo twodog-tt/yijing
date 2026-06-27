@@ -4,6 +4,7 @@ const {
   getQimenCategoryHighlight,
 } = require("./long-poster-canvas");
 const { formatDateTime } = require("./date");
+const { sanitizeInternalTerms, sanitizeInternalTermList } = require("./display-text");
 
 const MODULE_QIMEN_TYPE = 2;
 const MODULE_QIMEN_LABEL = "奇门问事";
@@ -26,7 +27,7 @@ const DUN_YUAN_LABELS = Object.freeze({
 });
 
 const PROFESSIONAL_PREVIEW_NOTE =
-  "奇门 v2 professional 第一版 · 传统文化学习参考 · 结构化观察 · 不构成现实决策依据";
+  "九宫结构观察口径 · 第一版排盘预览 · 传统文化学习参考 · 不构成现实决策依据";
 
 const PROFESSIONAL_POSTER_NOTE =
   "本记录含九宫结构化观察，详情页可查看排盘口径与宫位摘要。";
@@ -61,7 +62,7 @@ const TIME_BUCKET_LABELS = Object.freeze({
 });
 
 const METHOD_NOTE =
-  "本功能采用 qimen-simple-v1 简化规则，仅供传统文化学习与自我反思参考，不等同于专业奇门排盘，也不构成现实决策依据。";
+  "本功能采用简化奇门文化规则，仅供传统文化学习与自我反思参考，不等同于专业奇门排盘，也不构成现实决策依据。";
 
 const FREE_CONTENT_POSTER_NOTE =
   "以上局势梳理、风险观察、行动节奏、自我反思与行动建议构成本次免费解读要点。";
@@ -93,6 +94,11 @@ function normalizeTextField(value, fallback = "") {
   return text || fallback;
 }
 
+function displayTextField(value, fallback = "") {
+  const text = sanitizeInternalTerms(value).trim();
+  return text || fallback;
+}
+
 function normalizePalaceView(raw) {
   if (!raw || typeof raw !== "object") return null;
   const index = Number(raw.index);
@@ -101,15 +107,15 @@ function normalizePalaceView(raw) {
   const layoutRole = normalizeTextField(raw.layout_role);
   return {
     index,
-    name: normalizeTextField(raw.name, `第${index}宫`),
-    earthPlateStem: normalizeTextField(raw.earth_plate_stem, "—"),
-    heavenPlateStem: normalizeTextField(raw.heaven_plate_stem, "—"),
-    star: normalizeTextField(raw.star, "—"),
-    door: normalizeTextField(raw.door, "—"),
-    deity: normalizeTextField(raw.deity, "—"),
+    name: displayTextField(raw.name, `第${index}宫`),
+    earthPlateStem: displayTextField(raw.earth_plate_stem, "—"),
+    heavenPlateStem: displayTextField(raw.heaven_plate_stem, "—"),
+    star: displayTextField(raw.star, "—"),
+    door: displayTextField(raw.door, "—"),
+    deity: displayTextField(raw.deity, "—"),
     layoutRole,
     layoutRoleLabel: LAYOUT_ROLE_LABELS[layoutRole] || "",
-    summary: normalizeTextField(raw.summary),
+    summary: displayTextField(raw.summary),
   };
 }
 
@@ -139,44 +145,44 @@ function buildProfessionalQimenView(result) {
       : {};
   const ganzhi = result.ganzhi && typeof result.ganzhi === "object" ? result.ganzhi : {};
   const limits = Array.isArray(result.limits)
-    ? result.limits.map((item) => normalizeTextField(item)).filter(Boolean)
+    ? sanitizeInternalTermList(result.limits)
     : [];
 
   const dunType = normalizeTextField(dun.type);
   const yuanKey = normalizeTextField(dun.yuan);
   const ganzhiParts = ["year", "month", "day", "hour"]
-    .map((key) => normalizeTextField(ganzhi[key]))
+    .map((key) => displayTextField(ganzhi[key]))
     .filter(Boolean);
 
   return {
     isProfessionalQimen: true,
     algorithmVersion: ALGORITHM_QIMEN_V2_PROFESSIONAL,
-    layoutVersion: normalizeTextField(result.layout_version || result.layout_basis),
+    layoutVersion: displayTextField(result.layout_version || result.layout_basis, "第一版"),
     previewNote: PROFESSIONAL_PREVIEW_NOTE,
     palaceGrid,
     chiefView: {
-      zhiFu: normalizeTextField(chief.zhi_fu, "—"),
-      zhiShi: normalizeTextField(chief.zhi_shi, "—"),
-      zhiFuPalace: normalizeTextField(chief.zhi_fu_palace),
-      zhiShiPalace: normalizeTextField(chief.zhi_shi_palace),
+      zhiFu: displayTextField(chief.zhi_fu, "—"),
+      zhiShi: displayTextField(chief.zhi_shi, "—"),
+      zhiFuPalace: displayTextField(chief.zhi_fu_palace),
+      zhiShiPalace: displayTextField(chief.zhi_shi_palace),
     },
     dunView: {
       typeLabel:
-        dunType === "yang" ? "阳遁" : dunType === "yin" ? "阴遁" : normalizeTextField(dunType, "—"),
+        dunType === "yang" ? "阳遁" : dunType === "yin" ? "阴遁" : displayTextField(dunType, "—"),
       ju: dun.ju != null && dun.ju !== "" ? String(dun.ju) : "—",
-      yuanLabel: DUN_YUAN_LABELS[yuanKey] || yuanKey || "—",
-      method: normalizeTextField(dun.method || dun.source),
+      yuanLabel: DUN_YUAN_LABELS[yuanKey] || displayTextField(yuanKey, "—"),
+      method: displayTextField(dun.method || dun.source),
     },
     calendarBasisView: {
-      solarTerm: normalizeTextField(calendar.solar_term, "—"),
-      jieqiBasis: normalizeTextField(calendar.jieqi_basis),
-      timeBasis: normalizeTextField(calendar.time_basis),
+      solarTerm: displayTextField(calendar.solar_term, "—"),
+      jieqiBasis: displayTextField(calendar.jieqi_basis),
+      timeBasis: displayTextField(calendar.time_basis),
     },
     ganzhiView: {
-      year: normalizeTextField(ganzhi.year),
-      month: normalizeTextField(ganzhi.month),
-      day: normalizeTextField(ganzhi.day),
-      hour: normalizeTextField(ganzhi.hour),
+      year: displayTextField(ganzhi.year),
+      month: displayTextField(ganzhi.month),
+      day: displayTextField(ganzhi.day),
+      hour: displayTextField(ganzhi.hour),
       display: ganzhiParts.length ? ganzhiParts.join(" · ") : "—",
     },
     boundaryNotes: PROFESSIONAL_BOUNDARY_NOTES.slice(),
@@ -205,33 +211,33 @@ function buildQimenView(record) {
   return {
     algorithmVersion:
       result.algorithm_version || record?.algorithm_version || ALGORITHM_QIMEN_SIMPLE_V1,
-    methodNote: result.method_note || METHOD_NOTE,
+    methodNote: displayTextField(result.method_note) || METHOD_NOTE,
     category,
     categoryLabel: getCategoryLabel(category),
     questionSummary: QUESTION_SUMMARY,
     timeBucket,
     timeBucketLabel: getTimeBucketLabel(timeBucket),
     qimenLens: {
-      focusTheme: lens.focus_theme || "",
-      supportTheme: lens.support_theme || "",
-      cautionTheme: lens.caution_theme || "",
-      pacingTheme: lens.pacing_theme || "",
+      focusTheme: displayTextField(lens.focus_theme),
+      supportTheme: displayTextField(lens.support_theme),
+      cautionTheme: displayTextField(lens.caution_theme),
+      pacingTheme: displayTextField(lens.pacing_theme),
     },
     questionProfile: {
-      intentType: questionProfile.intent_type || "",
-      timeHorizon: questionProfile.time_horizon || "",
-      decisionPressure: questionProfile.decision_pressure || "",
-      relationScope: questionProfile.relation_scope || "",
-      riskTone: questionProfile.risk_tone || "",
+      intentType: displayTextField(questionProfile.intent_type),
+      timeHorizon: displayTextField(questionProfile.time_horizon),
+      decisionPressure: displayTextField(questionProfile.decision_pressure),
+      relationScope: displayTextField(questionProfile.relation_scope),
+      riskTone: displayTextField(questionProfile.risk_tone),
     },
-    safeQuestionSummary: result.safe_question_summary || QUESTION_SUMMARY,
-    situationOverview: result.situation_overview || "",
-    riskObservations: risks,
-    actionPacing: result.action_pacing || "",
-    reflectionQuestions: reflections,
-    actionSuggestions: suggestions,
-    limits: Array.isArray(limits) ? limits : [],
-    freeContent: String(record?.free_content || "").trim(),
+    safeQuestionSummary: displayTextField(result.safe_question_summary) || QUESTION_SUMMARY,
+    situationOverview: displayTextField(result.situation_overview),
+    riskObservations: sanitizeInternalTermList(risks),
+    actionPacing: displayTextField(result.action_pacing),
+    reflectionQuestions: sanitizeInternalTermList(reflections),
+    actionSuggestions: sanitizeInternalTermList(suggestions),
+    limits: Array.isArray(limits) ? sanitizeInternalTermList(limits) : [],
+    freeContent: displayTextField(record?.free_content),
     isProfessionalQimen: !!(professional && professional.isProfessionalQimen),
     professional: professional || null,
   };

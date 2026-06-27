@@ -31,8 +31,8 @@
 
   <view class="card privacy-card">
     <text class="card-title">隐私说明</text>
-    <text class="card-text">当前使用随机生成的匿名 session_key 关联本地历史记录。小程序不接入微信登录，不采集手机号，也不请求手机号授权。</text>
-    <text class="card-text">session_key 保存在本机小程序 Storage 中；清除缓存后将形成新的匿名会话，原历史不会自动迁移。</text>
+    <text class="card-text">当前使用随机生成的匿名会话标识关联本地历史记录。小程序不接入微信登录，不采集手机号，也不请求手机号授权。</text>
+    <text class="card-text">匿名会话标识保存在本机小程序缓存中；清除缓存后将形成新的匿名会话，原历史不会自动迁移。</text>
   </view>
 
   <view class="card disclaimer-card">

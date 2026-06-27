@@ -113,7 +113,7 @@ Page({
         id: item.id,
         createdAtDisplay: formatDateTime(item.created_at) || "—",
         moduleLabel: MODULE_BAZI_LABEL,
-        subtitle: item.algorithm_version || "bazi-simple-v1",
+        subtitle: "五行倾向与行动整理",
       }));
 
       this.setData({

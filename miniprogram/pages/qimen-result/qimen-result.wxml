@@ -19,7 +19,6 @@
             <text class="eyebrow">奇门问事</text>
             <text class="page-title">{{moduleLabel}}</text>
             <view class="result-meta">
-              <text>{{view.algorithmVersion}}</text>
               <text>{{view.categoryLabel}}</text>
               <text wx:if="{{view.timeBucketLabel}}">{{view.timeBucketLabel}}</text>
               <text>{{createdAtDisplay}}</text>
@@ -39,13 +38,13 @@
 
     <section-reveal wx:if="{{view.isProfessionalQimen && view.professional}}" active="{{resultReady}}" delay="100">
       <view class="card card--professional">
-        <text class="section-title section-title--gold">专业排盘预览</text>
+        <text class="section-title section-title--gold">九宫结构预览</text>
         <text class="pro-note">{{view.professional.previewNote}}</text>
 
         <view class="pro-section">
           <text class="pro-section__title">排盘口径</text>
           <view class="pro-kv-list">
-            <text class="pro-kv">layout · {{view.professional.layoutVersion || "—"}}</text>
+            <text class="pro-kv">布局 · {{view.professional.layoutVersion || "—"}}</text>
             <text class="pro-kv">节令 · {{view.professional.calendarBasisView.solarTerm}}</text>
             <text class="pro-kv">{{view.professional.dunView.typeLabel}} · 第{{view.professional.dunView.ju}}局 · {{view.professional.dunView.yuanLabel}}</text>
             <text wx:if="{{view.professional.dunView.method}}" class="pro-kv">口径 · {{view.professional.dunView.method}}</text>

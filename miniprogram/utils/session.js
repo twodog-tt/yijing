@@ -16,7 +16,7 @@ function saveSessionKey(sessionKey) {
   if (!normalized) {
     throw new RequestError({
       type: ERROR_TYPES.RESPONSE,
-      message: "服务器没有返回有效的 session_key。",
+      message: "服务器没有返回有效的匿名会话标识。",
     });
   }
   wx.setStorageSync(SESSION_STORAGE_KEY, normalized);

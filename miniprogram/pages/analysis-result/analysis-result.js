@@ -6,6 +6,7 @@ const {
   MODULE_BAZI_LABEL,
 } = require("../../utils/bazi");
 const { formatDateTime } = require("../../utils/date");
+const { sanitizeInternalTerms } = require("../../utils/display-text");
 const { isBusinessError } = require("../../utils/request");
 const {
   CONTENT_LOAD_ERROR_MESSAGE,
@@ -141,7 +142,7 @@ Page({
 
   applyFullContent(content) {
     if (this.pageUnloaded) return;
-    const fullContent = String(content || "").trim();
+    const fullContent = sanitizeInternalTerms(content);
     if (!fullContent) return;
     this.safeSetData({
       fullStatus: "loaded",
@@ -171,7 +172,7 @@ Page({
       const record = await getAnalysis(this.data.recordId);
       const view = buildAnalysisView(record);
       const isUnlocked = Number(record.unlock_status) === 1;
-      const fullContent = isUnlocked ? String(record.full_content || "").trim() : "";
+      const fullContent = isUnlocked ? sanitizeInternalTerms(record.full_content) : "";
 
       this.setData({
         loading: false,

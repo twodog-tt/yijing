@@ -1,9 +1,9 @@
 <view class="bazi-v2-panel" wx:if="{{v2 && v2.isBaziV2}}">
-  <text class="bazi-v2-panel__title">八字 v2 口径预览</text>
+  <text class="bazi-v2-panel__title">节气口径预览</text>
   <text class="bazi-v2-panel__note">{{v2.previewNote}}</text>
 
   <view class="bazi-v2-panel__section">
-    <text class="bazi-v2-panel__section-title">四柱（v2）</text>
+    <text class="bazi-v2-panel__section-title">四柱结构</text>
     <view class="bazi-v2-panel__pillar-grid">
       <view class="bazi-v2-panel__pillar">
         <text class="bazi-v2-panel__pillar-label">年柱</text>

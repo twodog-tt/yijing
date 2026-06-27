@@ -15,7 +15,6 @@
         <text class="eyebrow">八字简析</text>
         <text class="page-title">{{moduleLabel}}</text>
         <view class="result-meta">
-          <text>{{view.algorithmVersion}}</text>
           <text>{{createdAtDisplay}}</text>
         </view>
         <element-orbit></element-orbit>

@@ -84,7 +84,7 @@ Page({
       const metadata = result.daily_fortune || {};
       const divination = result.divination || {};
       this.setData({
-        todayResult: `日期：${metadata.fortune_date || "未知"}；记录 ID：${divination.id || "未知"}；${metadata.is_existing ? "已有记录" : "本次创建"}`,
+        todayResult: `日期：${metadata.fortune_date || "未知"}；记录编号：${divination.id || "未知"}；${metadata.is_existing ? "已有记录" : "本次创建"}`,
       });
     } catch (error) {
       this.setData({ error: errorMessage(error) });
