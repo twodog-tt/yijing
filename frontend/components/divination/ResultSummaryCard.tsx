@@ -1,4 +1,5 @@
 import type { Divination, FullReport } from "@/lib/types";
+import { sanitizeInternalTerms } from "@/lib/display-text";
 import { formatDateTime } from "@/lib/utils";
 
 interface ResultSummaryCardProps {
@@ -41,7 +42,7 @@ export function buildPosterSummary(
   primarySummary?: string
 ): string {
   if (fullReport && typeof fullReport === "object" && fullReport.summary) {
-    return fullReport.summary;
+    return sanitizeInternalTerms(fullReport.summary);
   }
   const parsed =
     typeof fullReport === "string"
@@ -53,10 +54,12 @@ export function buildPosterSummary(
           }
         })()
       : null;
-  if (parsed?.summary) return parsed.summary;
+  if (parsed?.summary) return sanitizeInternalTerms(parsed.summary);
 
-  const fromFree = freeContent.split(/[。！？\n]/)[0]?.trim();
+  const fromFree = sanitizeInternalTerms(
+    freeContent.split(/[。！？\n]/)[0]?.trim()
+  );
   if (fromFree && fromFree.length > 4) return fromFree;
-  if (primarySummary) return primarySummary;
+  if (primarySummary) return sanitizeInternalTerms(primarySummary);
   return "传统文化参考，助力自我反思与行动整理。";
 }

@@ -18,6 +18,7 @@ import {
   MODULE_QIMEN_LABEL,
 } from "@/lib/qimen";
 import { getSessionKey } from "@/lib/session";
+import { sanitizeInternalTerms } from "@/lib/display-text";
 import { ModuleTypeBazi, ModuleTypeQimen, type AnalysisRecord } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
 import Link from "next/link";
@@ -57,7 +58,7 @@ export default function AnalysisResultPage() {
       const data = await getAnalysis(id, getSessionKey());
       setRecord(data);
       const unlocked = data.unlock_status === 1;
-      const content = unlocked ? String(data.full_content || "").trim() : "";
+      const content = unlocked ? sanitizeInternalTerms(data.full_content) : "";
       setFullContent(content);
       setFullRevealActive(unlocked && Boolean(content));
     } catch (e) {
@@ -87,11 +88,12 @@ export default function AnalysisResultPage() {
   }, [shouldScrollToFull, fullContent]);
 
   function handleUnlockSuccess(content: string) {
-    setFullContent(content);
+    const safeContent = sanitizeInternalTerms(content);
+    setFullContent(safeContent);
     setFullRevealActive(true);
     setShouldScrollToFull(true);
     if (record) {
-      setRecord({ ...record, unlock_status: 1, full_content: content });
+      setRecord({ ...record, unlock_status: 1, full_content: safeContent });
     }
   }
 
@@ -111,7 +113,7 @@ export default function AnalysisResultPage() {
     try {
       await ensureSession(getSessionKey());
       const result = await unlockAnalysis(record.id, getSessionKey());
-      const content = String(result.full_content || "").trim();
+      const content = sanitizeInternalTerms(result.full_content);
       if (!content) {
         throw new Error("完整报告暂未返回，请稍后重新加载。");
       }
@@ -216,7 +218,6 @@ export default function AnalysisResultPage() {
                 <p className="text-sm tracking-[0.15em] text-amber-800">{moduleLabel}</p>
                 <h1 className="mt-2 text-2xl font-bold text-stone-900">{pageTitle}</h1>
                 <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-stone-500">
-                  <span>{record.algorithm_version}</span>
                   {qimenView?.categoryLabel && <span>{qimenView.categoryLabel}</span>}
                   {qimenView?.timeBucketLabel && (
                     <span>{qimenView.timeBucketLabel}</span>
@@ -231,7 +232,6 @@ export default function AnalysisResultPage() {
               <p className="text-sm tracking-[0.15em] text-amber-800">{moduleLabel}</p>
               <h1 className="mt-2 text-2xl font-bold text-stone-900">{pageTitle}</h1>
               <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-stone-500">
-                <span>{record.algorithm_version}</span>
                 <span>{formatDateTime(record.created_at)}</span>
               </div>
               <ElementOrbit />

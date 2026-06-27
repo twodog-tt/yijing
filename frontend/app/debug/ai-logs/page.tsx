@@ -3,6 +3,7 @@
 import ErrorAlert from "@/components/ui/ErrorAlert";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { getAILogs, getAIStats, isDebugDisabledError } from "@/lib/api";
+import { sanitizeInternalTerms } from "@/lib/display-text";
 import type { AIGenerationLog, AIStats } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
 import Link from "next/link";
@@ -24,7 +25,7 @@ function statusLabel(status: number): { text: string; className: string } {
       };
     case 3:
       return {
-        text: "fallback",
+        text: "降级成功",
         className: "bg-amber-100 text-amber-800 border-amber-200",
       };
     default:
@@ -40,10 +41,10 @@ function StatsCards({ stats }: { stats: AIStats }) {
     { label: "总调用", value: stats.total_count },
     { label: "成功", value: stats.success_count },
     { label: "失败", value: stats.fail_count },
-    { label: "Fallback", value: stats.fallback_count },
+    { label: "降级", value: stats.fallback_count },
     {
       label: "平均耗时",
-      value: `${Math.round(stats.avg_duration_ms)} ms`,
+      value: `${Math.round(stats.avg_duration_ms)} 毫秒`,
     },
   ];
 
@@ -91,7 +92,7 @@ function LogRow({ log }: { log: AIGenerationLog }) {
 
       <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
         <div>
-          <dt className="text-xs text-stone-500">divination_id</dt>
+          <dt className="text-xs text-stone-500">问事记录编号</dt>
           <dd className="font-medium text-stone-800">
             <Link
               href={`/divination/${log.divination_id}`}
@@ -102,17 +103,18 @@ function LogRow({ log }: { log: AIGenerationLog }) {
           </dd>
         </div>
         <div>
-          <dt className="text-xs text-stone-500">provider / model</dt>
+          <dt className="text-xs text-stone-500">生成方式 / 模型</dt>
           <dd className="text-stone-800">
-            {log.ai_provider} · {log.model_name}
+            {sanitizeInternalTerms(log.ai_provider)} ·{" "}
+            {sanitizeInternalTerms(log.model_name)}
           </dd>
         </div>
         <div>
-          <dt className="text-xs text-stone-500">duration</dt>
-          <dd className="text-stone-800">{log.duration_ms} ms</dd>
+          <dt className="text-xs text-stone-500">耗时</dt>
+          <dd className="text-stone-800">{log.duration_ms} 毫秒</dd>
         </div>
         <div>
-          <dt className="text-xs text-stone-500">fallback_used</dt>
+          <dt className="text-xs text-stone-500">是否降级</dt>
           <dd className="text-stone-800">
             {log.fallback_used === 1 ? "是" : "否"}
           </dd>
@@ -121,7 +123,7 @@ function LogRow({ log }: { log: AIGenerationLog }) {
 
       {log.error_message ? (
         <p className="mt-3 rounded-lg bg-stone-50 px-3 py-2 text-xs leading-relaxed text-stone-600">
-          {log.error_message}
+          {sanitizeInternalTerms(log.error_message)}
         </p>
       ) : null}
     </div>
@@ -157,7 +159,7 @@ export default function AILogsDebugPage() {
         setDebugDisabled(true);
         setError("调试接口未启用，仅本地开发环境可用。");
       } else {
-        setError(e instanceof Error ? e.message : "加载 AI 日志失败");
+        setError(e instanceof Error ? e.message : "加载智能生成日志失败");
       }
     } finally {
       setLoading(false);
@@ -165,6 +167,7 @@ export default function AILogsDebugPage() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch debug logs after mount
     loadLogs();
   }, [loadLogs]);
 
@@ -192,9 +195,9 @@ export default function AILogsDebugPage() {
         <code className="text-xs">ENABLE_DEBUG_ROUTES=false</code>。
       </div>
 
-      <h1 className="text-2xl font-bold text-stone-900">AI 调用日志</h1>
+      <h1 className="text-2xl font-bold text-stone-900">智能生成调用日志</h1>
       <p className="mt-1 text-sm text-stone-500">
-        查看完整解读生成时的 provider、耗时与 fallback 情况。
+        查看完整解读生成时的生成方式、耗时与降级情况。
       </p>
 
       {error ? (
@@ -213,7 +216,7 @@ export default function AILogsDebugPage() {
 
           {items.length === 0 ? (
             <p className="mt-8 text-center text-sm text-stone-500">
-              暂无记录。请先完成一次 mock 解锁或 DeepSeek 完整解读。
+              暂无记录。请先完成一次完整解读。
             </p>
           ) : (
             <div className="mt-6 space-y-3">

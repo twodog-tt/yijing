@@ -11,9 +11,9 @@ const notoSerif = Noto_Serif_SC({
 });
 
 export const metadata: Metadata = {
-  title: "易经问事 · AI 卦象解读",
+  title: "文易传统文化",
   description:
-    "AI 易经问事与卦象解读工具，仅供娱乐和传统文化参考，助力自我反思与行动建议。",
+    "提供易经问事、八字简析与奇门问事三类传统文化学习工具，帮助整理当前状态、自我观察与行动节奏。",
 };
 
 export default function RootLayout({

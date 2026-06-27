@@ -1,6 +1,7 @@
 "use client";
 
 import { ensureSession, unlockAnalysis } from "@/lib/api";
+import { sanitizeInternalTerms } from "@/lib/display-text";
 import { getSessionKey } from "@/lib/session";
 import { useEffect, useState } from "react";
 
@@ -41,7 +42,7 @@ export default function AnalysisUnlockModal({
         getSessionKey(),
         "free_unlock"
       );
-      const content = String(result.full_content || "").trim();
+      const content = sanitizeInternalTerms(result.full_content);
       if (!content) {
         throw new Error("完整报告暂未返回，请稍后重新加载。");
       }

@@ -60,7 +60,7 @@ const SharePoster = forwardRef<HTMLDivElement, SharePosterProps>(
         style={{ fontFamily: "serif" }}
       >
         <div className="border-b border-amber-200/60 bg-gradient-to-r from-amber-100 to-stone-100 px-6 py-5">
-          <p className="text-xs tracking-[0.3em] text-amber-800">AI 易经问事</p>
+          <p className="text-xs tracking-[0.3em] text-amber-800">文易传统文化</p>
           <p className="mt-1 text-lg font-bold text-stone-900">
             {isDailyFortune ? "今日一卦" : "卦象分享卡"}
           </p>

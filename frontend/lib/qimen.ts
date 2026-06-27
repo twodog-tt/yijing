@@ -1,10 +1,11 @@
 import type { AnalysisRecord } from "./types";
 import { ModuleTypeQimen } from "./types";
+import { sanitizeInternalTermList, sanitizeInternalTerms } from "./display-text";
 
 export const MODULE_QIMEN_LABEL = "奇门问事";
 export const QUESTION_SUMMARY = "用户问题已用于本次局势梳理";
 export const METHOD_NOTE =
-  "本功能采用 qimen-simple-v1 简化规则，仅供传统文化学习与自我反思参考，不等同于专业奇门排盘，也不构成现实决策依据。";
+  "本功能采用简化奇门文化规则，仅供传统文化学习与自我反思参考，不等同于专业奇门排盘，也不构成现实决策依据。";
 
 export const QIMEN_CATEGORIES = [
   { value: "career", label: "事业/计划" },
@@ -68,6 +69,11 @@ function parseJSONField(raw: unknown): Record<string, unknown> {
   }
 }
 
+function displayTextField(value: unknown, fallback = ""): string {
+  const text = sanitizeInternalTerms(value);
+  return text || fallback;
+}
+
 export function buildQimenView(record: AnalysisRecord): QimenAnalysisView {
   const result = parseJSONField(record.result_payload);
   const category = (result.category as string) || "general";
@@ -91,25 +97,25 @@ export function buildQimenView(record: AnalysisRecord): QimenAnalysisView {
       (result.algorithm_version as string) ||
       record.algorithm_version ||
       "qimen-simple-v1",
-    methodNote: (result.method_note as string) || METHOD_NOTE,
+    methodNote: displayTextField(result.method_note) || METHOD_NOTE,
     category,
     categoryLabel: CATEGORY_LABELS[category] || CATEGORY_LABELS.general,
     questionSummary: QUESTION_SUMMARY,
     timeBucket,
     timeBucketLabel: TIME_BUCKET_LABELS[timeBucket] || "",
     qimenLens: {
-      focusTheme: String(lensRaw.focus_theme || ""),
-      supportTheme: String(lensRaw.support_theme || ""),
-      cautionTheme: String(lensRaw.caution_theme || ""),
-      pacingTheme: String(lensRaw.pacing_theme || ""),
+      focusTheme: displayTextField(lensRaw.focus_theme),
+      supportTheme: displayTextField(lensRaw.support_theme),
+      cautionTheme: displayTextField(lensRaw.caution_theme),
+      pacingTheme: displayTextField(lensRaw.pacing_theme),
     },
-    situationOverview: (result.situation_overview as string) || "",
-    riskObservations: risks,
-    actionPacing: (result.action_pacing as string) || "",
-    reflectionQuestions: reflections,
-    actionSuggestions: suggestions,
-    limits: Array.isArray(limits) ? (limits as string[]) : [],
-    freeContent: String(record.free_content || "").trim(),
+    situationOverview: displayTextField(result.situation_overview),
+    riskObservations: sanitizeInternalTermList(risks),
+    actionPacing: displayTextField(result.action_pacing),
+    reflectionQuestions: sanitizeInternalTermList(reflections),
+    actionSuggestions: sanitizeInternalTermList(suggestions),
+    limits: sanitizeInternalTermList(limits),
+    freeContent: displayTextField(record.free_content),
   };
 }
 

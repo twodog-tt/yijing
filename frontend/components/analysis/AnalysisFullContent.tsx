@@ -1,3 +1,5 @@
+import { sanitizeInternalTerms } from "@/lib/display-text";
+
 interface AnalysisFullContentProps {
   content: string;
   revealed?: boolean;
@@ -7,6 +9,8 @@ export default function AnalysisFullContent({
   content,
   revealed = true,
 }: AnalysisFullContentProps) {
+  const safeContent = sanitizeInternalTerms(content);
+
   return (
     <section
       id="full-report"
@@ -16,7 +20,7 @@ export default function AnalysisFullContent({
     >
       <h2 className="text-lg font-bold text-stone-900">完整报告</h2>
       <div className="mt-5 text-sm leading-7 text-stone-700 sm:leading-8">
-        <p className="whitespace-pre-wrap">{content}</p>
+        <p className="whitespace-pre-wrap">{safeContent}</p>
       </div>
     </section>
   );

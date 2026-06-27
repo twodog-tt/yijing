@@ -245,7 +245,7 @@ export default function BaziPage() {
         error={listError}
         moduleLabel={MODULE_BAZI_LABEL}
         emptyText="暂无八字简析记录，提交后将显示在这里。"
-        getSubtitle={(item) => item.algorithm_version || "bazi-simple-v1"}
+        getSubtitle={() => "五行倾向与行动整理"}
         onRetry={loadRecentList}
       />
 

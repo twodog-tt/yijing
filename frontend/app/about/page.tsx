@@ -13,12 +13,25 @@ export default function AboutPage() {
       <article className="mt-6 space-y-8">
         <header>
           <h1 className="text-2xl font-bold text-stone-900">
-            关于 AI 易经问事
+            文易传统文化
           </h1>
           <p className="mt-4 text-base leading-relaxed text-stone-600">
-            这是一个基于传统易经卦象的趣味解读与自我反思工具。
+            提供易经问事、八字简析与奇门问事三类传统文化学习工具，帮助整理当前状态、自我观察与行动节奏。
           </p>
         </header>
+
+        <section className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm sm:p-6">
+          <h2 className="text-lg font-semibold text-stone-900">三个模块</h2>
+          <p className="mt-3 text-sm leading-relaxed text-stone-600">
+            问事起卦：适合梳理具体问题的当前状态与行动提醒。
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-stone-600">
+            八字简析：适合从传统文化视角观察个人结构与长期节奏。
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-stone-600">
+            奇门问事：适合观察当前局势、资源关系与推进节奏。
+          </p>
+        </section>
 
         <section className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm sm:p-6">
           <h2 className="text-lg font-semibold text-stone-900">起卦方式</h2>

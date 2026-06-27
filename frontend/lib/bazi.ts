@@ -1,4 +1,5 @@
 import type { AnalysisRecord } from "./types";
+import { sanitizeInternalTermList, sanitizeInternalTerms } from "./display-text";
 
 export const HOUR_BRANCHES = [
   { value: "zi", label: "子时 23:00-00:59" },
@@ -76,6 +77,11 @@ function parseJSONField(raw: unknown): Record<string, unknown> {
   }
 }
 
+function displayTextField(value: unknown, fallback = ""): string {
+  const text = sanitizeInternalTerms(value);
+  return text || fallback;
+}
+
 export function buildAnalysisView(record: AnalysisRecord): BaziAnalysisView {
   const result = parseJSONField(record.result_payload);
   const pillars = (result.pillars as Record<string, string>) || {};
@@ -93,16 +99,16 @@ export function buildAnalysisView(record: AnalysisRecord): BaziAnalysisView {
       record.algorithm_version ||
       "bazi-simple-v1",
     methodNote:
-      (result.method_note as string) ||
+      displayTextField(result.method_note) ||
       "本功能采用简化干支文化规则，不等同于专业八字排盘。",
     pillars: {
-      year: pillars.year || "—",
-      month: pillars.month || "—",
-      day: pillars.day || "—",
-      hour: pillars.hour || "",
+      year: displayTextField(pillars.year, "—"),
+      month: displayTextField(pillars.month, "—"),
+      day: displayTextField(pillars.day, "—"),
+      hour: displayTextField(pillars.hour),
     },
     hourUnknown,
-    dayMaster: (result.day_master as string) || "—",
+    dayMaster: displayTextField(result.day_master, "—"),
     elements: {
       wood: Number(elements.wood) || 0,
       fire: Number(elements.fire) || 0,
@@ -111,21 +117,21 @@ export function buildAnalysisView(record: AnalysisRecord): BaziAnalysisView {
       water: Number(elements.water) || 0,
     },
     baziProfile: {
-      dayMasterObservation: profileRaw.day_master_observation || "",
-      seasonTendency: profileRaw.season_tendency || "",
-      elementBalanceType: profileRaw.element_balance_type || "",
-      actionStyle: profileRaw.action_style || "",
-      reflectionTheme: profileRaw.reflection_theme || "",
+      dayMasterObservation: displayTextField(profileRaw.day_master_observation),
+      seasonTendency: displayTextField(profileRaw.season_tendency),
+      elementBalanceType: displayTextField(profileRaw.element_balance_type),
+      actionStyle: displayTextField(profileRaw.action_style),
+      reflectionTheme: displayTextField(profileRaw.reflection_theme),
     },
     interpretationLens: {
-      strengthHint: lensRaw.strength_hint || "",
-      cautionHint: lensRaw.caution_hint || "",
-      pacingHint: lensRaw.pacing_hint || "",
-      relationshipWithElements: lensRaw.relationship_with_elements || "",
+      strengthHint: displayTextField(lensRaw.strength_hint),
+      cautionHint: displayTextField(lensRaw.caution_hint),
+      pacingHint: displayTextField(lensRaw.pacing_hint),
+      relationshipWithElements: displayTextField(lensRaw.relationship_with_elements),
     },
-    reflectionFocus: (result.reflection_focus as string) || "",
-    actionSuggestions: suggestions,
-    freeContent: record.free_content || "",
+    reflectionFocus: displayTextField(result.reflection_focus),
+    actionSuggestions: sanitizeInternalTermList(suggestions),
+    freeContent: displayTextField(record.free_content),
   };
 }
 

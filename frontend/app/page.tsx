@@ -4,9 +4,8 @@ import Link from "next/link";
 
 const POSITIONING_TAGS = [
   "传统文化学习",
-  "趣味卦象解读",
-  "自我反思整理",
-  "克制的行动建议",
+  "自我观察",
+  "行动节奏整理",
 ] as const;
 
 const HOME_DISCLAIMER =
@@ -53,10 +52,10 @@ export default function Home() {
   return (
     <main className="home-page mx-auto w-full max-w-lg flex-1 px-4 py-6 sm:max-w-xl sm:py-10">
       <header className="home-hero">
-        <p className="home-eyebrow">易经问事</p>
-        <h1 className="home-title">从卦象中整理当下思路</h1>
+        <p className="home-eyebrow">文易传统文化</p>
+        <h1 className="home-title">易经问事、八字简析、奇门问事</h1>
         <p className="home-description">
-          以传统文化学习和趣味解读为基础，为自我反思、风险梳理与下一步行动提供参考。
+          传统文化学习参考，不构成现实决策依据。
         </p>
       </header>
 
