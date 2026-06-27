@@ -1,0 +1,291 @@
+# CODEX_PROJECT_CONTEXT
+
+更新时间：2026-06-27
+任务：CODEX-ONBOARDING：项目上下文梳理与持久化
+
+本文件记录 Codex 对当前项目的上下文理解。后续任务开始前应先阅读本文件和根目录 `AGENTS.md`。
+
+## 1. 项目当前定位
+
+「文易传统文化」是微信小程序 + Go 后端项目，以传统文化模型为载体，提供学习参考、趣味解读、自我观察和行动节奏整理。
+
+当前不是预测、改命、医疗、法律、投资或赌博建议产品。所有页面、报告、分享卡片、长图与 Prompt 都应使用合规边界文案。
+
+当前体验版前代码与 API 自动化预检基本就绪，但体验版分发被备案、HTTPS API 域名、微信 request 合法域名和本地 DevTools / 真机 UI 勾选阻塞。
+
+## 2. 用户侧模块说明
+
+- 问事起卦：用户选择事项类型并输入 5-200 字问题，后端生成六爻、本卦、变卦、动爻、免费解读和完整解析。
+- 今日一卦：同一匿名 session 同一本地日期只生成一条记录，复用六爻结果页与解读链路。
+- 八字简析：采集公历出生日期、十二时辰或时辰未知，输出简化干支文化示意、五行倾向、反思焦点、行动建议、完整报告。
+- 奇门问事：采集问题与分类，按当前时间生成局势梳理、风险观察、行动节奏、反思问题、行动建议、完整报告。
+- 历史记录：统一展示问事 / 八字 / 奇门，可筛选、跳转详情和删除。
+- 分享卡片 / 长图：小程序本地 Canvas 生成，不请求后端生成图片，不展示隐私字段或完整原始输入。
+- 首页模块引导：HOME1 后首页强调三模块入口、场景选择和使用边界。
+
+## 3. 后端 API 结构
+
+基础 API：
+
+- `GET /health`
+- `GET /api/v1/health`
+- `POST /api/v1/sessions`
+- `GET /api/v1/categories`
+
+六爻 / 今日一卦：
+
+- `POST /api/v1/divinations`
+- `GET /api/v1/divinations/{id}`
+- `GET /api/v1/divinations?session_key=...`
+- `DELETE /api/v1/divinations/{id}`，使用 `X-Session-Key`，软删除
+- `GET /api/v1/divinations/{id}/interpretation/free`
+- `GET /api/v1/divinations/{id}/interpretation/full`
+- `POST /api/v1/divinations/{id}/unlock`
+- `POST /api/v1/daily-fortune/today`
+
+八字 / 奇门 analysis：
+
+- `POST /api/v1/analysis/bazi`
+- `POST /api/v1/analysis/qimen`
+- `GET /api/v1/analysis/{id}`
+- `GET /api/v1/analysis?module=bazi|qimen&page=1&page_size=20`
+- `DELETE /api/v1/analysis/{id}`，硬删除 analysis 记录
+- `POST /api/v1/analysis/{id}/unlock`
+
+analysis 约定：
+
+- GET / DELETE / UNLOCK 必须通过 `X-Session-Key` 传 session，不放 query。
+- POST 可 body + header 传 session，但不一致会拒绝。
+- 响应统一 `{ code, message, data }`。
+- `analysis_records.module_type`：`1=八字`，`2=奇门`。
+- `analysis_records.algorithm_version` 存算法版本。
+- 解锁当前允许 `free_unlock` 和 `rewarded_video_mock`；AD0 后生产 UI 使用 `free_unlock`。
+
+## 4. 小程序页面结构
+
+`miniprogram/app.json` 当前注册页面：
+
+- `pages/index/index`：首页模块引导
+- `pages/today/today`：今日一卦
+- `pages/ask/ask`：问事起卦表单
+- `pages/result/result`：六爻 / 今日结果页
+- `pages/history/history`：统一历史记录
+- `pages/bazi/bazi`：八字简析表单和最近记录
+- `pages/qimen/qimen`：奇门问事表单和最近记录
+- `pages/qimen-result/qimen-result`：奇门结果页
+- `pages/analysis-result/analysis-result`：八字结果页
+- `pages/about/about`：关于与免责声明
+- `pages/debug/debug`：开发调试页，正式环境禁用操作区
+
+关键 utils / components：
+
+- `miniprogram/utils/config.js`：API 与广告配置集中处。
+- `miniprogram/utils/api.js`：API 封装。
+- `miniprogram/utils/bazi.js`：八字 view、v2 条件展示、长图数据。
+- `miniprogram/utils/qimen.js`：奇门 view、professional 条件展示、长图数据。
+- `miniprogram/utils/home.js`：首页模块配置与合规文案。
+- `miniprogram/utils/long-poster-canvas.js`：长图摘要化与 Canvas 工具。
+- `components/bazi-v2-panel/`：八字 v2 内部展示。
+- `components/qimen-palace-grid/`：奇门 professional 九宫展示。
+- `components/bazi-share-card/`、`components/qimen-share-card/`、`components/share-poster/`：分享长图。
+- `components/home-module-card/`、`components/home-guide-card/`：HOME1 首页引导。
+
+## 5. 八字模块状态
+
+默认算法：`bazi-simple-v1`。
+
+内部灰度算法：`bazi-v2-poc`。
+
+当前能力：
+
+- `POST /analysis/bazi` 支持出生日期、时辰 / 时辰未知、免责声明。
+- 普通小程序创建不传 `algorithm_version`，因此默认 `bazi-simple-v1`。
+- 内部可传 `algorithm_version=bazi-v2-poc` 创建灰度记录。
+- `bazi-v2-poc` 支持立春换年、节气月柱和 v2 payload 兼容字段，但仍是 POC，不是真太阳时、专业排盘、大运流年或神煞。
+- 结果页仅在 `result_payload.algorithm_version === "bazi-v2-poc"` 时展示 v2 区块。
+- 未知时辰不得生成或伪造时柱。
+- 完整报告走 DeepSeek 优先，失败 fallback。
+- AD0 后结果页按钮为“查看完整报告”，小程序生产 UI 不触发 mock 广告。
+- 分享和长图不展示出生日期 / 出生时辰原始输入、`session_key`、payload。
+
+当前测试记录线索：
+
+- v2 正常：id=105，session=`bazi-v2-view-test`
+- v1 默认：id=106，session=`bazi-v1-view-test`
+- v2 未知时辰：id=107，session=`bazi-v2-unknown-test`
+
+## 6. 奇门模块状态
+
+默认算法：`qimen-simple-v1`。
+
+内部灰度算法：
+
+- `qimen-v2-poc`
+- `qimen-v2-professional`
+
+当前能力：
+
+- `POST /analysis/qimen` 支持问题、分类、免责声明。
+- 分类：`career` / `relationship` / `study` / `decision` / `general`。
+- 普通小程序创建不传 `algorithm_version`，因此默认 `qimen-simple-v1`。
+- 内部可传 `qimen-v2-poc` 或 `qimen-v2-professional` 创建灰度记录。
+- `qimen-v2-poc` 有 9 宫 payload，但小程序 professional 九宫区块不触发。
+- `qimen-v2-professional` 当前为第一版 professional 预览 / 落盘口径：二十四节气近似、拆补三元、九宫、值符值使、layout_version。
+- 详情页仅在 `algorithm_version === "qimen-v2-professional"` 且 `palaces.length === 9` 时展示 professional 九宫。
+- 完整报告走 DeepSeek 优先，失败 fallback；ALG2.7 后 professional 报告为 9 段结构并按 category 差异化。
+- AD0 后结果页按钮为“查看完整报告”，使用 `free_unlock`。
+- 分享和长图不展示完整原问题、`session_key`、payload，professional 长图只加一句摘要，不画完整九宫。
+
+当前测试记录线索：
+
+- professional：id=102，session=`qimen-devtools-prof`
+- v1：id=103，session=`qimen-devtools-v1`
+- poc：id=104，session=`qimen-devtools-poc`
+
+## 7. 问事模块状态
+
+当前能力：
+
+- 问事起卦是 P0 核心流程。
+- 后端按三枚硬币法生成真实 `lines`、本卦、变卦、动爻。
+- 小程序起卦动画只读取后端返回结果，不在前端随机或计算卦象。
+- 结果页展示基础卦象、免费解读、完整解析。
+- AD0 后卦象结果页不再展示 mock 视频，按钮为“查看完整解析”，使用 `mock_button` unlock。
+- 长图已摘要化，不贴完整解析全文，不展示完整原问题。
+- 问事记录已支持 `DELETE /divinations/{id}`，历史页可删除。
+
+## 8. 历史记录状态
+
+H1 / H1.1 后历史页已经升级为统一入口：
+
+- 筛选：全部 / 问事起卦 / 八字简析 / 奇门问事
+- 并发加载 `GET /divinations`、`GET /analysis?module=bazi`、`GET /analysis?module=qimen`
+- 按 `created_at` 倒序合并
+- 点击跳转对应详情页
+- 八字 / 奇门调用 `DELETE /analysis/{id}` 硬删除
+- 问事起卦调用 `DELETE /divinations/{id}` 软删除
+- 列表不展示完整原问题、出生信息、payload、session_key
+
+## 9. 分享卡片 / 长图状态
+
+当前状态：
+
+- 首页、结果页支持微信原生分享。
+- 六爻结果页分享路径为 `/pages/result/result?id=...`。
+- 八字结果页分享路径回到 `/pages/bazi/bazi`，避免朋友直接打开私有记录。
+- 奇门结果页分享路径为 `/pages/qimen-result/qimen-result?id=...`，非同 session 不应泄露记录内容。
+- 长图均由本地 Canvas 绘制，不请求外部图片，不生成或伪造二维码 / 小程序码。
+- SHARE1 / SHARE2 后八字、奇门、卦象长图都改为摘要 + 行动要点，不再粘贴完整报告全文。
+- 长图禁止出现出生日期 / 时辰原始输入、完整原问题、`session_key`、payload、prompt、小程序码。
+- 长图真实导出、相册权限和真机保存仍需维护者在微信 DevTools / 真机本地勾选。
+
+## 10. 首页引导状态
+
+HOME1 后首页结构：
+
+- 顶部品牌区：文易传统文化，三模块一句话，学习参考边界。
+- 三模块入口：问事起卦、八字简析、奇门问事。
+- 如何选择模块：场景到模块映射。
+- 使用边界说明：不做精准预测、不替代现实决策、不提供投资医疗法律建议。
+- 保留历史记录、关于与说明入口。
+
+HOME1-QA 已通过静态 / 代码层 / 合规预检，但真实 DevTools 渲染与跳转仍需维护者本地勾选。
+
+## 11. 已完成阶段列表
+
+重点已完成阶段：
+
+- AD0：流量主未开通前隐藏 mock 广告，八字 / 奇门使用 `free_unlock`。
+- F7 / E10 / RC1：奇门 / 八字差异化解读与相关回归线索已落文档。
+- BAZI1 / BAZI1.3 / BAZI1.3-QA：八字 v2 内部记录展示与回归预检完成。
+- ALG2 / ALG2.7 / ALG2.7-QA：奇门 v2 POC、professional 报告质量增强与回归完成。
+- QIMEN-V2-VIEW：小程序 professional 九宫条件展示完成。
+- MINIAPP-LOCAL-QA 代码层：测试数据与代码预检就绪，真实 UI 待本地勾选。
+- HOME1 / HOME1-QA：首页模块引导与代码层 QA 完成。
+- RELEASE-QA-PREP：体验版前全模块验收准备完成。
+- RELEASE-QA：体验版前自动化最终验收通过，仍不上传体验版、不提审。
+
+其他重要已完成阶段：
+
+- Phase E1/E2/E3/E5/E7/E9：八字 API、删除、小程序页面、解锁、DeepSeek、长图。
+- Phase F1/F2/F4/F5/F6：奇门 API、小程序页面、完整报告、解锁、长图。
+- Phase H1/H1.1：统一历史记录与问事删除补齐。
+- SHARE1 / SHARE2：八字 / 奇门 / 问事长图摘要化。
+- REPORT1：完整报告质量增强。
+- UX1 / UX2 / UX2.1：八字 / 奇门动效和九宫动效强化。
+- W1 / W2：Web 八字 / 奇门同步与 Web 首页对齐。
+
+## 12. 当前最新 commit 线索
+
+本次 onboarding 开始时：
+
+- 当前分支：`main`
+- 当前 HEAD：`c4836a5 docs(miniprogram): record release QA results`
+- 远端：`origin git@github.com:twodog-tt/yijing.git`
+- 工作区已有未跟踪目录：`.deploy-patches/`，不得提交
+
+近期 commit 线索：
+
+- `bcfbe59 docs(miniprogram): record release QA prep results`
+- `17b9371 docs(miniprogram): record home guidance QA results`
+- `94c138b feat(miniprogram): improve home module guidance`
+- `d8a7e90 docs(miniprogram): record bazi v2 view QA results`
+- `879784d feat(miniprogram): show bazi v2 analysis details`
+- `cc883f7 docs(miniprogram): record local DevTools QA results`
+- `38bef14 docs(miniprogram): record qimen professional view DevTools QA`
+
+文档内历史线索：
+
+- `a083882`：八字 v2 内部灰度接入。
+- `8e47cdb`：奇门 professional 报告质量增强 QA 的 ECS 基线。
+- `bcfbe59`：RELEASE-QA-PREP 基线。
+
+## 13. 当前阻塞项
+
+当前已知阻塞项：
+
+1. 微信 DevTools / 真机真实 UI 仍需维护者本地勾选。
+2. 备案未完成。
+3. HTTPS API 域名未完成。
+4. 微信 request 合法域名未配置。
+5. `https://api.wenyiapp.cn/api/v1/health` 当前不可用。
+6. 当前 dev API 为 `http://123.57.48.214/api/v1`。
+
+补充说明：
+
+- Cursor / Codex 当前环境不能替代微信 DevTools 编译、预览、真机相册保存验证。
+- DevTools 本地调试依赖关闭合法域名、TLS 和 HTTPS 校验。
+- 上传体验版后真机请求可能被 HTTP IP 与未配置合法域名阻塞。
+- 当前不建议上传体验版，不提审。
+
+## 14. 体验版前置条件
+
+体验版前必须完成：
+
+- 维护者本地打开微信 DevTools，重新编译并勾选 RELEASE-QA 表格。
+- 至少真机验证首页、问事、八字、奇门、历史、分享卡片、长图保存。
+- `wenyiapp.cn` ICP 备案完成。
+- `api.wenyiapp.cn` 可用并部署 HTTPS 证书。
+- 微信公众平台配置 request 合法域名。
+- 验证 `https://api.wenyiapp.cn/api/v1/health` 可用。
+- 验证正式 API 全部核心接口。
+- release 环境确认切换到 prod Base URL。
+- 恢复合法域名、TLS 和 HTTPS 校验。
+- 确认无广告 / 支付 / 微信登录入口。
+- 确认无内部算法选择 UI。
+- 确认默认算法仍为 `bazi-simple-v1` 和 `qimen-simple-v1`。
+
+## 15. 后续建议阶段
+
+建议优先级：
+
+1. DOMAIN1：处理备案、HTTPS API 域名、微信 request 合法域名和 prod health。该阶段是体验版分发的主要阻塞。
+2. RELEASE-QA-RECHECK：DOMAIN1 和维护者 DevTools / 真机勾选完成后，再做一次体验版前回归，不上传体验版前不要跳过。
+3. BAZI1.4：八字报告质量或 v2 口径增强可作为产品质量阶段推进，但不是当前体验版分发的第一阻塞。
+
+当前不建议：
+
+- 不进入 AD1，除非流量主、真实 adUnitId、审核与服务端校验策略都已准备。
+- 不进入支付 / 会员 / 次数包阶段，除非产品和资质单独确认。
+- 不把 `bazi-v2-poc` 或 `qimen-v2-professional` 改成普通用户默认。
+- 不为了体验版临时切换到不可用的 `https://api.wenyiapp.cn/api/v1`。
