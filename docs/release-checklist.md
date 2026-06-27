@@ -36,11 +36,13 @@ API_BASE=http://127.0.0.1:8080/api/v1 ROOT_BASE=http://127.0.0.1 bash scripts/ch
 - `POST /api/v1/sessions`
 - `POST /api/v1/analysis/bazi`：默认 `bazi-simple-v1`
 - `POST /api/v1/analysis/bazi`：内部 `bazi-v2-poc`
+- `POST /api/v1/analysis/bazi`：内部 `bazi-v2-poc` + `birth_hour_unknown=true`
 - `POST /api/v1/analysis/qimen`：默认 `qimen-simple-v1`
 - `POST /api/v1/analysis/qimen`：内部 `qimen-v2-poc`
 - `POST /api/v1/analysis/qimen`：内部 `qimen-v2-professional`
 - 非法 `algorithm_version=qimen-v3` 返回 400 / invalid params
 - `POST /api/v1/analysis/{id}/unlock`：`free_unlock`
+- `POST /api/v1/analysis/{id}/unlock`：`bazi-v2-poc` 未知时辰报告包含未知时辰说明，且不生成干支时柱
 - `POST /api/v1/divinations`：问事起卦
 - `POST /api/v1/divinations/{id}/unlock`：`mock_button`
 
@@ -85,6 +87,8 @@ bash scripts/check-release-privacy.sh
 | v2 正常时辰 | 105 | `bazi-v2-view-test` | `bazi-v2-poc` | 展示 v2 节气 / 四柱 / 五行区块 |
 | v1 默认路径 | 106 | `bazi-v1-view-test` | `bazi-simple-v1` | 不展示 v2 区块 |
 | v2 未知时辰 | 107 | `bazi-v2-unknown-test` | `bazi-v2-poc` | 不生成或伪造时柱 |
+
+未知时辰 API 请求必须显式传 `birth_hour_unknown=true`，不要只省略 `birth_hour_branch`。`scripts/check-api-smoke.sh` 会动态创建 `bazi-v2-poc` 未知时辰记录，并在解锁后检查完整报告包含未知时辰说明、未生成干支时柱。
 
 ## 6. 奇门测试记录
 

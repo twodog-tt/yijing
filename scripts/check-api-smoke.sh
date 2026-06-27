@@ -126,6 +126,31 @@ create_bazi() {
   fi
 }
 
+create_bazi_unknown_hour() {
+  local label="$1"
+  local session_key="$2"
+  local out="$3"
+  local payload="{\"session_key\":\"$session_key\",\"birth_date\":\"1992-03-18\",\"birth_hour_unknown\":true,\"confirm_disclaimer\":true,\"algorithm_version\":\"bazi-v2-poc\"}"
+  curl_json POST "$API_BASE/analysis/bazi" "$payload" "$out" -H "X-Session-Key: $session_key"
+  local id returned_version hour_v1 hour_v2
+  id="$(json_get "$out" "data.id")"
+  returned_version="$(json_get "$out" "data.algorithm_version")"
+  hour_v1="$(json_get "$out" "data.result_payload.pillars.hour")"
+  hour_v2="$(json_get "$out" "data.result_payload.pillars_v2.hour")"
+  if [[ "$LAST_HTTP_CODE" == "200" ]] &&
+    expect_code_zero "$out" &&
+    [[ -n "$id" ]] &&
+    [[ "$returned_version" == "bazi-v2-poc" ]] &&
+    [[ -z "$hour_v1" ]] &&
+    [[ -z "$hour_v2" ]]; then
+    printf '  %s id=%s algorithm_version=%s birth_hour_unknown=true hour_pillar=none\n' "$label" "$id" "$returned_version"
+    pass "$label create"
+  else
+    fail "$label create (http=$LAST_HTTP_CODE)"
+    return 1
+  fi
+}
+
 create_qimen() {
   local label="$1"
   local session_key="$2"
@@ -161,6 +186,28 @@ unlock_analysis() {
   unlock_status="$(json_get "$out" "data.unlock_status")"
   has_full="$(json_get "$out" "data.full_content")"
   if [[ "$LAST_HTTP_CODE" == "200" ]] && expect_code_zero "$out" && [[ "$unlock_status" == "1" ]] && [[ -n "$has_full" ]]; then
+    pass "$label free_unlock"
+  else
+    fail "$label free_unlock (http=$LAST_HTTP_CODE)"
+    return 1
+  fi
+}
+
+unlock_bazi_unknown_hour() {
+  local label="$1"
+  local session_key="$2"
+  local id="$3"
+  local out="$4"
+  curl_json POST "$API_BASE/analysis/$id/unlock" '{"unlock_type":"free_unlock"}' "$out" -H "X-Session-Key: $session_key"
+  local unlock_status full_content
+  unlock_status="$(json_get "$out" "data.unlock_status")"
+  full_content="$(json_get "$out" "data.full_content")"
+  if [[ "$LAST_HTTP_CODE" == "200" ]] &&
+    expect_code_zero "$out" &&
+    [[ "$unlock_status" == "1" ]] &&
+    [[ -n "$full_content" ]] &&
+    { [[ "$full_content" == *"时辰未知"* ]] || [[ "$full_content" == *"未生成时柱"* ]] || [[ "$full_content" == *"不生成时柱"* ]]; } &&
+    [[ ! "$full_content" =~ 时柱[：:][[:space:]]*[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥] ]]; then
     pass "$label free_unlock"
   else
     fail "$label free_unlock (http=$LAST_HTTP_CODE)"
@@ -229,6 +276,9 @@ bazi_v1_id="$(json_get "$tmp_dir/bazi-v1.json" "data.id")"
 
 create_bazi "bazi-v2-poc" "test-smoke-bazi-v2" "bazi-v2-poc" "$tmp_dir/bazi-v2.json"
 
+create_bazi_unknown_hour "bazi-v2-poc unknown-hour" "test-smoke-bazi-v2-unknown" "$tmp_dir/bazi-v2-unknown.json"
+bazi_v2_unknown_id="$(json_get "$tmp_dir/bazi-v2-unknown.json" "data.id")"
+
 create_qimen "qimen-simple-v1" "test-smoke-qimen-v1" "" "$tmp_dir/qimen-v1.json"
 qimen_v1_id="$(json_get "$tmp_dir/qimen-v1.json" "data.id")"
 
@@ -245,6 +295,7 @@ else
 fi
 
 unlock_analysis "bazi-simple-v1" "test-smoke-bazi-v1" "$bazi_v1_id" "$tmp_dir/bazi-unlock.json"
+unlock_bazi_unknown_hour "bazi-v2-poc unknown-hour" "test-smoke-bazi-v2-unknown" "$bazi_v2_unknown_id" "$tmp_dir/bazi-v2-unknown-unlock.json"
 unlock_analysis "qimen-simple-v1" "test-smoke-qimen-v1" "$qimen_v1_id" "$tmp_dir/qimen-unlock.json"
 
 create_divination "test-smoke-divination" "$tmp_dir/divination.json"
