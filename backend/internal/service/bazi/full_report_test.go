@@ -81,6 +81,23 @@ func TestBuildBaziUserPromptHourUnknown(t *testing.T) {
 	}
 }
 
+func TestBuildBaziUserPromptKeepsStaticInstructionsBeforeDynamicInput(t *testing.T) {
+	input, err := buildFullReportPromptInput(sampleResultPayload("甲子"), "免费解读")
+	if err != nil {
+		t.Fatalf("build prompt input: %v", err)
+	}
+	prompt := buildBaziUserPrompt(input)
+	rulesIndex := strings.Index(prompt, "必须按以下 7 个部分输出")
+	inputIndex := strings.LastIndex(prompt, "【本次结构化输入】")
+	dataIndex := strings.LastIndex(prompt, "algorithm_version：")
+	if rulesIndex < 0 || inputIndex < 0 || dataIndex < 0 {
+		t.Fatalf("prompt missing expected sections: %s", prompt)
+	}
+	if rulesIndex > inputIndex || inputIndex > dataIndex {
+		t.Fatalf("expected static instructions before dynamic input: %s", prompt)
+	}
+}
+
 func TestBuildBaziUserPromptV2UsesStructuredSummariesAndHidesSensitiveInput(t *testing.T) {
 	v2, err := CalculateV2("1995-03-12", "mao", false)
 	if err != nil {
@@ -209,6 +226,37 @@ func TestFullReportGeneratorUsesDeepSeekWhenConfigured(t *testing.T) {
 	}
 	if !strings.Contains(content, "免责声明") {
 		t.Fatalf("expected disclaimer in AI content")
+	}
+}
+
+func TestDeepSeekFullCallAPIReadsCacheUsage(t *testing.T) {
+	raw, _ := json.Marshal(map[string]any{
+		"choices": []map[string]any{
+			{"message": map[string]string{"content": "模型返回内容"}},
+		},
+		"usage": map[string]any{
+			"prompt_cache_hit_tokens":  256,
+			"prompt_cache_miss_tokens": 64,
+		},
+	})
+	server := newDeepSeekTestServer(t, string(raw))
+	defer server.Close()
+
+	cfg := &config.Config{
+		AIProvider:              model.AIProviderDeepSeek,
+		DeepSeekAPIKey:          "test-key",
+		DeepSeekBaseURL:         server.URL,
+		DeepSeekModel:           "deepseek-chat",
+		DeepSeekMaxOutputTokens: 800,
+		DeepSeekTimeoutSeconds:  5,
+	}
+	gen := NewFullReportGenerator(cfg)
+	result, err := gen.deepseek.callAPI(context.Background(), "测试 prompt")
+	if err != nil {
+		t.Fatalf("callAPI: %v", err)
+	}
+	if result.PromptCacheHitTokens != 256 || result.PromptCacheMissTokens != 64 {
+		t.Fatalf("unexpected cache usage: hit=%d miss=%d", result.PromptCacheHitTokens, result.PromptCacheMissTokens)
 	}
 }
 

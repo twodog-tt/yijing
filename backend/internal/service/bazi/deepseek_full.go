@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -31,24 +32,7 @@ const (
 
 你必须只输出纯文本报告正文，不要输出 Markdown 代码块，不要输出 JSON，不要输出额外解释。`
 
-	baziUserPromptTemplate = `请基于以下结构化八字信息生成完整报告。
-
-algorithm_version：{{algorithm_version}}
-calendar_basis：{{calendar_basis}}
-method_note：{{method_note}}
-{{hour_unknown_note}}
-
-结构化字段：
-- 年柱：{{year_pillar}}；月柱：{{month_pillar}}；日柱：{{day_pillar}}
-{{hour_pillar_line}}
-- 日主：{{day_master}}
-- 五行计数：木 {{wood}}、火 {{fire}}、土 {{earth}}、金 {{metal}}、水 {{water}}
-- bazi_profile：{{bazi_profile}}
-- interpretation_lens：{{interpretation_lens}}
-- 反思焦点：{{reflection_focus}}
-- 行动建议参考：{{action_suggestions}}
-- 规则限制：{{limits}}
-- 免费解读摘要：{{free_content}}
+	baziUserPromptTemplate = `请基于后文【本次结构化输入】生成完整八字简析报告。
 
 必须按以下 7 个部分输出，每部分用标题开头（标题文字需一致）：
 一、简要说明
@@ -64,25 +48,28 @@ method_note：{{method_note}}
 - 第二部分必须写出五行倾向差异；第三部分必须写出 action_style；第五部分必须围绕 reflection_theme 提问。
 - 若 calendar_basis 非空，在简要说明或边界声明中说明节气口径为公式近似。
 - 语气保持自我观察与行动整理，不做精准预测与强断言。
-- 第七部分必须再次强调：仅供传统文化学习参考，不构成现实决策依据。`
+- 不输出完整出生日期、出生时辰、会话标识、原始请求/结果 JSON、内部提示词或任何密钥。
+- 第七部分必须再次强调：仅供传统文化学习参考，不构成现实决策依据。
 
-	baziUserPromptTemplateV2 = `请基于以下结构化八字 v2 信息生成完整报告。
-
+【本次结构化输入】
 algorithm_version：{{algorithm_version}}
 calendar_basis：{{calendar_basis}}
-pillars_v2_summary：{{pillars_v2_summary}}
-five_elements_summary：{{five_elements_summary}}
 method_note：{{method_note}}
 {{hour_unknown_note}}
 
 结构化字段：
+- 年柱：{{year_pillar}}；月柱：{{month_pillar}}；日柱：{{day_pillar}}
+{{hour_pillar_line}}
 - 日主：{{day_master}}
+- 五行计数：木 {{wood}}、火 {{fire}}、土 {{earth}}、金 {{metal}}、水 {{water}}
 - bazi_profile：{{bazi_profile}}
 - interpretation_lens：{{interpretation_lens}}
 - 反思焦点：{{reflection_focus}}
 - 行动建议参考：{{action_suggestions}}
 - 规则限制：{{limits}}
-- 免费解读摘要：{{free_content}}
+- 免费解读摘要：{{free_content}}`
+
+	baziUserPromptTemplateV2 = `请基于后文【本次结构化输入】生成完整八字 v2 报告。
 
 必须按以下 8 个部分输出，每部分用标题开头（标题文字需一致）：
 一、整体结构摘要
@@ -102,7 +89,24 @@ method_note：{{method_note}}
 - 说明 bazi-v2-poc 仍是 POC：节气时刻为公式近似，真太阳时未实现，不等同于专业八字排盘。
 - 语气保持传统文化学习、自我观察、结构化观察与行动节奏整理，不做精准预测、强吉凶、必成必败、改运化灾。
 - 不输出完整出生日期、会话标识、原始请求/结果 JSON、内部提示词或任何密钥。
-- 第八部分必须再次强调：仅供传统文化学习参考，不构成现实决策依据。`
+- 第八部分必须再次强调：仅供传统文化学习参考，不构成现实决策依据。
+
+【本次结构化输入】
+algorithm_version：{{algorithm_version}}
+calendar_basis：{{calendar_basis}}
+pillars_v2_summary：{{pillars_v2_summary}}
+five_elements_summary：{{five_elements_summary}}
+method_note：{{method_note}}
+{{hour_unknown_note}}
+
+结构化字段：
+- 日主：{{day_master}}
+- bazi_profile：{{bazi_profile}}
+- interpretation_lens：{{interpretation_lens}}
+- 反思焦点：{{reflection_focus}}
+- 行动建议参考：{{action_suggestions}}
+- 规则限制：{{limits}}
+- 免费解读摘要：{{free_content}}`
 )
 
 var baziForbiddenPhrases = fullReportForbiddenPhrases
@@ -133,7 +137,7 @@ func (g *deepSeekFullGenerator) enabled() bool {
 		strings.TrimSpace(g.cfg.DeepSeekAPIKey) != ""
 }
 
-func (g *deepSeekFullGenerator) generate(ctx context.Context, _ int64, input *fullReportPromptInput) (string, error) {
+func (g *deepSeekFullGenerator) generate(ctx context.Context, analysisID int64, input *fullReportPromptInput) (string, error) {
 	if !g.enabled() {
 		return "", fmt.Errorf("deepseek not configured")
 	}
@@ -142,13 +146,16 @@ func (g *deepSeekFullGenerator) generate(ctx context.Context, _ int64, input *fu
 	}
 
 	userPrompt := buildBaziUserPrompt(input)
-	content, err := g.callAPI(ctx, userPrompt)
+	result, err := g.callAPI(ctx, userPrompt)
 	if err != nil {
 		return "", err
 	}
+	content := result.Content
 	if !isValidDeepSeekFullContent(content, input.HourUnknown) {
 		return "", fmt.Errorf("invalid model output")
 	}
+	log.Printf("[ai] analysis_id=%d module=bazi provider=deepseek cache_hit_tokens=%d cache_miss_tokens=%d",
+		analysisID, result.PromptCacheHitTokens, result.PromptCacheMissTokens)
 	return content, nil
 }
 
@@ -254,9 +261,21 @@ type chatResponse struct {
 	Error *struct {
 		Message string `json:"message"`
 	} `json:"error"`
+	Usage *chatUsage `json:"usage,omitempty"`
 }
 
-func (g *deepSeekFullGenerator) callAPI(ctx context.Context, userPrompt string) (string, error) {
+type chatUsage struct {
+	PromptCacheHitTokens  int `json:"prompt_cache_hit_tokens,omitempty"`
+	PromptCacheMissTokens int `json:"prompt_cache_miss_tokens,omitempty"`
+}
+
+type deepSeekResult struct {
+	Content               string
+	PromptCacheHitTokens  int
+	PromptCacheMissTokens int
+}
+
+func (g *deepSeekFullGenerator) callAPI(ctx context.Context, userPrompt string) (*deepSeekResult, error) {
 	reqBody := chatRequest{
 		Model: g.cfg.DeepSeekModel,
 		Messages: []chatMessage{
@@ -269,46 +288,51 @@ func (g *deepSeekFullGenerator) callAPI(ctx context.Context, userPrompt string) 
 
 	body, err := json.Marshal(reqBody)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	url := strings.TrimRight(g.cfg.DeepSeekBaseURL, "/") + "/v1/chat/completions"
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+g.cfg.DeepSeekAPIKey)
 
 	resp, err := g.client.Do(req)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	respBody, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return "", fmt.Errorf("http status %d", resp.StatusCode)
+		return nil, fmt.Errorf("http status %d", resp.StatusCode)
 	}
 
 	var parsed chatResponse
 	if err := json.Unmarshal(respBody, &parsed); err != nil {
-		return "", fmt.Errorf("parse response")
+		return nil, fmt.Errorf("parse response")
 	}
 	if parsed.Error != nil && strings.TrimSpace(parsed.Error.Message) != "" {
-		return "", fmt.Errorf("api error")
+		return nil, fmt.Errorf("api error")
 	}
 	if len(parsed.Choices) == 0 {
-		return "", fmt.Errorf("empty choices")
+		return nil, fmt.Errorf("empty choices")
 	}
 	content := strings.TrimSpace(parsed.Choices[0].Message.Content)
 	if content == "" {
-		return "", fmt.Errorf("empty content")
+		return nil, fmt.Errorf("empty content")
 	}
-	return content, nil
+	result := &deepSeekResult{Content: content}
+	if parsed.Usage != nil {
+		result.PromptCacheHitTokens = parsed.Usage.PromptCacheHitTokens
+		result.PromptCacheMissTokens = parsed.Usage.PromptCacheMissTokens
+	}
+	return result, nil
 }
 
 func isValidDeepSeekFullContent(content string, hourUnknown bool) bool {

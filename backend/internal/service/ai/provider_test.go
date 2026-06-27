@@ -60,12 +60,12 @@ func TestRouterMockProvider(t *testing.T) {
 
 func TestDeepSeekMissingAPIKeyFallback(t *testing.T) {
 	cfg := &config.Config{
-		AIProvider:             "deepseek",
-		DeepSeekAPIKey:           "",
-		DeepSeekBaseURL:          "https://example.com",
-		DeepSeekModel:            "deepseek-v4-flash",
-		DeepSeekTimeoutSeconds:   5,
-		DeepSeekMaxOutputTokens:  1800,
+		AIProvider:              "deepseek",
+		DeepSeekAPIKey:          "",
+		DeepSeekBaseURL:         "https://example.com",
+		DeepSeekModel:           "deepseek-v4-flash",
+		DeepSeekTimeoutSeconds:  5,
+		DeepSeekMaxOutputTokens: 1800,
 	}
 	p := NewDeepSeekProvider(cfg, NewMockProvider())
 	out, err := p.GenerateFullInterpretation(context.Background(), sampleAIInput())
@@ -83,17 +83,21 @@ func TestDeepSeekValidJSON(t *testing.T) {
 			"choices": []map[string]any{
 				{"message": map[string]string{"content": validReportJSON()}},
 			},
+			"usage": map[string]any{
+				"prompt_cache_hit_tokens":  128,
+				"prompt_cache_miss_tokens": 32,
+			},
 		})
 	}))
 	defer server.Close()
 
 	cfg := &config.Config{
-		AIProvider:             "deepseek",
-		DeepSeekAPIKey:           "test-key",
-		DeepSeekBaseURL:          server.URL,
-		DeepSeekModel:            "deepseek-v4-flash",
-		DeepSeekTimeoutSeconds:   5,
-		DeepSeekMaxOutputTokens:  1800,
+		AIProvider:              "deepseek",
+		DeepSeekAPIKey:          "test-key",
+		DeepSeekBaseURL:         server.URL,
+		DeepSeekModel:           "deepseek-v4-flash",
+		DeepSeekTimeoutSeconds:  5,
+		DeepSeekMaxOutputTokens: 1800,
 	}
 	p := NewDeepSeekProvider(cfg, NewMockProvider())
 	out, err := p.GenerateFullInterpretation(context.Background(), sampleAIInput())
@@ -102,6 +106,22 @@ func TestDeepSeekValidJSON(t *testing.T) {
 	}
 	if out.Provider != model.AIProviderDeepSeek {
 		t.Fatalf("expected deepseek, got %s", out.Provider)
+	}
+	if out.PromptCacheHitTokens != 128 || out.PromptCacheMissTokens != 32 {
+		t.Fatalf("unexpected cache usage: hit=%d miss=%d", out.PromptCacheHitTokens, out.PromptCacheMissTokens)
+	}
+}
+
+func TestBuildUserPromptKeepsStaticInstructionsBeforeDynamicInput(t *testing.T) {
+	prompt := BuildUserPrompt(sampleAIInput())
+	rulesIndex := strings.Index(prompt, "请输出 JSON")
+	inputIndex := strings.LastIndex(prompt, "【本次输入】")
+	questionIndex := strings.LastIndex(prompt, "用户问题：")
+	if rulesIndex < 0 || inputIndex < 0 || questionIndex < 0 {
+		t.Fatalf("prompt missing expected sections: %s", prompt)
+	}
+	if rulesIndex > inputIndex || inputIndex > questionIndex {
+		t.Fatalf("expected static instructions before dynamic input: %s", prompt)
 	}
 }
 
@@ -116,12 +136,12 @@ func TestDeepSeekInvalidJSONFallback(t *testing.T) {
 	defer server.Close()
 
 	cfg := &config.Config{
-		AIProvider:             "deepseek",
-		DeepSeekAPIKey:           "test-key",
-		DeepSeekBaseURL:          server.URL,
-		DeepSeekModel:            "deepseek-v4-flash",
-		DeepSeekTimeoutSeconds:   5,
-		DeepSeekMaxOutputTokens:  1800,
+		AIProvider:              "deepseek",
+		DeepSeekAPIKey:          "test-key",
+		DeepSeekBaseURL:         server.URL,
+		DeepSeekModel:           "deepseek-v4-flash",
+		DeepSeekTimeoutSeconds:  5,
+		DeepSeekMaxOutputTokens: 1800,
 	}
 	p := NewDeepSeekProvider(cfg, NewMockProvider())
 	out, err := p.GenerateFullInterpretation(context.Background(), sampleAIInput())

@@ -21,18 +21,18 @@ func sampleResultPayload(category string) json.RawMessage {
 	profile := ExtractQuestionProfile("示例问事问题用于测试", category)
 	lens := BuildQimenLens(profile, category)
 	payload := map[string]any{
-		"algorithm_version":  model.AlgorithmVersionQimenSimpleV1,
-		"method_note":        MethodNote,
-		"question_summary":   QuestionSummary,
+		"algorithm_version":     model.AlgorithmVersionQimenSimpleV1,
+		"method_note":           MethodNote,
+		"question_summary":      QuestionSummary,
 		"safe_question_summary": BuildSafeQuestionSummary(profile),
-		"category":           category,
-		"time_context":       map[string]string{"time_bucket": "day"},
-		"question_profile":   profile,
-		"qimen_lens":         lens,
-		"differentiation_seed": BuildDifferentiationSeed(category, "day"),
-		"situation_overview": "当前局势更像是在整理方向与节奏，适合先观察再推进。",
-		"risk_observations":  []string{"过度依赖单一结论，可能忽略现实细节。"},
-		"action_pacing":      "建议分三步：先整理现状，再安排小动作，最后复盘。",
+		"category":              category,
+		"time_context":          map[string]string{"time_bucket": "day"},
+		"question_profile":      profile,
+		"qimen_lens":            lens,
+		"differentiation_seed":  BuildDifferentiationSeed(category, "day"),
+		"situation_overview":    "当前局势更像是在整理方向与节奏，适合先观察再推进。",
+		"risk_observations":     []string{"过度依赖单一结论，可能忽略现实细节。"},
+		"action_pacing":         "建议分三步：先整理现状，再安排小动作，最后复盘。",
 		"reflection_questions": []string{
 			"我真正想推进的核心目标是什么？",
 		},
@@ -102,6 +102,24 @@ func TestBuildQimenUserPromptPrivacy(t *testing.T) {
 		if strings.Contains(prompt, forbidden) {
 			t.Fatalf("prompt must not contain %s", forbidden)
 		}
+	}
+}
+
+func TestBuildQimenUserPromptKeepsStaticInstructionsBeforeDynamicInput(t *testing.T) {
+	raw := sampleResultPayload("career")
+	input, err := buildFullReportPromptInput(raw, "免费解读")
+	if err != nil {
+		t.Fatalf("build prompt input: %v", err)
+	}
+	prompt := buildQimenUserPrompt(input)
+	rulesIndex := strings.Index(prompt, "必须按以下 7 个部分输出")
+	inputIndex := strings.LastIndex(prompt, "【本次结构化输入】")
+	dataIndex := strings.LastIndex(prompt, "algorithm_version：")
+	if rulesIndex < 0 || inputIndex < 0 || dataIndex < 0 {
+		t.Fatalf("prompt missing expected sections: %s", prompt)
+	}
+	if rulesIndex > inputIndex || inputIndex > dataIndex {
+		t.Fatalf("expected static instructions before dynamic input: %s", prompt)
 	}
 }
 
@@ -176,6 +194,37 @@ func TestFullReportGeneratorUsesDeepSeekWhenConfigured(t *testing.T) {
 	}
 	if !strings.Contains(content, "免责声明") {
 		t.Fatalf("expected disclaimer in AI content")
+	}
+}
+
+func TestDeepSeekFullCallAPIReadsCacheUsage(t *testing.T) {
+	raw, _ := json.Marshal(map[string]any{
+		"choices": []map[string]any{
+			{"message": map[string]string{"content": "模型返回内容"}},
+		},
+		"usage": map[string]any{
+			"prompt_cache_hit_tokens":  320,
+			"prompt_cache_miss_tokens": 80,
+		},
+	})
+	server := newDeepSeekTestServer(t, string(raw))
+	defer server.Close()
+
+	cfg := &config.Config{
+		AIProvider:              model.AIProviderDeepSeek,
+		DeepSeekAPIKey:          "test-key",
+		DeepSeekBaseURL:         server.URL,
+		DeepSeekModel:           "deepseek-chat",
+		DeepSeekMaxOutputTokens: 800,
+		DeepSeekTimeoutSeconds:  5,
+	}
+	gen := NewFullReportGenerator(cfg)
+	result, err := gen.deepseek.callAPI(context.Background(), "测试 prompt")
+	if err != nil {
+		t.Fatalf("callAPI: %v", err)
+	}
+	if result.PromptCacheHitTokens != 320 || result.PromptCacheMissTokens != 80 {
+		t.Fatalf("unexpected cache usage: hit=%d miss=%d", result.PromptCacheHitTokens, result.PromptCacheMissTokens)
 	}
 }
 

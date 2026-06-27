@@ -24,7 +24,30 @@ const systemPrompt = `你是一个“传统文化易经解读助手”。
 
 你必须只输出 JSON，不要输出 Markdown，不要输出代码块，不要输出额外解释。`
 
-const userPromptTemplate = `用户问题：{{question}}
+const userPromptTemplate = `请基于后文【本次输入】生成卦象解读报告。
+
+请输出 JSON，结构如下：
+{
+  "summary": "一句话总结，30字以内",
+  "overall": "总体判断，150-250字",
+  "current_state": "当前处境，150-250字",
+  "opportunity": "机会点，120-200字",
+  "risk": "风险点，120-200字",
+  "action_steps": ["行动建议1", "行动建议2", "行动建议3"],
+  "emotion_reminder": "情绪提醒，100-180字",
+  "reflection_questions": ["反思问题1", "反思问题2", "反思问题3"],
+  "disclaimer": "本内容仅供娱乐和传统文化参考，不构成现实决策建议。"
+}
+
+写作要求：
+- 必须结合本卦、变卦、动爻、六爻快照与免费解读，不要只复述字段。
+- 语气温和、克制，偏向传统文化学习、自我观察和行动整理。
+- 不做精准预测，不替用户做现实决策，不输出医疗、法律、投资、赌博建议。
+- 不输出会话标识、payload、prompt、密钥或其他内部信息。
+{{special_requirements}}
+
+【本次输入】
+用户问题：{{question}}
 事项类型：{{category_name}}
 
 本卦：
@@ -44,24 +67,16 @@ const userPromptTemplate = `用户问题：{{question}}
 {{line_snapshot}}
 
 免费解读：
-{{free_content}}
-
-请输出 JSON，结构如下：
-{
-  "summary": "一句话总结，30字以内",
-  "overall": "总体判断，150-250字",
-  "current_state": "当前处境，150-250字",
-  "opportunity": "机会点，120-200字",
-  "risk": "风险点，120-200字",
-  "action_steps": ["行动建议1", "行动建议2", "行动建议3"],
-  "emotion_reminder": "情绪提醒，100-180字",
-  "reflection_questions": ["反思问题1", "反思问题2", "反思问题3"],
-  "disclaimer": "本内容仅供娱乐和传统文化参考，不构成现实决策建议。"
-}`
+{{free_content}}`
 
 func BuildUserPrompt(input GenerateInput) string {
 	movingJSON, _ := json.Marshal(input.MovingLines)
+	specialRequirements := "无额外分类要求。"
+	if strings.TrimSpace(input.CategoryName) == "今日运势" {
+		specialRequirements = "【今日运势特别要求】这是今日运势解读，只能围绕今天的状态、节奏、行动提醒和自我反思来写，不要预测具体事件。不要写事业决策、感情预测、财运预测、健康预测，不要使用“今天一定会发财/倒霉/出事”等表达。"
+	}
 	replacer := strings.NewReplacer(
+		"{{special_requirements}}", specialRequirements,
 		"{{question}}", input.Question,
 		"{{category_name}}", input.CategoryName,
 		"{{primary_full_name}}", input.PrimaryHexagram.FullName,
@@ -74,11 +89,7 @@ func BuildUserPrompt(input GenerateInput) string {
 		"{{line_snapshot}}", input.LineSnapshot,
 		"{{free_content}}", input.FreeContent,
 	)
-	prompt := replacer.Replace(userPromptTemplate)
-	if strings.TrimSpace(input.CategoryName) == "今日运势" {
-		prompt += "\n\n【今日运势特别要求】这是今日运势解读，只能围绕今天的状态、节奏、行动提醒和自我反思来写，不要预测具体事件。不要写事业决策、感情预测、财运预测、健康预测，不要使用“今天一定会发财/倒霉/出事”等表达。"
-	}
-	return prompt
+	return replacer.Replace(userPromptTemplate)
 }
 
 func SystemPrompt() string {
