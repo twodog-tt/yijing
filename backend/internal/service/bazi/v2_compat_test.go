@@ -58,8 +58,9 @@ func TestBuildFullContentSupportsV2Payload(t *testing.T) {
 	if !strings.Contains(content, "bazi-v2-poc") {
 		t.Fatalf("expected v2 disclaimer in full content")
 	}
-	if !strings.Contains(content, "【一、简要说明】") {
-		t.Fatalf("missing required section")
+	if !strings.Contains(content, "【一、整体结构摘要】") ||
+		!strings.Contains(content, "【八、边界声明】") {
+		t.Fatalf("missing required v2 sections")
 	}
 }
 

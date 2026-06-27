@@ -2201,3 +2201,34 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 **下一步：** DOMAIN1；RELEASE-QA-RECHECK；BAZI1.4。
 
 ---
+
+### 10.58 Phase BAZI1.4 交付清单（八字 v2 报告质量增强）
+
+**目标：** 提升 `bazi-v2-poc` 完整报告的结构化表达质量，让 DeepSeek prompt 与 fallback 都能使用 v2 排盘口径、四柱、五行和边界信息；**不改变** `bazi-simple-v1` 默认算法。
+
+**本阶段完成：**
+
+- [x] `bazi-v2-poc` fallback 升级为 8 段结构：整体结构、排盘口径、四柱观察、五行观察、可借助倾向、需留意倾向、行动节奏、边界声明。
+- [x] v2 DeepSeek prompt 增加 `calendar_basis`、`pillars_v2_summary`、`five_elements_summary`、`bazi_profile`、`interpretation_lens`、`method_note`、`limits`。
+- [x] 排盘口径明确记录立春换年、节气月柱、不启用真太阳时、日柱依据。
+- [x] 五行表达改为文化观察与行动节奏建议，不使用强吉凶或决定性判断。
+- [x] 未知时辰不生成或暗示时柱。
+- [x] v1 报告继续保持原 7 段结构，普通用户默认仍为 `bazi-simple-v1`。
+
+**隐私与合规：**
+
+- [x] 报告 / prompt 不输出完整出生日期、`session_key`、payload、raw JSON、内部 prompt 或密钥。
+- [x] 继续避免精准预测、改运化灾、医疗 / 法律 / 投资等建议。
+
+**测试覆盖：**
+
+- [x] v2 fallback 8 段结构与排盘口径
+- [x] v2 prompt 结构化摘要与隐私字段过滤
+- [x] 未知时辰不伪造时柱
+- [x] v1 兼容回归
+
+**部署判断：** backend 八字报告逻辑已变更；若要让 dev API 生效，需要维护者确认 backend-only 部署。无需 SQL / miniprogram / frontend；不上传体验版，不提审。
+
+**下一步：** DOMAIN1；RELEASE-QA-RECHECK；维护者确认后 backend-only dev 部署。
+
+---

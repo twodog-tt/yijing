@@ -24,8 +24,11 @@ func containsForbiddenReportPhrase(content string) bool {
 func reportBodyExcludingBoundary(content string) string {
 	markers := []string{
 		sectionBoundary,
+		sectionV2Boundary,
 		"【七、边界声明】",
+		"【八、边界声明】",
 		"七、边界声明",
+		"八、边界声明",
 		"【7. 免责声明】",
 		"7. 免责声明",
 	}

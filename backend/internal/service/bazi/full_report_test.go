@@ -81,6 +81,83 @@ func TestBuildBaziUserPromptHourUnknown(t *testing.T) {
 	}
 }
 
+func TestBuildBaziUserPromptV2UsesStructuredSummariesAndHidesSensitiveInput(t *testing.T) {
+	v2, err := CalculateV2("1995-03-12", "mao", false)
+	if err != nil {
+		t.Fatalf("CalculateV2: %v", err)
+	}
+	calc := CalculationResultFromV2(v2)
+	payload, err := BuildV2APIResultPayload(v2, calc)
+	if err != nil {
+		t.Fatalf("BuildV2APIResultPayload: %v", err)
+	}
+	input, err := buildFullReportPromptInput(payload, BuildFreeContent(calc))
+	if err != nil {
+		t.Fatalf("build prompt input: %v", err)
+	}
+	prompt := buildBaziUserPrompt(input)
+
+	for _, snippet := range []string{
+		"algorithm_version：bazi-v2-poc",
+		"calendar_basis：",
+		"year_boundary=lichun",
+		"month_boundary=solar_terms_jie",
+		"true_solar_time=false",
+		"pillars_v2_summary：",
+		"year=" + v2.PillarsV2.Year,
+		"month=" + v2.PillarsV2.Month,
+		"day=" + v2.PillarsV2.Day,
+		"five_elements_summary：",
+		"wood=",
+		"fire=",
+		"earth=",
+		"metal=",
+		"water=",
+		"bazi_profile：",
+		"interpretation_lens：",
+		"必须按以下 8 个部分输出",
+	} {
+		if !strings.Contains(prompt, snippet) {
+			t.Fatalf("expected v2 prompt to contain %q\n%s", snippet, prompt)
+		}
+	}
+	for _, forbidden := range []string{
+		"1995-03-12",
+		"session_key",
+		"input_payload",
+		"result_payload",
+		"raw",
+		"DeepSeek 原始",
+	} {
+		if strings.Contains(prompt, forbidden) {
+			t.Fatalf("v2 prompt must not contain %q", forbidden)
+		}
+	}
+}
+
+func TestBuildBaziUserPromptV2HourUnknownDoesNotInventHourPillar(t *testing.T) {
+	v2, err := CalculateV2("1988-05-18", "", true)
+	if err != nil {
+		t.Fatalf("CalculateV2: %v", err)
+	}
+	calc := CalculationResultFromV2(v2)
+	payload, err := BuildV2APIResultPayload(v2, calc)
+	if err != nil {
+		t.Fatalf("BuildV2APIResultPayload: %v", err)
+	}
+	input, err := buildFullReportPromptInput(payload, BuildFreeContent(calc))
+	if err != nil {
+		t.Fatalf("build prompt input: %v", err)
+	}
+	prompt := buildBaziUserPrompt(input)
+	if !strings.Contains(prompt, "hour=时辰未知，本次不生成时柱") {
+		t.Fatalf("expected unknown-hour v2 prompt")
+	}
+	if strings.Contains(prompt, "1988-05-18") {
+		t.Fatalf("v2 prompt must not contain full birth date")
+	}
+}
+
 func TestIsValidDeepSeekFullContentRejectsStrongPredictionWords(t *testing.T) {
 	cases := []string{
 		strings.Repeat("完整报告。", 40) + "未来必然发生变局。免责声明：仅供学习。",

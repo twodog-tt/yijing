@@ -2339,3 +2339,50 @@ bash scripts/check-api-smoke.sh
 - [x] 不执行 SQL，不部署，不上传体验版
 
 **后续使用：** DOMAIN1 完成备案 / HTTPS / request 合法域名后，RELEASE-QA-RECHECK 应先运行上述脚本，再做 DevTools / 真机勾选。
+
+## 36. Phase BAZI1.4：八字 v2 报告质量增强
+
+**范围：** `backend/internal/service/bazi` 八字报告生成与测试；同步更新阶段文档。**不改** miniprogram / frontend / SQL / deploy / `.env*` / 默认算法 / 普通用户算法选择。
+
+**变化摘要：**
+
+- `bazi-v2-poc` 完整报告 fallback 从通用 7 段升级为 v2 专用 8 段结构：
+  1. 整体结构摘要
+  2. 排盘口径说明
+  3. 四柱结构观察
+  4. 五行分布观察
+  5. 可借助的倾向
+  6. 需要留意的倾向
+  7. 行动节奏建议
+  8. 边界声明
+- DeepSeek user prompt 针对 `bazi-v2-poc` 增加结构化上下文：
+  - `calendar_basis`
+  - `pillars_v2_summary`
+  - `five_elements_summary`
+  - `bazi_profile`
+  - `interpretation_lens`
+  - `method_note`
+  - `limits`
+- v2 prompt / fallback 均明确展示排盘口径：立春换年、节气月柱、不启用真太阳时、当前日柱依据。
+- 五行表达从简单数量罗列改为温和观察：突出、偏少、可观察，并关联行动风格、协作方式和节奏提醒。
+- 未知时辰场景不生成或暗示时柱，只说明“时辰未知，本次未生成时柱，也不做时柱相关展开”。
+- v1 `bazi-simple-v1` 继续沿用原 7 段报告结构，不改变默认算法。
+
+**隐私与合规：**
+
+- 报告与 prompt 不输出完整出生日期、`session_key`、`input_payload`、`result_payload`、raw JSON、内部 prompt 或密钥。
+- 报告保持传统文化学习、自我观察和行动节奏建议边界。
+- 不做精准预测、改运化灾、医疗、法律、投资、赌博等建议。
+
+**测试：**
+
+- [x] `bazi-v2-poc` fallback 使用 8 段结构。
+- [x] v2 报告包含排盘口径、四柱摘要、五行摘要与 POC 边界。
+- [x] 未知时辰不伪造时柱。
+- [x] v2 DeepSeek prompt 使用结构化摘要并隐藏敏感输入。
+- [x] v1 报告结构兼容，不混入 v2 8 段标题。
+
+**部署判断：**
+
+- 本阶段改动后端八字报告生成逻辑，若要让 dev API 生效，需要维护者确认后执行 backend-only 部署。
+- 无需 SQL / frontend / miniprogram 重新发版；不上传体验版，不提审。

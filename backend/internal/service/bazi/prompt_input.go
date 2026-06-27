@@ -2,25 +2,26 @@ package bazi
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/wangxintong/yijing/backend/internal/model"
 )
 
 type fullReportPromptInput struct {
-	AlgorithmVersion  string
-	MethodNote        string
-	Pillars           Pillars
-	CalendarBasis     CalendarBasis
-	HourUnknown       bool
-	DayMaster         string
-	FiveElements      FiveElements
-	BaziProfile       BaziProfile
+	AlgorithmVersion   string
+	MethodNote         string
+	Pillars            Pillars
+	CalendarBasis      CalendarBasis
+	HourUnknown        bool
+	DayMaster          string
+	FiveElements       FiveElements
+	BaziProfile        BaziProfile
 	InterpretationLens InterpretationLens
-	ReflectionFocus   string
-	ActionSuggestions []string
-	Limits            []string
-	FreeContent       string
+	ReflectionFocus    string
+	ActionSuggestions  []string
+	Limits             []string
+	FreeContent        string
 }
 
 func buildFullReportPromptInput(resultPayload json.RawMessage, freeContent string) (*fullReportPromptInput, error) {
@@ -123,6 +124,39 @@ func formatInterpretationLensForPrompt(lens InterpretationLens) string {
 		"pacing_hint=" + lens.PacingHint,
 		"relationship_with_elements=" + lens.RelationshipWithElements,
 	}, "；")
+}
+
+func formatPillarsV2SummaryForPrompt(pillars Pillars, hourUnknown bool) string {
+	parts := []string{
+		"year=" + nonEmpty(pillars.Year, "—"),
+		"month=" + nonEmpty(pillars.Month, "—"),
+		"day=" + nonEmpty(pillars.Day, "—"),
+	}
+	if hourUnknown {
+		parts = append(parts, "hour=时辰未知，本次不生成时柱")
+	} else {
+		parts = append(parts, "hour="+nonEmpty(pillars.Hour, "—"))
+	}
+	return strings.Join(parts, "；")
+}
+
+func formatFiveElementsSummaryForPrompt(elements FiveElements) string {
+	dominant, weak := dominantElements(elements)
+	parts := []string{
+		fmt.Sprintf("wood=%d", elements.Wood),
+		fmt.Sprintf("fire=%d", elements.Fire),
+		fmt.Sprintf("earth=%d", elements.Earth),
+		fmt.Sprintf("metal=%d", elements.Metal),
+		fmt.Sprintf("water=%d", elements.Water),
+	}
+	if dominant != "" {
+		parts = append(parts, "relative_prominent="+dominant)
+	}
+	if weak != "" {
+		parts = append(parts, "relative_less="+weak)
+	}
+	parts = append(parts, "expression_rule=只用偏多、偏少、相对突出、可观察等温和表达，不作强吉凶")
+	return strings.Join(parts, "；")
 }
 
 const maxFreeContentPromptRunes = 320
