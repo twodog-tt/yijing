@@ -58,6 +58,7 @@
 - 不改变默认算法，除非用户明确要求并确认影响面。
 - 不引入广告、支付、微信登录、手机号授权或小程序码能力，除非用户明确要求。
 - 不把密钥、AppSecret、DeepSeek Key、服务器密码、私钥、真实 adUnitId 写入仓库。
+- 不把真实微信 AppID 反复写入公开文档；文档中使用 `<WECHAT_APP_ID>` 或类似占位符。
 - API 地址集中维护，不能散落到页面文件。
 - 小程序普通入口不能传 `algorithm_version`，普通用户不能看到算法选择 UI。
 - 内部算法只能用于内部创建记录后的详情页条件展示。
@@ -102,6 +103,7 @@
 - 日志和错误响应不得输出完整出生信息、完整原问题、`session_key`、payload、prompt、DeepSeek 原始响应或 API key。
 - DeepSeek 完整报告失败时使用模板 fallback，不能让用户流程直接崩掉。
 - 内容安全边界由 service / prompt / report forbidden 检查共同维护。
+- 如果发现疑似 AppSecret、`access_token`、真实 API key、数据库密码或私钥，先停止提交，并提示维护者轮换对应密钥。
 
 默认算法固定：
 
@@ -157,11 +159,12 @@
 - 不使用 force push。
 - 不覆盖用户已有未提交改动。
 - 提交前查看 `git status --short`，只 stage 任务允许文件。
-- 文档 onboarding 任务只允许：
+- 不要 stage 未确认文件；按任务明确列出的路径精确 `git add`。
+- SECURITY1 / onboarding 类任务可按任务要求精确添加相关文档，例如：
 
 ```bash
-git add AGENTS.md docs/CODEX_PROJECT_CONTEXT.md
-git commit -m "docs: add Codex project context"
+git add AGENTS.md docs/CODEX_PROJECT_CONTEXT.md docs/miniprogram-dev.md
+git commit -m "docs: add Codex context and sanitize app id"
 git push origin main
 ```
 

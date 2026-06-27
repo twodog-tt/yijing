@@ -1906,7 +1906,7 @@ Storage 参考：各模块测试记录 session 见上表；首页无需特殊 se
 | 是否重新编译 / 真机预览（Agent） | 未执行，需维护者本地完成 |
 | 本地 DevTools 可测（关合法域名校验 + HTTP dev API） | **是** |
 | 体验版真机可稳定请求后端 | **否**（见备案 / 合法域名） |
-| 当前 appid（规格） | `wx80ab4e58d65af2b9`（仓库无 project.config.json，以开发者工具为准） |
+| 当前 appid（规格） | `<WECHAT_APP_ID>`（仓库无 project.config.json，以开发者工具为准） |
 | 当前 API 基址（develop/trial） | `http://123.57.48.214/api/v1` |
 | 是否依赖「不校验合法域名」 | **是**（DevTools 本地调试） |
 | `https://api.wenyiapp.cn/api/v1/health` | 不可用（curl 失败） |
