@@ -57,7 +57,7 @@ const HOME_TOOL_ITEMS = Object.freeze([
   { key: "dream", title: "梦境意象解析", hint: "意象整理" },
   { key: "name-stroke", title: "姓名笔画观察", hint: "笔画参考" },
   { key: "naming", title: "起名灵感助手", hint: "灵感收集" },
-  { key: "relationship-note", title: "感情签", hint: "关系提醒" },
+  { key: "solar-term-action", title: "节气行动卡", hint: "节令提醒" },
 ]);
 
 const HOME_BOUNDARY_ITEMS = Object.freeze([

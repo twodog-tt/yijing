@@ -17,7 +17,7 @@
 
   <view class="card plan-card">
     <text class="card-title">规划中</text>
-    <text class="card-text">梦境意象解析、姓名笔画观察、起名灵感助手、感情签等传统文化小工具仍在规划中，当前不作为正式功能入口。</text>
+    <text class="card-text">梦境意象解析、姓名笔画观察、起名灵感助手、节气行动卡等传统文化小工具仍在规划中，当前不作为正式功能入口。</text>
   </view>
 
   <view class="card">

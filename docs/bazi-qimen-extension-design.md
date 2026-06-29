@@ -2388,7 +2388,7 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 - [x] 三大主模块保持问事起卦、八字简析、奇门问事，仍由 `HOME_MODULES` 维护。
 - [x] 感情关系观察继续位于常见场景区，路径保持 `/pages/ask/ask?scene=relationship`。
 - [x] 事业选择、学习规划、人际沟通仅显示为“规划中”状态，不作为正式入口。
-- [x] 新增传统文化小工具规划区：梦境意象解析、姓名笔画观察、起名灵感助手、感情签；均不可点击。
+- [x] 新增传统文化小工具规划区：梦境意象解析、姓名笔画观察、起名灵感助手、节气行动卡；均不可点击。
 - [x] about 页同步“当前已开放 / 规划中”说明。
 
 **视觉与交互：**
@@ -2422,7 +2422,7 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 - [x] 三大主模块路径仍为 `/pages/ask/ask`、`/pages/bazi/bazi`、`/pages/qimen/qimen`
 - [x] 感情关系观察位于 `HOME_SCENE_ITEMS`，路径保持 `/pages/ask/ask?scene=relationship`
 - [x] 事业选择、学习规划、人际沟通为规划态，无 `url`
-- [x] 梦境意象解析、姓名笔画观察、起名灵感助手、感情签为规划态，无 `url`
+- [x] 梦境意象解析、姓名笔画观察、起名灵感助手、节气行动卡为规划态，无 `url`
 - [x] 首页 WXML 中规划项使用普通 `view`，未做成可点击 `navigator`
 - [x] about 页同步当前已开放模块与规划中小工具
 
@@ -2430,7 +2430,7 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 
 - [x] 不改 backend / frontend / SQL / deploy / `.env*`
 - [x] 不改 create payload、解锁逻辑、分享路径、默认算法
-- [x] 不新增真实梦境 / 姓名 / 起名 / 感情签功能
+- [x] 不新增真实梦境 / 姓名 / 起名 / 节气行动卡功能
 - [x] 不新增广告 / 支付 / 登录 / 手机号授权
 - [x] 不暴露内部算法选择 UI
 
@@ -2472,7 +2472,7 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 
 - [x] 不改 backend / frontend / SQL / deploy / `.env*`
 - [x] 不改 create payload、解锁逻辑、分享路径、默认算法
-- [x] 不新增真实梦境 / 姓名 / 起名 / 感情签功能
+- [x] 不新增真实梦境 / 姓名 / 起名 / 节气行动卡功能
 - [x] 不新增广告 / 支付 / 登录 / 手机号授权
 - [x] 不暴露内部算法选择 UI
 
