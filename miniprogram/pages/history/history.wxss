@@ -2,6 +2,10 @@
   color: #b99255;
 }
 
+.back-link {
+  display: none;
+}
+
 .filter-bar {
   display: flex;
   flex-wrap: wrap;

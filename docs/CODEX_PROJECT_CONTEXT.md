@@ -277,9 +277,9 @@ HOME2-UI-POLISH 代码层结论：
 - 三大主模块仍为问事起卦、八字简析、奇门问事，路径不变，卡片 padding / chip / 操作区高度收紧。
 - 感情关系观察仍位于 `HOME_SCENE_ITEMS`，路径为 `/pages/ask/ask?scene=relationship`，不是第四个主模块。
 - 事业选择、学习规划、人际沟通仍为 disabled 规划态，无 `url`。
-- 梦境意象解析、姓名笔画观察、起名灵感助手、感情签仍为规划态，无 `url`，小工具区改为两列均衡布局。
+- 梦境意象解析、姓名笔画观察、起名灵感助手、感情签仍为规划态，无 `url`，小工具区改为两列均衡布局，并使用“规划中”状态 pill。
 - 首页 WXML 中规划项继续使用普通 `view`，未做成可点击 `navigator`。
-- 历史页保留浅色背景，仅统一金色强调色和更轻的空状态按钮，不改筛选 / 删除 / 跳转逻辑。
+- 历史页保留浅色背景，仅统一金色强调色和更轻的空状态按钮；截图复核后隐藏页面内冗余返回链接，不改筛选 / 删除 / 跳转逻辑。
 - about 页同步“传统文化观察工具”说法，并轻量统一规划卡片 / 免责声明样式。
 - 自动化检查：miniprogram static 4 PASS / 0 FAIL、release privacy 4 PASS / 0 FAIL、API smoke 15 PASS / 0 FAIL、全量 JS `node --check`、`git diff --check` 均通过。
 - UI1 的问事结果页与长图可读性结论继续保留。
