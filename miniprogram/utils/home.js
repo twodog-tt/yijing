@@ -1,18 +1,19 @@
 const HOME_BRAND = Object.freeze({
   eyebrow: "文易传统文化",
-  title: "易经问事、八字简析、奇门问事",
-  subtitle: "传统文化学习参考，不构成现实决策依据",
+  title: "把问题整理清楚",
+  subtitle: "用传统文化模型，帮你观察结构与行动节奏。",
+  note: "传统文化学习参考，不构成现实决策依据。",
 });
 
 const HOME_COMPLIANCE_NOTE =
-  "本小程序内容基于传统文化模型生成，仅供学习参考、自我观察与行动节奏整理。结果不构成现实决策依据，请结合实际情况判断。";
+  "内容仅供传统文化学习与自我观察参考，请结合实际情况判断。";
 
 const HOME_MODULES = Object.freeze([
   {
     key: "ask",
     title: "问事起卦",
     subtitle: "适合梳理一个具体问题的当前状态与行动提醒",
-    tags: ["具体问题", "局势观察", "行动提醒"],
+    tags: ["具体问题", "行动提醒"],
     buttonText: "开始问事",
     url: "/pages/ask/ask",
     accent: "ask",
@@ -21,7 +22,7 @@ const HOME_MODULES = Object.freeze([
     key: "bazi",
     title: "八字简析",
     subtitle: "适合从传统文化视角观察个人结构与长期节奏",
-    tags: ["自我观察", "五行结构", "长期节奏"],
+    tags: ["个人结构", "长期节奏"],
     buttonText: "查看八字",
     url: "/pages/bazi/bazi",
     accent: "bazi",
@@ -30,41 +31,48 @@ const HOME_MODULES = Object.freeze([
     key: "qimen",
     title: "奇门问事",
     subtitle: "适合观察当前局势、资源关系与推进节奏",
-    tags: ["局势梳理", "资源关系", "推进节奏"],
+    tags: ["局势梳理", "推进节奏"],
     buttonText: "进入奇门",
     url: "/pages/qimen/qimen",
     accent: "qimen",
   },
 ]);
 
-const HOME_GUIDE_ITEMS = Object.freeze([
-  { scenario: "临时问题 / 具体事情", module: "问事起卦" },
-  { scenario: "自我结构 / 长期节奏", module: "八字简析" },
-  { scenario: "当前局势 / 行动节奏", module: "奇门问事" },
-]);
-
 const HOME_SCENE_ITEMS = Object.freeze([
   {
     key: "relationship",
     title: "感情关系观察",
-    subtitle: "适合梳理关系状态、沟通节奏与边界提醒",
-    description: "遇到感情困惑时，可以先从一个具体问题开始观察。",
-    buttonText: "去问感情问题",
+    subtitle: "梳理关系状态、沟通节奏与边界提醒",
+    buttonText: "进入",
     url: "/pages/ask/ask?scene=relationship",
   },
 ]);
 
+const HOME_PLANNED_SCENE_ITEMS = Object.freeze([
+  { key: "career", title: "事业选择" },
+  { key: "study", title: "学习规划" },
+  { key: "communication", title: "人际沟通" },
+]);
+
+const HOME_TOOL_ITEMS = Object.freeze([
+  { key: "dream", title: "梦境意象解析" },
+  { key: "name-stroke", title: "姓名笔画观察" },
+  { key: "naming", title: "起名灵感助手" },
+  { key: "relationship-note", title: "感情签" },
+]);
+
 const HOME_BOUNDARY_ITEMS = Object.freeze([
-  "不做精准预测",
+  "不承诺具体结果",
   "不替代现实决策",
-  "不提供投资、医疗、法律等建议",
+  "不提供投资、医疗、法律等专业建议",
 ]);
 
 module.exports = {
   HOME_BOUNDARY_ITEMS,
   HOME_BRAND,
   HOME_COMPLIANCE_NOTE,
-  HOME_GUIDE_ITEMS,
   HOME_MODULES,
+  HOME_PLANNED_SCENE_ITEMS,
   HOME_SCENE_ITEMS,
+  HOME_TOOL_ITEMS,
 };

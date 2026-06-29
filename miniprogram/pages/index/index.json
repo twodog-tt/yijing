@@ -1,7 +1,6 @@
 {
   "navigationBarTitleText": "文易传统文化",
   "usingComponents": {
-    "home-module-card": "/components/home-module-card/home-module-card",
-    "home-guide-card": "/components/home-guide-card/home-guide-card"
+    "home-module-card": "/components/home-module-card/home-module-card"
   }
 }

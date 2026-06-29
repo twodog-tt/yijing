@@ -4,14 +4,20 @@
   <view class="page-header">
     <text class="eyebrow">关于产品</text>
     <text class="page-title">文易传统文化</text>
-    <text class="page-description">提供易经问事、八字简析与奇门问事三类传统文化学习工具，帮助整理当前状态、自我观察与行动节奏。</text>
+    <text class="page-description">提供问事起卦、八字简析与奇门问事三类传统文化学习工具，帮助整理当前状态、自我观察与行动节奏。</text>
   </view>
 
   <view class="card">
-    <text class="card-title">三个模块</text>
+    <text class="card-title">当前已开放</text>
     <text class="card-text">问事起卦：适合梳理具体问题的当前状态与行动提醒。</text>
     <text class="card-text">八字简析：适合从传统文化视角观察个人结构与长期节奏。</text>
     <text class="card-text">奇门问事：适合观察当前局势、资源关系与推进节奏。</text>
+    <text class="card-text">感情关系观察：作为常见场景入口，复用问事起卦流程，帮助整理关系状态、沟通节奏与边界提醒。</text>
+  </view>
+
+  <view class="card plan-card">
+    <text class="card-title">规划中</text>
+    <text class="card-text">梦境意象解析、姓名笔画观察、起名灵感助手、感情签等传统文化小工具仍在规划中，当前不作为正式功能入口。</text>
   </view>
 
   <view class="card">
@@ -22,11 +28,11 @@
 
   <view class="card">
     <text class="card-title">内容边界</text>
-    <text class="boundary-item">· 不做精准预测，不保证具体结果</text>
+    <text class="boundary-item">· 不承诺具体结果</text>
     <text class="boundary-item">· 不处理健康诊断、生死或伤害相关问题</text>
     <text class="boundary-item">· 不处理赌博、彩票或金融涨跌问题</text>
     <text class="boundary-item">· 不代替法律、医疗、心理或财务专业服务</text>
-    <text class="boundary-item">· 不提供结果保证或所谓改变运势的服务</text>
+    <text class="boundary-item">· 不提供结果保证或所谓改变现实处境的服务</text>
   </view>
 
   <view class="card privacy-card">

@@ -3,17 +3,19 @@ const {
   HOME_BOUNDARY_ITEMS,
   HOME_BRAND,
   HOME_COMPLIANCE_NOTE,
-  HOME_GUIDE_ITEMS,
   HOME_MODULES,
+  HOME_PLANNED_SCENE_ITEMS,
   HOME_SCENE_ITEMS,
+  HOME_TOOL_ITEMS,
 } = require("../../utils/home");
 
 Page({
   data: {
     brand: HOME_BRAND,
     modules: HOME_MODULES,
-    guideItems: HOME_GUIDE_ITEMS,
+    plannedScenes: HOME_PLANNED_SCENE_ITEMS,
     sceneItems: HOME_SCENE_ITEMS,
+    toolItems: HOME_TOOL_ITEMS,
     boundaryItems: HOME_BOUNDARY_ITEMS,
     complianceNote: HOME_COMPLIANCE_NOTE,
     sessionStatus: "preparing",

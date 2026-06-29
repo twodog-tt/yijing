@@ -11,6 +11,11 @@
   background: #fafaf9;
 }
 
+.plan-card {
+  border-color: #e7d8b8;
+  background: #fffaf0;
+}
+
 .disclaimer-card {
   border-color: #fcd34d;
   background: #fffbeb;

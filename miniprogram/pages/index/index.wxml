@@ -1,28 +1,39 @@
 <view class="page page--home">
   <view class="home-hero">
-    <view class="home-hero__aura" aria-hidden="true"></view>
     <text class="home-hero__eyebrow">{{brand.eyebrow}}</text>
     <text class="home-hero__title">{{brand.title}}</text>
     <text class="home-hero__subtitle">{{brand.subtitle}}</text>
+    <text class="home-hero__note">{{brand.note}}</text>
+    <view class="home-hero__actions">
+      <navigator class="home-hero__button home-hero__button--primary" url="/pages/ask/ask">开始问事</navigator>
+      <navigator class="home-hero__button home-hero__button--secondary" url="/pages/history/history">查看历史</navigator>
+    </view>
   </view>
 
-  <view class="home-modules">
-    <home-module-card
-      wx:for="{{modules}}"
-      wx:key="key"
-      title="{{item.title}}"
-      subtitle="{{item.subtitle}}"
-      tags="{{item.tags}}"
-      button-text="{{item.buttonText}}"
-      url="{{item.url}}"
-      accent="{{item.accent}}"
-    ></home-module-card>
+  <view class="home-section home-section--modules">
+    <view class="home-section__header">
+      <text class="home-section__title">三大主模块</text>
+      <text class="home-section__desc">按问题类型选择工具，入口保持清晰独立。</text>
+    </view>
+    <view class="home-modules">
+      <home-module-card
+        wx:for="{{modules}}"
+        wx:key="key"
+        title="{{item.title}}"
+        subtitle="{{item.subtitle}}"
+        tags="{{item.tags}}"
+        button-text="{{item.buttonText}}"
+        url="{{item.url}}"
+        accent="{{item.accent}}"
+      ></home-module-card>
+    </view>
   </view>
 
-  <home-guide-card items="{{guideItems}}"></home-guide-card>
-
-  <view class="home-scenes">
-    <text class="home-scenes__title">常见场景</text>
+  <view class="home-section home-section--scenes">
+    <view class="home-section__header">
+      <text class="home-section__title">常见场景</text>
+      <text class="home-section__desc">场景入口会回到对应主模块，不新增独立业务流程。</text>
+    </view>
     <navigator
       wx:for="{{sceneItems}}"
       wx:key="key"
@@ -32,10 +43,28 @@
       <view class="home-scene-card__main">
         <text class="home-scene-card__title">{{item.title}}</text>
         <text class="home-scene-card__subtitle">{{item.subtitle}}</text>
-        <text class="home-scene-card__description">{{item.description}}</text>
       </view>
       <text class="home-scene-card__button">{{item.buttonText}}</text>
     </navigator>
+    <view class="home-planned-scenes">
+      <view class="home-planned-chip" wx:for="{{plannedScenes}}" wx:key="key">
+        <text class="home-planned-chip__title">{{item.title}}</text>
+        <text class="home-planned-chip__status">规划中</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="home-section home-section--tools">
+    <view class="home-section__header">
+      <text class="home-section__title">传统文化小工具</text>
+      <text class="home-section__desc">更多传统文化小工具正在规划中。</text>
+    </view>
+    <view class="home-tool-grid">
+      <view class="home-tool-card" wx:for="{{toolItems}}" wx:key="key">
+        <text class="home-tool-card__title">{{item.title}}</text>
+        <text class="home-tool-card__status">规划中</text>
+      </view>
+    </view>
   </view>
 
   <view class="home-boundary">
