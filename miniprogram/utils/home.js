@@ -1,8 +1,7 @@
 const HOME_BRAND = Object.freeze({
-  eyebrow: "文易传统文化",
+  eyebrow: "传统文化观察工具",
   title: "把问题整理清楚",
   subtitle: "用传统文化模型，帮你观察结构与行动节奏。",
-  note: "传统文化学习参考，不构成现实决策依据。",
 });
 
 const HOME_COMPLIANCE_NOTE =
@@ -55,10 +54,10 @@ const HOME_PLANNED_SCENE_ITEMS = Object.freeze([
 ]);
 
 const HOME_TOOL_ITEMS = Object.freeze([
-  { key: "dream", title: "梦境意象解析" },
-  { key: "name-stroke", title: "姓名笔画观察" },
-  { key: "naming", title: "起名灵感助手" },
-  { key: "relationship-note", title: "感情签" },
+  { key: "dream", title: "梦境意象解析", hint: "意象整理" },
+  { key: "name-stroke", title: "姓名笔画观察", hint: "笔画参考" },
+  { key: "naming", title: "起名灵感助手", hint: "灵感收集" },
+  { key: "relationship-note", title: "感情签", hint: "关系提醒" },
 ]);
 
 const HOME_BOUNDARY_ITEMS = Object.freeze([

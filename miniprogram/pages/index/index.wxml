@@ -3,7 +3,6 @@
     <text class="home-hero__eyebrow">{{brand.eyebrow}}</text>
     <text class="home-hero__title">{{brand.title}}</text>
     <text class="home-hero__subtitle">{{brand.subtitle}}</text>
-    <text class="home-hero__note">{{brand.note}}</text>
     <view class="home-hero__actions">
       <navigator class="home-hero__button home-hero__button--primary" url="/pages/ask/ask">开始问事</navigator>
       <navigator class="home-hero__button home-hero__button--secondary" url="/pages/history/history">查看历史</navigator>
@@ -62,6 +61,7 @@
     <view class="home-tool-grid">
       <view class="home-tool-card" wx:for="{{toolItems}}" wx:key="key">
         <text class="home-tool-card__title">{{item.title}}</text>
+        <text class="home-tool-card__hint">{{item.hint}}</text>
         <text class="home-tool-card__status">规划中</text>
       </view>
     </view>

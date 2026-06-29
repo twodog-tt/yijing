@@ -2447,3 +2447,45 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 **结论：** HOME2-QA 代码层通过；仅更新文档记录，无需 backend / frontend / SQL / deploy，不上传体验版、不提审。
 
 ---
+
+### 10.66 Phase HOME2-UI-POLISH 交付说明（首页视觉层级与可读性精修）
+
+**目标：** 基于微信开发者工具截图反馈，在不新增功能、不修改后端接口和不改变默认算法的前提下，对 HOME2 首页做一轮视觉精修，并轻量统一历史页 / about 页。
+
+**首页实现范围：**
+
+- [x] hero 小标题改为“传统文化观察工具”，减少与导航标题重复
+- [x] hero 移除额外说明行，收紧 padding、标题间距和按钮高度，降低第一屏密度
+- [x] 三大主模块卡片收紧上下 padding、标签尺寸和操作区高度，让首屏露出更多内容
+- [x] 感情关系观察仍为唯一可点击常见场景，路径保持 `/pages/ask/ask?scene=relationship`
+- [x] 事业选择、学习规划、人际沟通继续为 disabled 规划态 chip
+- [x] 传统文化小工具规划区改为两列均衡布局，每项显示“规划中”，不可点击
+- [x] 底部边界说明、历史记录和关于入口降噪，降低压迫感
+
+**历史页 / about 页：**
+
+- [x] 历史页保留浅色背景，仅统一金色强调色和轻量空状态按钮
+- [x] about 页同步“传统文化观察工具”说法，规划卡片和免责声明卡片轻量统一
+- [x] 不改变历史筛选、删除、跳转、加载和 about 信息结构
+
+**未改范围：**
+
+- [x] 不改 backend / frontend / SQL / deploy / `.env*`
+- [x] 不改 create payload、解锁逻辑、分享路径、默认算法
+- [x] 不新增真实梦境 / 姓名 / 起名 / 感情签功能
+- [x] 不新增广告 / 支付 / 登录 / 手机号授权
+- [x] 不暴露内部算法选择 UI
+
+**自动化检查：**
+
+- [x] `bash scripts/check-miniprogram-static.sh`：4 PASS / 0 FAIL
+- [x] `bash scripts/check-release-privacy.sh`：4 PASS / 0 FAIL
+- [x] `bash scripts/check-api-smoke.sh`：15 PASS / 0 FAIL
+- [x] 小程序 JS `node --check`
+- [x] `git diff --check`
+
+**待人工勾选：** 微信 DevTools / 真机重新截图复核首页首屏密度、主模块卡片高度、小工具两列布局、规划态不可点击、历史页空状态按钮、about 页显示和所有已上线入口跳转。
+
+**结论：** HOME2-UI-POLISH 为小程序 UI 精修；无需 backend / frontend / SQL / deploy，不上传体验版、不提审。
+
+---

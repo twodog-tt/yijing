@@ -1,3 +1,8 @@
+.page-header .eyebrow,
+.back-link {
+  color: #b99255;
+}
+
 .boundary-item {
   display: block;
   margin-top: 16rpx;
@@ -7,16 +12,16 @@
 }
 
 .privacy-card {
-  border-color: #d6d3d1;
+  border-color: #e7e5e4;
   background: #fafaf9;
 }
 
 .plan-card {
   border-color: #e7d8b8;
-  background: #fffaf0;
+  background: #fffdf8;
 }
 
 .disclaimer-card {
-  border-color: #fcd34d;
-  background: #fffbeb;
+  border-color: #e7d8b8;
+  background: #fff7e6;
 }

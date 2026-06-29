@@ -1,31 +1,35 @@
+.page-header .eyebrow {
+  color: #b99255;
+}
+
 .filter-bar {
   display: flex;
   flex-wrap: wrap;
-  gap: 16rpx;
-  margin-bottom: 28rpx;
+  gap: 14rpx;
+  margin-bottom: 26rpx;
 }
 
 .filter-chip {
-  padding: 12rpx 24rpx;
+  padding: 10rpx 22rpx;
   border: 1rpx solid #e7e5e4;
   border-radius: 999rpx;
   background: #ffffff;
   color: #57534e;
-  font-size: 24rpx;
+  font-size: 23rpx;
 }
 
 .filter-chip--active {
-  border-color: #d6a24a;
-  background: #fff7e8;
-  color: #92400e;
+  border-color: #d6b06d;
+  background: #fff7e6;
+  color: #7c4a16;
   font-weight: 600;
 }
 
 .empty-state {
-  padding: 56rpx 32rpx;
-  border: 2rpx dashed #d6d3d1;
+  padding: 52rpx 32rpx;
+  border: 2rpx dashed #e7d8b8;
   border-radius: 24rpx;
-  background: #ffffff;
+  background: #fffdf8;
   text-align: center;
 }
 
@@ -52,6 +56,15 @@
 
 .empty-action {
   margin-top: 32rpx;
+  border-color: #d6b06d;
+  background: #fff7e6;
+  color: #7c4a16;
+}
+
+.empty-action.nav-link--primary {
+  border-color: #d6b06d;
+  background: #fff7e6;
+  color: #7c4a16;
 }
 
 .history-item {
@@ -79,7 +92,7 @@
 }
 
 .type-tag {
-  color: #92400e;
+  color: #7c4a16;
   font-size: 23rpx;
   font-weight: 600;
 }
@@ -88,7 +101,7 @@
   flex-shrink: 0;
   padding: 6rpx 14rpx;
   border-radius: 999rpx;
-  background: #f5f5f4;
+  background: #faf5eb;
   color: #78716c;
   font-size: 20rpx;
 }
@@ -123,9 +136,9 @@
   height: 64rpx;
   margin: 0;
   padding: 0 20rpx;
-  border: 1rpx solid #e7e5e4;
+  border: 1rpx solid #eadfcb;
   border-radius: 999rpx;
-  background: #fafaf9;
+  background: #fffdf8;
   color: #78716c;
   font-size: 22rpx;
   line-height: 64rpx;

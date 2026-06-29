@@ -4,7 +4,7 @@
   <view class="page-header">
     <text class="eyebrow">关于产品</text>
     <text class="page-title">文易传统文化</text>
-    <text class="page-description">提供问事起卦、八字简析与奇门问事三类传统文化学习工具，帮助整理当前状态、自我观察与行动节奏。</text>
+    <text class="page-description">一个传统文化观察工具，提供问事起卦、八字简析与奇门问事三类学习参考，帮助整理当前状态、自我观察与行动节奏。</text>
   </view>
 
   <view class="card">

@@ -2660,11 +2660,11 @@ bash scripts/check-api-smoke.sh
 
 **本阶段检查：**
 
-- `bash scripts/check-miniprogram-static.sh`
-- `bash scripts/check-release-privacy.sh`
-- `bash scripts/check-api-smoke.sh`：期望 15 PASS / 0 FAIL
-- `find miniprogram -name "*.js" -not -path "*/miniprogram_npm/*" -print0 | xargs -0 -n1 node --check`
-- `git diff --check`
+- `bash scripts/check-miniprogram-static.sh`：4 PASS / 0 FAIL
+- `bash scripts/check-release-privacy.sh`：4 PASS / 0 FAIL
+- `bash scripts/check-api-smoke.sh`：15 PASS / 0 FAIL
+- `find miniprogram -name "*.js" -not -path "*/miniprogram_npm/*" -print0 | xargs -0 -n1 node --check`：通过
+- `git diff --check`：通过
 
 **DevTools / 真机待维护者本地勾选：**
 
@@ -2749,3 +2749,64 @@ bash scripts/check-api-smoke.sh
 - [ ] 页面不拥挤，窄屏文字不重叠。
 
 **结论：** HOME2-QA 代码层通过；本阶段仅记录 QA 文档，不需要 backend / frontend / SQL / deploy，不上传体验版、不提审。
+
+## 44. Phase HOME2-UI-POLISH：首页视觉层级与可读性精修
+
+**范围：** 基于微信开发者工具截图反馈，对小程序首页做视觉精修，并轻量统一历史页 / about 页视觉语言；**不改** backend / frontend / SQL / deploy / `.env*`，不新增真实功能。
+
+**首页首屏优化：**
+
+- [x] hero 小标题从重复品牌名调整为“传统文化观察工具”，避免与顶部导航重复。
+- [x] hero 保留“把问题整理清楚”和“用传统文化模型，帮你观察结构与行动节奏。”。
+- [x] 移除 hero 内额外边界说明行，减少第一屏文案密度。
+- [x] hero padding、标题间距和按钮高度略收紧，保持“开始问事”为主按钮，“查看历史”为弱入口。
+
+**三大主模块卡片优化：**
+
+- [x] 主模块卡片上下 padding、标题 / 描述 / 标签 / 操作区间距收紧。
+- [x] 标签 chip 字号和 padding 缩小，降低卡片高度。
+- [x] 三个主模块仍保持一致视觉层级与清晰点击区域。
+- [x] 问事 / 八字 / 奇门路径不变，不改变任何创建 payload。
+
+**常见场景与小工具规划区：**
+
+- [x] 感情关系观察仍为可点击场景卡，路径保持 `/pages/ask/ask?scene=relationship`。
+- [x] 事业选择、学习规划、人际沟通仍为普通 `view` disabled chip，颜色更弱，并显示“规划中”。
+- [x] 小工具规划区改为更稳的两列均衡布局，不再依赖易产生空白的单列观感。
+- [x] 梦境意象解析、姓名笔画观察、起名灵感助手、感情签均显示“规划中”，不可点击，不新增页面或 API。
+
+**底部 / 历史页 / about 页：**
+
+- [x] 首页使用边界说明边框与背景亮度降低，弱化警告感。
+- [x] 历史记录 / 关于与说明保持列表项风格，边框亮度降低。
+- [x] 历史页保留浅色背景，仅统一金色强调色；空状态按钮从重黑按钮改为更轻的金色描边浅底。
+- [x] about 页同步“传统文化观察工具”说法，并轻量统一金色强调色和规划卡片样式。
+
+**兼容性与合规：**
+
+- [x] 未修改 backend / frontend / SQL / deploy / `.env*`。
+- [x] 未新增真实梦境 / 姓名 / 起名 / 感情签功能。
+- [x] 未新增广告、支付、微信登录、手机号授权或内部算法选择 UI。
+- [x] 未新增现实结果承诺、关系承诺或现实专业服务替代表述。
+
+**本阶段检查：**
+
+- `bash scripts/check-miniprogram-static.sh`
+- `bash scripts/check-release-privacy.sh`
+- `bash scripts/check-api-smoke.sh`：期望 15 PASS / 0 FAIL
+- `find miniprogram -name "*.js" -not -path "*/miniprogram_npm/*" -print0 | xargs -0 -n1 node --check`
+- `git diff --check`
+
+**DevTools / 真机待维护者本地勾选：**
+
+- [ ] 首页第一屏更清爽，hero 文案不重复。
+- [ ] 三大主模块层级清晰，卡片不拥挤，第三张露出更多。
+- [ ] 感情关系观察位于常见场景，跳转 relationship scene。
+- [ ] 规划中场景视觉为 disabled，且不可误跳。
+- [ ] 小工具规划区两列均衡，不出现右侧大面积空白。
+- [ ] 底部边界说明不压迫。
+- [ ] 历史页空状态按钮视觉不过重。
+- [ ] about 页打开正常，说明准确。
+- [ ] 页面不白屏，所有已上线入口可正常跳转。
+
+**结论：** HOME2-UI-POLISH 是截图反馈后的首页视觉精修；不需要 backend / frontend / SQL / deploy，不上传体验版、不提审。
