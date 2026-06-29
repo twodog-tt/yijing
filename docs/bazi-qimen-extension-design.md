@@ -2410,3 +2410,40 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T backend ./migr
 **结论：** HOME2 为首页信息架构与视觉层级优化；无需 backend / frontend / SQL / deploy，不上传体验版、不提审。
 
 ---
+
+### 10.65 Phase HOME2-QA 记录（首页信息架构与视觉层级回归验收）
+
+**目标：** 对 HOME2（`28a713e`）做代码层回归与文档记录，确认首页新信息架构、常见场景、传统文化小工具规划区和 about 页同步均符合边界。
+
+**代码层结论：**
+
+- [x] 首页顶部品牌区短文案存在，“开始问事”路径为 `/pages/ask/ask`，“查看历史”路径为 `/pages/history/history`
+- [x] `HOME_MODULES` 仍只有问事起卦、八字简析、奇门问事三项
+- [x] 三大主模块路径仍为 `/pages/ask/ask`、`/pages/bazi/bazi`、`/pages/qimen/qimen`
+- [x] 感情关系观察位于 `HOME_SCENE_ITEMS`，路径保持 `/pages/ask/ask?scene=relationship`
+- [x] 事业选择、学习规划、人际沟通为规划态，无 `url`
+- [x] 梦境意象解析、姓名笔画观察、起名灵感助手、感情签为规划态，无 `url`
+- [x] 首页 WXML 中规划项使用普通 `view`，未做成可点击 `navigator`
+- [x] about 页同步当前已开放模块与规划中小工具
+
+**未改范围：**
+
+- [x] 不改 backend / frontend / SQL / deploy / `.env*`
+- [x] 不改 create payload、解锁逻辑、分享路径、默认算法
+- [x] 不新增真实梦境 / 姓名 / 起名 / 感情签功能
+- [x] 不新增广告 / 支付 / 登录 / 手机号授权
+- [x] 不暴露内部算法选择 UI
+
+**自动化检查：**
+
+- [x] `bash scripts/check-miniprogram-static.sh`
+- [x] `bash scripts/check-release-privacy.sh`
+- [x] `bash scripts/check-api-smoke.sh`：15 PASS / 0 FAIL
+- [x] 小程序 JS `node --check`
+- [x] `git diff --check`
+
+**待人工勾选：** 微信 DevTools / 真机仍需维护者本地确认首页首屏、三主模块视觉层级、relationship 场景跳转、规划项不可误点、about 页打开、窄屏不拥挤和无白屏。
+
+**结论：** HOME2-QA 代码层通过；仅更新文档记录，无需 backend / frontend / SQL / deploy，不上传体验版、不提审。
+
+---

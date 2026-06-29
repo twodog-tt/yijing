@@ -2678,3 +2678,74 @@ bash scripts/check-api-smoke.sh
 - [ ] 页面不拥挤，不白屏。
 
 **部署判断：** backend / frontend / SQL 均不需要部署；小程序需要微信开发者工具重新编译 / 预览；不上传体验版、不提审。
+
+## 43. Phase HOME2-QA：首页信息架构与视觉层级回归验收
+
+**范围：** HOME2 首页与 about 页代码层 QA、自动化检查和文档记录；**不改** backend / frontend / SQL / deploy / `.env*`，不新增功能。
+
+**开工检查：**
+
+- [x] 当前分支为 `main`。
+- [x] 最新提交包含 HOME2：`28a713e feat(miniprogram): refine home information architecture`。
+- [x] 开工前 `git status --short` 干净。
+- [x] 开工前 `git diff --stat` 无输出。
+
+**首页结构检查：**
+
+- [x] 顶部品牌区存在：`文易传统文化 / 把问题整理清楚 / 用传统文化模型，帮你观察结构与行动节奏。`
+- [x] “开始问事”跳转 `/pages/ask/ask`。
+- [x] “查看历史”跳转 `/pages/history/history`。
+- [x] `HOME_MODULES` 只有三项：问事起卦、八字简析、奇门问事。
+- [x] 三大主模块路径分别为 `/pages/ask/ask`、`/pages/bazi/bazi`、`/pages/qimen/qimen`。
+- [x] 首页仅注册 `home-module-card` 作为三大主模块组件，HOME2 当前不再注册旧的 `home-guide-card`。
+- [x] 底部边界说明为低权重展示，并保留历史记录 / 关于与说明入口。
+
+**常见场景与规划区检查：**
+
+- [x] 感情关系观察位于 `HOME_SCENE_ITEMS`，路径为 `/pages/ask/ask?scene=relationship`。
+- [x] 事业选择、学习规划、人际沟通位于 `HOME_PLANNED_SCENE_ITEMS`，均无 `url` 字段。
+- [x] 梦境意象解析、姓名笔画观察、起名灵感助手、感情签位于 `HOME_TOOL_ITEMS`，均无 `url` 字段。
+- [x] WXML 中规划中场景和小工具使用普通 `view` 渲染，不使用 `navigator`。
+- [x] 未上线工具不会跳转空白页，不新增页面或 API。
+
+**about 页检查：**
+
+- [x] 当前已开放列出问事起卦、八字简析、奇门问事、感情关系观察。
+- [x] 规划中说明包含梦境意象解析、姓名笔画观察、起名灵感助手、感情签。
+- [x] 未承诺上线时间。
+- [x] 未展示内部算法字段或算法选择。
+- [x] 未新增广告、支付、微信登录或手机号授权说明。
+
+**隐私与合规：**
+
+- [x] 首页和 about 页无广告 / 支付 / 登录入口。
+- [x] 首页和 about 页无内部算法选择 UI。
+- [x] 首页和 about 页无正缘、复合概率、姻缘指数、脱单时间等承诺式关系文案。
+- [x] 首页和 about 页无现实结果承诺或现实专业服务替代表述。
+- [x] about 页涉及医疗、法律、金融等仅为边界说明，不提供现实建议。
+
+**程序化检查结果：**
+
+- `bash scripts/check-miniprogram-static.sh`：通过
+- `bash scripts/check-release-privacy.sh`：通过
+- `bash scripts/check-api-smoke.sh`：15 PASS / 0 FAIL
+- `find miniprogram -name "*.js" -not -path "*/miniprogram_npm/*" -print0 | xargs -0 -n1 node --check`：通过
+- `git diff --check`：通过
+
+**DevTools / 真机待维护者本地勾选：**
+
+- [ ] 首页第一屏正常显示，不白屏。
+- [ ] 顶部品牌区不拥挤。
+- [ ] “开始问事”跳转普通问事页。
+- [ ] “查看历史”跳转历史页。
+- [ ] 三大主模块卡片层级最高。
+- [ ] 问事起卦 / 八字简析 / 奇门问事跳转正常。
+- [ ] 感情关系观察跳转 relationship scene。
+- [ ] 规划中场景和小工具不可误点 / 不误跳。
+- [ ] about 页正常打开。
+- [ ] 首页无广告 / 支付 / 登录入口。
+- [ ] 首页无内部算法字段或选择 UI。
+- [ ] 首页无强预测或现实结果承诺文案。
+- [ ] 页面不拥挤，窄屏文字不重叠。
+
+**结论：** HOME2-QA 代码层通过；本阶段仅记录 QA 文档，不需要 backend / frontend / SQL / deploy，不上传体验版、不提审。

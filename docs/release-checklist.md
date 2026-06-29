@@ -69,6 +69,8 @@ bash scripts/check-release-privacy.sh
 
 维护者本地打开微信开发者工具，使用 dev API 时需勾选「不校验合法域名、web-view、TLS 版本以及 HTTPS 证书」。
 
+HOME2-QA 代码层已确认：首页结构、三大主模块、感情关系观察、规划中场景 / 小工具和 about 页同步均符合预期；以下仍需维护者在 DevTools / 真机本地勾选。
+
 必测路径：
 
 - 首页：三模块入口、历史、关于
